@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Incomes — نموذج تفاعلي</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg2: #f7f7f6;
+    --bg3: #f0efed;
+    --text: #1a1a1a;
+    --text2: #6b6b6b;
+    --text3: #a0a0a0;
+    --border: rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.18);
+    --green: #1D9E75;
+    --green-bg: #EAF3DE;
+    --green-text: #3B6D11;
+    --red: #A32D2D;
+    --red-bg: #FCEBEB;
+    --red-text: #A32D2D;
+    --accent: #1a1a1a;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: #e8e6e1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 24px 16px 40px;
+  }
+
+  h1 {
+    font-size: 13px;
+    font-weight: 500;
+    color: #888;
+    letter-spacing: 0.06em;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  /* NAV */
+  .nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 20px;
+    max-width: 420px;
+  }
+  .nav-pill {
+    font-family: 'Cairo', sans-serif;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 99px;
+    border: 1px solid rgba(0,0,0,0.15);
+    background: white;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .nav-pill.active, .nav-pill:hover {
+    background: #1a1a1a;
+    color: white;
+    border-color: #1a1a1a;
+  }
+
+  /* DEVICE FRAME */
+  .device {
+    width: 360px;
+    background: var(--bg);
+    border-radius: 36px;
+    border: 1px solid rgba(0,0,0,0.12);
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    height: 44px;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .status-time { font-size: 13px; font-weight: 600; color: var(--text); }
+  .status-icons { display: flex; gap: 5px; align-items: center; }
+  .status-icons span { font-size: 13px; color: var(--text); }
+
+  /* SCREEN */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* TOP BAR */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--bg);
+  }
+  .tb-center { flex: 1; text-align: center; }
+  .tb-title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .tb-sub { font-size: 11px; color: var(--text2); margin-top: 1px; }
+  .icon-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--bg2); border: 0.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 15px; color: var(--text); flex-shrink: 0;
+    transition: background 0.12s;
+  }
+  .icon-btn:hover { background: var(--bg3); }
+  .spacer { width: 34px; }
+
+  /* BODY */
+  .body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+  /* INPUTS */
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .lbl { font-size: 11px; color: var(--text2); font-weight: 500; }
+  .inp {
+    background: var(--bg2); border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 12px;
+    font-size: 13px; color: var(--text); font-family: 'Cairo', sans-serif;
+  }
+  .inp.ph { color: var(--text3); }
+  .inp.sel { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* BUTTONS */
+  .btn-primary {
+    background: var(--accent); color: white; border-radius: var(--radius-sm);
+    padding: 12px; text-align: center; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: 'Cairo', sans-serif; transition: opacity 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-ghost {
+    border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
+    padding: 11px; text-align: center; font-size: 13px; color: var(--text2);
+    cursor: pointer; font-family: 'Cairo', sans-serif; transition: background 0.12s;
+  }
+  .btn-ghost:hover { background: var(--bg2); }
+  .btn-danger {
+    border: 0.5px solid #F09595; border-radius: var(--radius-sm);
+    padding: 11px; text-align: center; font-size: 13px; color: var(--red);
+    cursor: pointer; font-family: 'Cairo', sans-serif;
+  }
+
+  /* CARDS */
+  .income-card {
+    background: var(--bg); border: 0.5px solid var(--border);
+    border-radius: var(--radius); padding: 13px 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer; transition: background 0.12s;
+  }
+  .income-card:hover { background: var(--bg2); }
+  .ic-left { display: flex; align-items: center; gap: 10px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .ic-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .ic-cur { font-size: 11px; color: var(--text2); }
+  .ic-right { text-align: left; }
+  .bal-num { font-size: 14px; font-weight: 600; color: var(--text); }
+  .bal-lbl { font-size: 10px; color: var(--text2); }
+
+  /* ADD ROW */
+  .add-row {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    border: 0.5px dashed var(--border2); border-radius: var(--radius);
+    padding: 11px; font-size: 12px; color: var(--text2); cursor: pointer;
+    transition: background 0.12s;
+  }
+  .add-row:hover { background: var(--bg2); }
+
+  /* DIVIDER */
+  .divider { height: 0.5px; background: var(--border); }
+
+  /* BADGES */
+  .badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
+  .bin { background: var(--green-bg); color: var(--green-text); }
+  .bout { background: var(--red-bg); color: var(--red-text); }
+
+  /* TX ROW */
+  .tx-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 0.5px solid var(--border);
+  }
+  .tx-row:last-of-type { border-bottom: none; }
+  .tx-left { display: flex; align-items: center; gap: 8px; }
+  .tx-name { font-size: 13px; color: var(--text); }
+  .tx-date { font-size: 10px; color: var(--text3); }
+  .tx-amt { font-size: 13px; font-weight: 600; }
+  .tx-amt.in { color: var(--green); }
+  .tx-amt.out { color: var(--red); }
+
+  /* STAT GRID */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-card { background: var(--bg2); border-radius: var(--radius-sm); padding: 10px 12px; }
+  .stat-val { font-size: 15px; font-weight: 700; color: var(--text); }
+  .stat-val.g { color: var(--green); }
+  .stat-val.r { color: var(--red); }
+  .stat-lbl { font-size: 10px; color: var(--text2); margin-top: 2px; }
+
+  /* TAB BAR */
+  .tab-bar {
+    display: flex; border-top: 0.5px solid var(--border);
+    background: var(--bg); padding-bottom: 8px;
+  }
+  .tab {
+    flex: 1; padding: 10px 4px 4px; text-align: center;
+    font-size: 10px; color: var(--text2); cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    font-family: 'Cairo', sans-serif; transition: color 0.12s;
+  }
+  .tab.on { color: var(--text); font-weight: 600; }
+  .tab-ic { font-size: 16px; }
+
+  /* FAB */
+  .fab-wrap { padding: 8px 16px; display: flex; justify-content: flex-start; }
+  .fab {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--accent); display: flex; align-items: center;
+    justify-content: center; color: white; font-size: 22px; cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .fab:hover { opacity: 0.85; }
+
+  /* SHEET */
+  .sheet-handle { display: flex; justify-content: center; padding: 10px 0 4px; background: var(--bg2); }
+  .handle { width: 36px; height: 4px; border-radius: 2px; background: var(--border2); }
+  .sheet-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; background: var(--bg2); }
+  .sheet-title { font-size: 15px; font-weight: 600; color: var(--text); }
+
+  /* CHIPS */
+  .chip-row { display: flex; gap: 6px; }
+  .chip {
+    font-size: 12px; padding: 6px 14px; border-radius: 99px;
+    border: 0.5px solid var(--border2); color: var(--text2); cursor: pointer;
+    font-family: 'Cairo', sans-serif; transition: all 0.15s;
+  }
+  .chip.on { background: var(--accent); color: white; border-color: transparent; }
+
+  /* SPLASH */
+  .splash-body {
+    padding: 48px 24px 32px; display: flex;
+    flex-direction: column; align-items: center;
+  }
+  .logo-box {
+    width: 72px; height: 72px; border-radius: 20px;
+    background: var(--accent); display: flex; align-items: center;
+    justify-content: center; margin-bottom: 24px;
+  }
+  .logo-svg { width: 36px; height: 36px; }
+  .app-name { font-size: 26px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .app-tagline {
+    font-size: 13px; color: var(--text2); text-align: center;
+    line-height: 1.7; margin-bottom: 40px;
+  }
+
+  /* LINK */
+  .link { font-size: 12px; color: var(--text2); text-align: center; cursor: pointer; }
+  .link span { color: var(--text); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+  /* FORGOT SENT */
+  .success-wrap { padding: 48px 24px 32px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+  .success-icon {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--green-bg); display: flex; align-items: center;
+    justify-content: center; font-size: 24px; margin-bottom: 8px;
+  }
+
+  /* CONTEXT MENU */
+  .ctx-overlay {
+    background: rgba(0,0,0,0.35);
+    display: flex; align-items: flex-end;
+  }
+  .ctx-sheet {
+    background: var(--bg); border-radius: 16px 16px 0 0;
+    width: 100%; padding: 0 0 20px;
+  }
+  .ctx-title {
+    font-size: 12px; color: var(--text3); text-align: center;
+    padding: 16px; border-bottom: 0.5px solid var(--border);
+    font-weight: 500;
+  }
+  .ctx-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px; cursor: pointer; font-size: 14px;
+    color: var(--text); transition: background 0.12s;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .ctx-item:last-child { border-bottom: none; }
+  .ctx-item:hover { background: var(--bg2); }
+  .ctx-item.danger { color: var(--red); }
+  .ctx-icon { font-size: 16px; width: 20px; text-align: center; }
+
+  /* CONFIRM DELETE */
+  .confirm-overlay {
+    background: rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .confirm-box {
+    background: var(--bg); border-radius: var(--radius);
+    padding: 20px; width: 100%;
+  }
+  .confirm-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .confirm-msg { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 16px; }
+
+  /* SETTINGS */
+  .setting-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-bottom: 0.5px solid var(--border); cursor: pointer;
+  }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-name { font-size: 13px; color: var(--text); }
+  .soon-badge {
+    font-size: 10px; padding: 2px 8px; border-radius: 99px;
+    background: var(--bg3); color: var(--text2);
+  }
+  .section-lbl { font-size: 11px; color: var(--text2); font-weight: 600; letter-spacing: 0.04em; }
+
+  .avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--bg3); border: 0.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 600; color: var(--text2);
+  }
+
+  /* SCREEN-AS-OVERLAY */
+  .overlay-screen {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    display: none; flex-direction: column; justify-content: flex-end;
+    z-index: 10;
+  }
+  .overlay-screen.active { display: flex; }
+
+  /* PASSWORD TOGGLE */
+  .pw-wrap { position: relative; }
+  .pw-toggle {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 12px; color: var(--text3); cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<h1>نموذج تفاعلي — تطبيق الدخل</h1>
+
+<div class="nav" id="nav">
+  <div class="nav-pill active" onclick="go('splash')">البداية</div>
+  <div class="nav-pill" onclick="go('signin')">تسجيل الدخول</div>
+  <div class="nav-pill" onclick="go('signup')">إنشاء حساب</div>
+  <div class="nav-pill" onclick="go('forgot')">نسيت كلمة المرور</div>
+  <div class="nav-pill" onclick="go('home')">الرئيسية</div>
+  <div class="nav-pill" onclick="go('add-type')">إضافة نوع</div>
+  <div class="nav-pill" onclick="go('add-tx-type')">نوع المعاملة</div>
+  <div class="nav-pill" onclick="go('detail')">تفاصيل المصدر</div>
+  <div class="nav-pill" onclick="go('ctx-type')">قائمة المصدر</div>
+  <div class="nav-pill" onclick="go('edit-type')">تعديل المصدر</div>
+  <div class="nav-pill" onclick="go('ctx-tx-type')">قائمة المعاملة</div>
+  <div class="nav-pill" onclick="go('edit-tx-type')">تعديل المعاملة</div>
+  <div class="nav-pill" onclick="go('delete-confirm')">تأكيد الحذف</div>
+  <div class="nav-pill" onclick="go('add-tx')">إضافة معاملة</div>
+  <div class="nav-pill" onclick="go('settings')">الإعدادات</div>
+</div>
+
+<div class="device" id="device">
+
+  <!-- STATUS BAR shared -->
+  <div class="status-bar" id="status-bar">
+    <span class="status-time">9:41</span>
+    <div class="status-icons">
+      <span>●●●</span>
+      <span>WiFi</span>
+      <span>🔋</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       1. SPLASH
+  ══════════════════════════════════════════ -->
+  <div class="screen active" id="s-splash">
+    <div class="splash-body">
+      <div class="logo-box">
+        <svg class="logo-svg" viewBox="0 0 36 36" fill="none">
+          <rect x="4" y="10" width="28" height="18" rx="4" stroke="white" stroke-width="2.2"/>
+          <path d="M12 10V8a6 6 0 0 1 12 0v2" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="18" cy="19" r="3" fill="white"/>
+        </svg>
+      </div>
+      <div class="app-name">مداخيل</div>
+      <div class="app-tagline">تتبّع كل مصدر دخل بدقة،<br>واعرف رصيدك في أي وقت.</div>
+      <div class="btn-primary" onclick="go('signup')" style="width:100%;margin-bottom:10px;">ابدأ الآن</div>
+      <div class="btn-ghost" onclick="go('signin')" style="width:100%;">لديّ حساب بالفعل</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       2. SIGN IN
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="s-signin">
+    <div class="topbar">
+      <div class="icon-btn" onclick="go('splash')">←</div>
+      <div class="tb-center"><div class="tb-title">تسجيل الدخول</div></div>
+      <div class="spacer"></div>
+    </div>
+    <div class="body">
+      <div style="height:6px;"></div>
+      <div class="field">
+        <div class="lbl">البريد الإلكتروني</div>
+        <div class="inp">ahmad@email.com</div>
+      </div>
+      <div class="field">
+        <div class="lbl">كلمة المرور</div>
+        <div class="inp">••••••••</div>
+      </div>
+      <div style="text-align:left;font-size:12px;color:var(--text2);cursor:pointer;text-decoration:underline;text-underline-offset:3px;" onclick="go('forgot')">نسيت كلمة المرور؟</div>
+      <div class="btn-primary" onclick="go('home')">دخول</div>
+      <div class="divider"></div>
+      <div class="link" onclick="go('signup')">ليس لديك حساب؟ <span>إنشاء حساب</span></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       3. SIGN UP
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="s-signup">
+    <div class="topbar">
+      <div class="icon-btn" onclick="go('signin')">←</div>
+      <div class="tb-center"><div class="tb-title">إنشاء حساب</div></div>
+      <div class="spacer"></div>
+    </div>
+    <div class="body">
+      <div class="field">
+        <div class="lbl">الاسم الكامل</div>
+        <div class="inp ph">اسمك هنا</div>
+      </div>
+      <div class="field">
+        <div class="lbl">البريد الإلكتروني</div>
+        <div class="inp ph">you@email.com</div>
+      </div>
+      <div class="field">
+        <div class="lbl">كلمة المرور</div>
+        <div class="inp ph">8 أحرف على الأقل</div>
+      </div>
+      <div class="field">
+        <div class="lbl">تأكيد كلمة المرور</div>
+        <div class="inp ph">أعد كتابة كلمة المرور</div>
+      </div>
+      <div class="btn-primary" onclick="go('home')">إنشاء الحساب</div>
+      <div class="divider"></div>
+      <div class="link" onclick="go('signin')">لديك حساب؟ <span>تسجيل الدخول</span></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       4. FORGOT PASSWORD
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="s-forgot">
+    <div class="topbar">
+      <div class="icon-btn" onclick="go('signin')">←</div>
+      <div class="tb-center"><div class="tb-title">إعادة تعيين كلمة المرور</div></div>
+      <div class="spacer"></div>
+    </div>
+    <div class="body">
+      <div style="height:8px;"></div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.7;">أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين.</div>
+      <div style="height:4px;"></div>
+      <div class="field">
+        <div class="lbl">البريد الإلكتروني</div>
+        <div class="inp">ahmad@email.com</div>
+      </div>
+      <div class="btn-primary" onclick="go('forgot-sent')">إرسال الرابط</div>
+      <div class="btn-ghost" onclick="go('signin')">العودة لتسجيل الدخول</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       4b. FORGOT SENT
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="s-forgot-sent">
+    <div class="success-wrap">
+      <div class="success-icon">✓</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);">تحقق من بريدك</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.7;">أرسلنا رابط إعادة التعيين إلى<br><strong style="color:var(--text);">ahmad@email.com</strong></div>
+      <div style="height:12px;"></div>
+      <div class="btn-primary" onclick="go('signin')" style="width:100%;">العودة لتسجيل الدخول</div>
+      <div style="height:8px;"></div>
+      <div class="link">إعادة الإرسال</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       5. HOME
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="s-home">
+    <div class="topbar">
+      <div class="icon-btn" onclick="go('add-type')">+</div>
+      <div class="tb-center">
+        <div class="tb-title">مداخيلي</div>
+        <div class="tb-sub">3 مصادر</div>
+      </div>
+      <div class="icon-btn" onclick="go('settings')">⚙</div>
+    </div>
+    <div class="body">
+      <div class="income-card" onclick="go('detail')">
+        <div class="ic-left"><div class="dot" style="background:#1D9E75;"></div>
+          <div><div class="ic-name">مقهى الإنترنت</div><div class="ic-cur">$ USD</div></div>
+        </div>
+        <div class="ic-right"><div class="bal-num">$4,280</div><div class="bal-lbl">الرصيد</div></div>
+      </div>
+      <div class="income-card" onclick="go('detail')">
+        <div class="ic-left"><div class="dot" style="background:#378ADD;"></div>
+          <div><div class="ic-name">المصدر ب</div><div class="ic-cur">₪ ILS</div></div>
+        </div>
+        <div class="ic-right"><div class="bal-num">₪1,150</div><div class="bal-lbl">الرصيد</div></div>
+      </div>
+      <div class="income-card" onclick="go('detail')">
+        <div class="ic-left"><div class="dot" style="background:#BA7517;"></div>
+          <div><div class="ic-name">المصدر ج</div><div class="ic-cur">$ USD</div></div>
+        </div>
+        <div class="ic-right"><div class="bal-num">$870</div><div class="bal-lbl">الرصيد</div></div>
+      </div>
+      <div class="add-row" onclick="go('add-type')">+ إضافة مصدر دخل</div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab" onclick="go('settings')"><span class="tab-ic">◎</span>الإعدادات</div>
+      <div class="tab" onclick="go('detail')"><span class="tab-ic">↕</span>المعاملات</div>
+      <div class="tab on"><span class="tab-ic">⊞</span>الرئيسية</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       6. ADD INCOME TYPE
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="s-add-type">
+    <div class="topbar">
+      <div class="icon-btn" onclick="go('home')">←</div>
+      <div class="tb-center"><div class="tb-title">مصدر دخل جديد</div></div>
+      <div class="spacer"></div>
+    </div>
+    <div class="body">
+      <div class="field">
+        <div class="lbl">الاسم</div>
+        <div class="inp">مقهى الإنترنت</div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <div class="lbl">الرصيد الابتدائي</div>
+          <div class="inp">2,000</div>
+        </div>
+        <div class="field">
+          <div class="lbl">العملة</div>
+          <div class="inp sel"><span>$ USD</span><span style="color:var(--text3);">▾</span></div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="section-lbl">أنواع المعاملات</div>
+      <div class="tx-row">
+        <div class="tx-left"><span class="badge bin">دخل</span><span class="tx-name">دخل الإنترنت</span></div>
+        <span style="color:var(--text3);font-size:13px;cursor:pointer;" onclick="go('ctx-tx-type')">⋯</span>
+      </div>
+      <div class="tx-row">
+        <div class="tx-left"><span class="badge bin">دخل</span><span class="tx-name">دخل مباريات كرة القدم</span></div>
+        <span style="color:var(--text3);font-size:13px;cursor:pointer;" onclick="go('ctx-tx-type')">⋯</span>
+      </div>
+      <div class="tx-row" style="border:none;">
+        <div class="tx-left"><span class="badge bout">مصروف</span><span class="tx-name">فواتير الإنترنت</span></div>
+        <span style="color:var(--text3);font-size:13px;cursor:pointer;" onclick="go('ctx-tx-type')">⋯</span>
+      </div>
+      <div class="add-row" onclick="go('add-tx-type')">+ إضافة نوع معاملة</div>
+      <div class="btn-primary" onclick="go('home')">حفظ مصدر الدخل</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       7. ADD TX TYPE (sheet)
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="s-add-tx-type">
+    <div style="height:80px;background:var(--bg);"></div>
+    <div class="sheet-handle"><div class="handle"></div></div>
+    <div class="sheet-body">
+      <div class="sheet-title">نوع معاملة جديد</div>
+      <div class="field">
+        <div class="lbl">الاسم</div>
+        <div class="inp ph">مثال: مشتريات</div>
+      </div>
+      <div class="field">
+        <div class="lbl">الاتجاه</div>
+        <div class="chip-row">
+          <div class="chip on" id="chip-in" onclick="chipSel('in')">+ دخل</div>
+          <div class="chip" id="chip-out" onclick="chipSel('out')">− مصروف</div>
+        </div>
+      </div>
+      <div class="btn-primary" onclick="go('add-type')">إضافة</div>
+      <div class="btn-ghost" onclick="go('add-type')">إلغاء</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       8. INCOME TYPE DETAIL
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="s-detail">
+    <div class="topbar">
+      <div class="icon-btn" onclick="go('ctx-type')">⋯</div>
+      <div class="tb-center">
+        <div class="tb-title">مقهى الإنترنت</div>
+        <div class="tb-sub">$ USD</div>
+      </div>
+      <div class="icon-btn" onclick="go('home')">←</div>
+    </div>
+    <div class="body">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-val">$4,280</div><div class="stat-lbl">الرصيد</div></div>
+        <div class="stat-card"><div class="stat-val g">$6,500</div><div class="stat-lbl">إجمالي الدخل</div></div>
+        <div class="stat-card"><div class="stat-val r">$4,220</div><div class="stat-lbl">إجمالي المصروف</div></div>
+        <div class="stat-card"><div class="stat-val">48</div><div class="stat-lbl">عدد المعاملات</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="section-lbl">آخر المعاملات</div>
+      <div class="tx-row">
+        <div class="tx-left"><span class="badge bin">دخل</span>
+          <div><div class="tx-name">دخل الإنترنت</div><div class="tx-date">اليوم</div></div>
+        </div>
+        <div class="tx-amt in">+$120</div>
+      </div>
+      <div class="tx-row">
+        <div class="tx-left"><span class="badge bout">مصروف</span>
+          <div><div class="tx-name">فواتير الإنترنت</div><div class="tx-date">أمس</div></div>
+        </div>
+        <div class="tx-amt out">−$80</div>
+      </div>
+      <div class="tx-row">
+        <div class="tx-left"><span class="badge bin">دخل</span>
+          <div><div class="tx-name">مباريات كرة القدم</div><div class="tx-date">2 مايو</div></div>
+        </div>
+        <div class="tx-amt in">+$60</div>
+      </div>
+      <div style="text-align:center;font-size:12px;color:var(--text2);cursor:pointer;padding-top:4px;">عرض الكل</div>
+    </div>
+    <div class="fab-wrap"><div class="fab" onclick="go('add-tx')">+</div></div>
+    <div class="tab-bar">
+      <div class="tab" onclick="go('settings')"><span class="tab-ic">◎</span>الإعدادات</div>
+      <div class="tab on"><span class="tab-ic">↕</span>المعاملات</div>
+      <div class="tab" onclick="go('home')"><span class="tab-ic">⊞</span>الرئيسية</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       9. CONTEXT MENU — INCOME TYPE
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="s-ctx-type" style="background:rgba(0,0,0,0.35);display:none;flex-direction:column;justify-content:flex-end;">
+    <div class="ctx-sheet">
+      <div class="ctx-title">مقهى الإنترنت</div>
+      <div class="ctx-item" onclick="go('edit-type')">
+        <span class="ctx-icon">✏️</span> تعديل المصدر
+      </div>
+      <div class="ctx-item" onclick="go('add-tx-type')">
+        <span class="ctx-icon">+</span> إضافة نوع معاملة
+      </div>
+      <div class="ctx-item danger" onclick="go('delete-confirm')">
+        <span class="ctx-icon">🗑</span> حذف المصدر
+      </div>
+      <div style="height:8px;"></div>
+      <div class="btn-ghost" onclick="go('detail')" style="margin:0 16px;">إلغاء</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       10. EDIT INCOME TYPE
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="s-edit-type">
+    <div class="topbar">
+      <div class="icon-btn" onclick="go('detail')">←</div>
+      <div class="tb-center"><div class="tb-title">تعديل مصدر الدخل</div></div>
+      <div class="spacer"></div>
+    </div>
+    <div class="body">
+      <div class="field">
+        <div class="lbl">الاسم</div>
+        <div class="inp">مقهى الإنترنت</div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <div class="lbl">الرصيد الابتدائي</div>
+          <div class="inp">2,000</div>
+        </div>
+        <div class="field">
+          <div class="lbl">العملة</div>
+          <div class="inp sel"><span>$ USD</span><span style="color:var(--text3);">▾</span></div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="section-lbl">أنواع المعاملات</div>
+      <div class="tx-row">
+        <div class="tx-left"><span class="badge bin">دخل</span><span class="tx-name">دخل الإنترنت</span></div>
+        <span style="color:var(--text3);font-size:13px;cursor:pointer;" onclick="go('ctx-tx-type')">⋯</span>
+      </div>
+      <div class="tx-row">
+        <div class="tx-left"><span class="badge bin">دخل</span><span class="tx-name">مباريات كرة القدم</span></div>
+        <span style="color:var(--text3);font-size:13px;cursor:pointer;" onclick="go('ctx-tx-type')">⋯</span>
+      </div>
+      <div class="tx-row" style="border:none;">
+        <div class="tx-left"><span class="badge bout">مصروف</span><span class="tx-name">فواتير الإنترنت</span></div>
+        <span style="color:var(--text3);font-size:13px;cursor:pointer;" onclick="go('ctx-tx-type')">⋯</span>
+      </div>
+      <div class="add-row" onclick="go('add-tx-type')">+ إضافة نوع معاملة</div>
+      <div class="btn-primary" onclick="go('detail')">حفظ التعديلات</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       11. CONTEXT MENU — TX TYPE
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="s-ctx-tx-type" style="background:rgba(0,0,0,0.35);display:none;flex-direction:column;justify-content:flex-end;">
+    <div class="ctx-sheet">
+      <div class="ctx-title">دخل الإنترنت</div>
+      <div class="ctx-item" onclick="go('edit-tx-type')">
+        <span class="ctx-icon">✏️</span> تعديل نوع المعاملة
+      </div>
+      <div class="ctx-item danger" onclick="go('delete-confirm')">
+        <span class="ctx-icon">🗑</span> حذف نوع المعاملة
+      </div>
+      <div style="height:8px;"></div>
+      <div class="btn-ghost" onclick="goBack()" style="margin:0 16px;">إلغاء</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       12. EDIT TX TYPE
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="s-edit-tx-type">
+    <div style="height:60px;background:var(--bg);"></div>
+    <div class="sheet-handle"><div class="handle"></div></div>
+    <div class="sheet-body">
+      <div class="sheet-title">تعديل نوع المعاملة</div>
+      <div class="field">
+        <div class="lbl">الاسم</div>
+        <div class="inp">دخل الإنترنت</div>
+      </div>
+      <div class="field">
+        <div class="lbl">الاتجاه</div>
+        <div class="chip-row">
+          <div class="chip on">+ دخل</div>
+          <div class="chip">− مصروف</div>
+        </div>
+      </div>
+      <div class="btn-primary" onclick="goBack()">حفظ التعديلات</div>
+      <div class="btn-ghost" onclick="goBack()">إلغاء</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       13. DELETE CONFIRM
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="s-delete-confirm" style="background:rgba(0,0,0,0.4);display:none;flex-direction:column;justify-content:center;padding:20px;">
+    <div class="confirm-box">
+      <div class="confirm-title">تأكيد الحذف</div>
+      <div class="confirm-msg">هل أنت متأكد من حذف هذا العنصر؟ لا يمكن التراجع عن هذا الإجراء.</div>
+      <div class="btn-danger" onclick="go('home')" style="margin-bottom:8px;">نعم، احذف</div>
+      <div class="btn-ghost" onclick="goBack()">إلغاء</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       14. ADD TRANSACTION (sheet)
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="s-add-tx">
+    <div style="height:50px;background:var(--bg);"></div>
+    <div class="sheet-handle"><div class="handle"></div></div>
+    <div class="sheet-body">
+      <div class="sheet-title">معاملة جديدة</div>
+      <div class="field">
+        <div class="lbl">النوع</div>
+        <div class="inp sel"><span>دخل مباريات كرة القدم</span><span style="color:var(--text3);">▾</span></div>
+      </div>
+      <div class="field">
+        <div class="lbl">المبلغ</div>
+        <div class="inp">60</div>
+      </div>
+      <div class="field">
+        <div class="lbl">التاريخ</div>
+        <div class="inp">4 مايو 2026</div>
+      </div>
+      <div class="field">
+        <div class="lbl">ملاحظة <span style="color:var(--text3);">(اختياري)</span></div>
+        <div class="inp ph">أضف ملاحظة...</div>
+      </div>
+      <div class="btn-primary" onclick="go('detail')">حفظ المعاملة</div>
+      <div class="btn-ghost" onclick="go('detail')">إلغاء</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       15. SETTINGS
+  ══════════════════════════════════════════ -->
+  <div class="screen" id="s-settings">
+    <div class="topbar">
+      <div class="spacer"></div>
+      <div class="tb-center"><div class="tb-title">الإعدادات</div></div>
+      <div class="spacer"></div>
+    </div>
+    <div class="body">
+      <div style="display:flex;align-items:center;gap:12px;padding:4px 0;">
+        <div class="avatar">AH</div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text);">أحمد حسن</div>
+          <div style="font-size:12px;color:var(--text2);">ahmad@email.com</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="section-lbl">الحساب</div>
+      <div class="setting-row"><span class="setting-name">تعديل الملف الشخصي</span><span style="color:var(--text3);">›</span></div>
+      <div class="setting-row"><span class="setting-name">تغيير كلمة المرور</span><span style="color:var(--text3);">›</span></div>
+      <div class="divider"></div>
+      <div class="section-lbl">البيانات</div>
+      <div class="setting-row"><span class="setting-name">تصدير إلى CSV</span><span style="color:var(--text3);">›</span></div>
+      <div class="setting-row" style="border:none;"><span class="setting-name">النسخ الاحتياطي</span><span class="soon-badge">قريباً</span></div>
+      <div class="divider"></div>
+      <div class="btn-danger" onclick="go('signin')">تسجيل الخروج</div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab on"><span class="tab-ic">◎</span>الإعدادات</div>
+      <div class="tab" onclick="go('detail')"><span class="tab-ic">↕</span>المعاملات</div>
+      <div class="tab" onclick="go('home')"><span class="tab-ic">⊞</span>الرئيسية</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const history = [];
+  const overlays = ['ctx-type','ctx-tx-type','delete-confirm'];
+
+  function go(id) {
+    const current = document.querySelector('.screen.active');
+    if (current) {
+      history.push(current.id.replace('s-',''));
+    }
+    showScreen(id);
+    updateNav(id);
+  }
+
+  function goBack() {
+    if (history.length > 0) {
+      const prev = history.pop();
+      showScreen(prev);
+      updateNav(prev);
+    }
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => {
+      s.classList.remove('active');
+      s.style.display = '';
+    });
+    const el = document.getElementById('s-' + id);
+    if (!el) return;
+
+    if (overlays.includes(id)) {
+      el.style.display = 'flex';
+      el.classList.add('active');
+      document.getElementById('status-bar').style.display = 'none';
+    } else {
+      el.classList.add('active');
+      document.getElementById('status-bar').style.display = 'flex';
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function updateNav(id) {
+    document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-pill').forEach(p => {
+      if (p.getAttribute('onclick') === "go('" + id + "')") {
+        p.classList.add('active');
+      }
+    });
+  }
+
+  function chipSel(dir) {
+    const ci = document.getElementById('chip-in');
+    const co = document.getElementById('chip-out');
+    if (ci && co) {
+      ci.classList.toggle('on', dir === 'in');
+      co.classList.toggle('on', dir === 'out');
+    }
+  }
+</script>
+</body>
+</html>

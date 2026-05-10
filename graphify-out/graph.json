@@ -1,0 +1,1376 @@
+{
+  "schema_version": 1,
+  "directed": false,
+  "root_path": "E:\\Flutter\\madakhel_app",
+  "extractor_version": 61,
+  "nodes": [
+    {
+      "id": "build_gradle",
+      "label": "build.gradle.kts",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/android/build.gradle.kts",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:kotlin",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/android/build.gradle.kts",
+          "source_location": "L1"
+        }
+      ],
+      "community": 8
+    },
+    {
+      "id": "generatedpluginregistrant",
+      "label": "GeneratedPluginRegistrant.m",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/GeneratedPluginRegistrant.m",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:objective-c",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/GeneratedPluginRegistrant.m",
+          "source_location": "L1"
+        }
+      ],
+      "community": 1
+    },
+    {
+      "id": "generatedpluginregistrant_generatedpluginregistrant",
+      "label": "GeneratedPluginRegistrant",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/GeneratedPluginRegistrant.m",
+      "source_location": "L33",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:objective-c",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/GeneratedPluginRegistrant.m",
+          "source_location": "L33"
+        }
+      ],
+      "community": 1
+    },
+    {
+      "id": "generatedpluginregistrant_generatedpluginregistrant_registerwith",
+      "label": ".registerWith()",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java",
+      "source_location": "L17",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:java",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java",
+          "source_location": "L17"
+        }
+      ],
+      "community": 1
+    },
+    {
+      "id": "mainactivity",
+      "label": "MainActivity.kt",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/android/app/src/main/kotlin/com/zaher/madakhel/MainActivity.kt",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:kotlin",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/android/app/src/main/kotlin/com/zaher/madakhel/MainActivity.kt",
+          "source_location": "L1"
+        }
+      ],
+      "community": 4
+    },
+    {
+      "id": "mainactivity_mainactivity",
+      "label": "MainActivity",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/android/app/src/main/kotlin/com/zaher/madakhel/MainActivity.kt",
+      "source_location": "L5",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:kotlin",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/android/app/src/main/kotlin/com/zaher/madakhel/MainActivity.kt",
+          "source_location": "L5"
+        }
+      ],
+      "community": 4
+    },
+    {
+      "id": "mainactivity_flutteractivity",
+      "label": "FlutterActivity",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/android/app/src/main/kotlin/com/zaher/madakhel/MainActivity.kt",
+      "source_location": "L5",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:kotlin",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/android/app/src/main/kotlin/com/zaher/madakhel/MainActivity.kt",
+          "source_location": "L5"
+        }
+      ],
+      "community": 4
+    },
+    {
+      "id": "settings_gradle",
+      "label": "settings.gradle.kts",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/android/settings.gradle.kts",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:kotlin",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/android/settings.gradle.kts",
+          "source_location": "L1"
+        }
+      ],
+      "community": 7
+    },
+    {
+      "id": "settings_gradle_require",
+      "label": "require()",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/android/settings.gradle.kts",
+      "source_location": "L7",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:kotlin",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/android/settings.gradle.kts",
+          "source_location": "L7"
+        }
+      ],
+      "community": 7
+    },
+    {
+      "id": "flutter_lldb_helper",
+      "label": "flutter_lldb_helper.py",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:python",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+          "source_location": "L1"
+        }
+      ],
+      "community": 6
+    },
+    {
+      "id": "flutter_lldb_helper_handle_new_rx_page",
+      "label": "handle_new_rx_page()",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+      "source_location": "L7",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:python",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+          "source_location": "L7"
+        }
+      ],
+      "community": 3
+    },
+    {
+      "id": "flutter_lldb_helper_lldb_init_module",
+      "label": "__lldb_init_module()",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+      "source_location": "L24",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:python",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+          "source_location": "L24"
+        }
+      ],
+      "community": 6
+    },
+    {
+      "id": "flutter_lldb_helper_handle_new_rx_page_rationale_8",
+      "label": "Intercept NOTIFY_DEBUGGER_ABOUT_RX_PAGES and touch the pages.",
+      "file_type": "rationale",
+      "source_file": "E:/Flutter/madakhel_app/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+      "source_location": "L8",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:python",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+          "source_location": "L8"
+        }
+      ],
+      "rationale_kind": "docstring",
+      "community": 3
+    },
+    {
+      "id": "flutter_lldb_helper_handle_new_rx_page_rationale_12",
+      "label": "NOTE: NOTIFY_DEBUGGER_ABOUT_RX_PAGES will check contents of the",
+      "file_type": "rationale",
+      "source_file": "E:/Flutter/madakhel_app/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+      "source_location": "L12",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:python",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+          "source_location": "L12"
+        }
+      ],
+      "rationale_kind": "comment",
+      "community": 3
+    },
+    {
+      "id": "appdelegate",
+      "label": "AppDelegate.swift",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/AppDelegate.swift",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/AppDelegate.swift",
+          "source_location": "L1"
+        }
+      ],
+      "community": 0
+    },
+    {
+      "id": "appdelegate_appdelegate",
+      "label": "AppDelegate",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/AppDelegate.swift",
+      "source_location": "L5",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/AppDelegate.swift",
+          "source_location": "L5"
+        }
+      ],
+      "community": 0
+    },
+    {
+      "id": "appdelegate_flutterappdelegate",
+      "label": "FlutterAppDelegate",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/AppDelegate.swift",
+      "source_location": "L5",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/AppDelegate.swift",
+          "source_location": "L5"
+        }
+      ],
+      "community": 0
+    },
+    {
+      "id": "appdelegate_flutterimplicitenginedelegate",
+      "label": "FlutterImplicitEngineDelegate",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/AppDelegate.swift",
+      "source_location": "L5",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/AppDelegate.swift",
+          "source_location": "L5"
+        }
+      ],
+      "community": 0
+    },
+    {
+      "id": "appdelegate_appdelegate_didinitializeimplicitflutterengine",
+      "label": ".didInitializeImplicitFlutterEngine()",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/AppDelegate.swift",
+      "source_location": "L13",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/AppDelegate.swift",
+          "source_location": "L13"
+        }
+      ],
+      "community": 0
+    },
+    {
+      "id": "generatedpluginregistrant_nsobject",
+      "label": "NSObject",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/GeneratedPluginRegistrant.h",
+      "source_location": "L14",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:c-family",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/GeneratedPluginRegistrant.h",
+          "source_location": "L14"
+        }
+      ],
+      "community": 1
+    },
+    {
+      "id": "generatedpluginregistrant_generatedpluginregistrant_registerwithregistry",
+      "label": ".registerWithRegistry()",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/GeneratedPluginRegistrant.m",
+      "source_location": "L35",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:objective-c",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/GeneratedPluginRegistrant.m",
+          "source_location": "L35"
+        }
+      ],
+      "community": 1
+    },
+    {
+      "id": "runner_bridging_header",
+      "label": "Runner-Bridging-Header.h",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Runner-Bridging-Header.h",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:c-family",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Runner-Bridging-Header.h",
+          "source_location": "L1"
+        }
+      ],
+      "community": 34
+    },
+    {
+      "id": "scenedelegate",
+      "label": "SceneDelegate.swift",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/SceneDelegate.swift",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/SceneDelegate.swift",
+          "source_location": "L1"
+        }
+      ],
+      "community": 5
+    },
+    {
+      "id": "scenedelegate_scenedelegate",
+      "label": "SceneDelegate",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/SceneDelegate.swift",
+      "source_location": "L4",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/SceneDelegate.swift",
+          "source_location": "L4"
+        }
+      ],
+      "community": 5
+    },
+    {
+      "id": "scenedelegate_flutterscenedelegate",
+      "label": "FlutterSceneDelegate",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/SceneDelegate.swift",
+      "source_location": "L4",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/SceneDelegate.swift",
+          "source_location": "L4"
+        }
+      ],
+      "community": 5
+    },
+    {
+      "id": "runnertests",
+      "label": "RunnerTests.swift",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/RunnerTests/RunnerTests.swift",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/RunnerTests/RunnerTests.swift",
+          "source_location": "L1"
+        }
+      ],
+      "community": 2
+    },
+    {
+      "id": "runnertests_runnertests",
+      "label": "RunnerTests",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/RunnerTests/RunnerTests.swift",
+      "source_location": "L5",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/RunnerTests/RunnerTests.swift",
+          "source_location": "L5"
+        }
+      ],
+      "community": 2
+    },
+    {
+      "id": "runnertests_xctestcase",
+      "label": "XCTestCase",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/RunnerTests/RunnerTests.swift",
+      "source_location": "L5",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/RunnerTests/RunnerTests.swift",
+          "source_location": "L5"
+        }
+      ],
+      "community": 2
+    },
+    {
+      "id": "runnertests_runnertests_testexample",
+      "label": ".testExample()",
+      "file_type": "code",
+      "source_file": "E:/Flutter/madakhel_app/ios/RunnerTests/RunnerTests.swift",
+      "source_location": "L7",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/RunnerTests/RunnerTests.swift",
+          "source_location": "L7"
+        }
+      ],
+      "community": 2
+    },
+    {
+      "id": "ic_launcher",
+      "file_bytes": 1443,
+      "content_type": "image/png",
+      "label": "ic_launcher.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 10
+    },
+    {
+      "id": "lock_svg",
+      "file_bytes": 344,
+      "content_type": "image/svg+xml",
+      "label": "lock.svg.svg",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/assets/images/lock.svg.svg",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/assets/images/lock.svg.svg",
+          "source_location": "L1"
+        }
+      ],
+      "community": 33
+    },
+    {
+      "id": "icon_app_1024x1024_1x",
+      "file_bytes": 10932,
+      "content_type": "image/png",
+      "label": "Icon-App-1024x1024@1x.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 13
+    },
+    {
+      "id": "icon_app_20x20_1x",
+      "file_bytes": 295,
+      "content_type": "image/png",
+      "label": "Icon-App-20x20@1x.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@1x.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@1x.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 14
+    },
+    {
+      "id": "icon_app_20x20_2x",
+      "file_bytes": 406,
+      "content_type": "image/png",
+      "label": "Icon-App-20x20@2x.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@2x.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@2x.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 15
+    },
+    {
+      "id": "icon_app_20x20_3x",
+      "file_bytes": 450,
+      "content_type": "image/png",
+      "label": "Icon-App-20x20@3x.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@3x.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@3x.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 16
+    },
+    {
+      "id": "icon_app_29x29_1x",
+      "file_bytes": 282,
+      "content_type": "image/png",
+      "label": "Icon-App-29x29@1x.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@1x.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@1x.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 17
+    },
+    {
+      "id": "icon_app_29x29_2x",
+      "file_bytes": 462,
+      "content_type": "image/png",
+      "label": "Icon-App-29x29@2x.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@2x.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@2x.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 18
+    },
+    {
+      "id": "icon_app_29x29_3x",
+      "file_bytes": 704,
+      "content_type": "image/png",
+      "label": "Icon-App-29x29@3x.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@3x.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@3x.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 19
+    },
+    {
+      "id": "icon_app_40x40_1x",
+      "file_bytes": 406,
+      "content_type": "image/png",
+      "label": "Icon-App-40x40@1x.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@1x.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@1x.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 20
+    },
+    {
+      "id": "icon_app_40x40_2x",
+      "file_bytes": 586,
+      "content_type": "image/png",
+      "label": "Icon-App-40x40@2x.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 21
+    },
+    {
+      "id": "icon_app_40x40_3x",
+      "file_bytes": 862,
+      "content_type": "image/png",
+      "label": "Icon-App-40x40@3x.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 22
+    },
+    {
+      "id": "icon_app_60x60_2x",
+      "file_bytes": 862,
+      "content_type": "image/png",
+      "label": "Icon-App-60x60@2x.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 23
+    },
+    {
+      "id": "icon_app_60x60_3x",
+      "file_bytes": 1674,
+      "content_type": "image/png",
+      "label": "Icon-App-60x60@3x.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 24
+    },
+    {
+      "id": "icon_app_76x76_1x",
+      "file_bytes": 762,
+      "content_type": "image/png",
+      "label": "Icon-App-76x76@1x.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@1x.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@1x.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 25
+    },
+    {
+      "id": "icon_app_76x76_2x",
+      "file_bytes": 1226,
+      "content_type": "image/png",
+      "label": "Icon-App-76x76@2x.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@2x.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@2x.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 26
+    },
+    {
+      "id": "icon_app_83_5x83_5_2x",
+      "file_bytes": 1418,
+      "content_type": "image/png",
+      "label": "Icon-App-83.5x83.5@2x.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-83.5x83.5@2x.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-83.5x83.5@2x.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 27
+    },
+    {
+      "id": "launchimage",
+      "file_bytes": 68,
+      "content_type": "image/png",
+      "label": "LaunchImage.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 30
+    },
+    {
+      "id": "launchimage_2x",
+      "file_bytes": 68,
+      "content_type": "image/png",
+      "label": "LaunchImage@2x.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@2x.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@2x.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 31
+    },
+    {
+      "id": "launchimage_3x",
+      "file_bytes": 68,
+      "content_type": "image/png",
+      "label": "LaunchImage@3x.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@3x.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@3x.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 32
+    },
+    {
+      "id": "favicon",
+      "file_bytes": 917,
+      "content_type": "image/png",
+      "label": "favicon.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/web/favicon.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/web/favicon.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 9
+    },
+    {
+      "id": "icon_192",
+      "file_bytes": 5292,
+      "content_type": "image/png",
+      "label": "Icon-192.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/web/icons/Icon-192.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/web/icons/Icon-192.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 11
+    },
+    {
+      "id": "icon_512",
+      "file_bytes": 8252,
+      "content_type": "image/png",
+      "label": "Icon-512.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/web/icons/Icon-512.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/web/icons/Icon-512.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 12
+    },
+    {
+      "id": "icon_maskable_192",
+      "file_bytes": 5594,
+      "content_type": "image/png",
+      "label": "Icon-maskable-192.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/web/icons/Icon-maskable-192.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/web/icons/Icon-maskable-192.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 28
+    },
+    {
+      "id": "icon_maskable_512",
+      "file_bytes": 20998,
+      "content_type": "image/png",
+      "label": "Icon-maskable-512.png",
+      "file_type": "image",
+      "source_file": "E:/Flutter/madakhel_app/web/icons/Icon-maskable-512.png",
+      "source_location": "L1",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:image",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/web/icons/Icon-maskable-512.png",
+          "source_location": "L1"
+        }
+      ],
+      "community": 29
+    }
+  ],
+  "links": [
+    {
+      "source": "generatedpluginregistrant",
+      "target": "generatedpluginregistrant_generatedpluginregistrant",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/GeneratedPluginRegistrant.m",
+      "source_location": "L33",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:objective-c",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/GeneratedPluginRegistrant.m",
+          "source_location": "L33"
+        }
+      ]
+    },
+    {
+      "source": "generatedpluginregistrant_generatedpluginregistrant",
+      "target": "generatedpluginregistrant_generatedpluginregistrant_registerwith",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java",
+      "source_location": "L17",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:java",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java",
+          "source_location": "L17"
+        }
+      ]
+    },
+    {
+      "source": "mainactivity",
+      "target": "mainactivity_mainactivity",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/android/app/src/main/kotlin/com/zaher/madakhel/MainActivity.kt",
+      "source_location": "L5",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:kotlin",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/android/app/src/main/kotlin/com/zaher/madakhel/MainActivity.kt",
+          "source_location": "L5"
+        }
+      ]
+    },
+    {
+      "source": "mainactivity_mainactivity",
+      "target": "mainactivity_flutteractivity",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/android/app/src/main/kotlin/com/zaher/madakhel/MainActivity.kt",
+      "source_location": "L5",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:kotlin",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/android/app/src/main/kotlin/com/zaher/madakhel/MainActivity.kt",
+          "source_location": "L5"
+        }
+      ]
+    },
+    {
+      "source": "settings_gradle",
+      "target": "settings_gradle_require",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/android/settings.gradle.kts",
+      "source_location": "L7",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:kotlin",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/android/settings.gradle.kts",
+          "source_location": "L7"
+        }
+      ]
+    },
+    {
+      "source": "flutter_lldb_helper",
+      "target": "flutter_lldb_helper_handle_new_rx_page",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+      "source_location": "L7",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:python",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+          "source_location": "L7"
+        }
+      ]
+    },
+    {
+      "source": "flutter_lldb_helper",
+      "target": "flutter_lldb_helper_lldb_init_module",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+      "source_location": "L24",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:python",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+          "source_location": "L24"
+        }
+      ]
+    },
+    {
+      "source": "flutter_lldb_helper_handle_new_rx_page_rationale_8",
+      "target": "flutter_lldb_helper_handle_new_rx_page",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+      "source_location": "L8",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:python",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+          "source_location": "L8"
+        }
+      ]
+    },
+    {
+      "source": "flutter_lldb_helper_handle_new_rx_page_rationale_12",
+      "target": "flutter_lldb_helper_handle_new_rx_page",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+      "source_location": "L12",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:python",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Flutter/ephemeral/flutter_lldb_helper.py",
+          "source_location": "L12"
+        }
+      ]
+    },
+    {
+      "source": "appdelegate",
+      "target": "appdelegate_appdelegate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/AppDelegate.swift",
+      "source_location": "L5",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/AppDelegate.swift",
+          "source_location": "L5"
+        }
+      ]
+    },
+    {
+      "source": "appdelegate_appdelegate",
+      "target": "appdelegate_flutterappdelegate",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/AppDelegate.swift",
+      "source_location": "L5",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/AppDelegate.swift",
+          "source_location": "L5"
+        }
+      ]
+    },
+    {
+      "source": "appdelegate_appdelegate",
+      "target": "appdelegate_flutterimplicitenginedelegate",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/AppDelegate.swift",
+      "source_location": "L5",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/AppDelegate.swift",
+          "source_location": "L5"
+        }
+      ]
+    },
+    {
+      "source": "appdelegate_appdelegate",
+      "target": "appdelegate_appdelegate_didinitializeimplicitflutterengine",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/AppDelegate.swift",
+      "source_location": "L13",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/AppDelegate.swift",
+          "source_location": "L13"
+        }
+      ]
+    },
+    {
+      "source": "generatedpluginregistrant_generatedpluginregistrant",
+      "target": "generatedpluginregistrant_nsobject",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/GeneratedPluginRegistrant.h",
+      "source_location": "L14",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:c-family",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/GeneratedPluginRegistrant.h",
+          "source_location": "L14"
+        }
+      ]
+    },
+    {
+      "source": "generatedpluginregistrant_generatedpluginregistrant",
+      "target": "generatedpluginregistrant_generatedpluginregistrant_registerwithregistry",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/GeneratedPluginRegistrant.m",
+      "source_location": "L35",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:objective-c",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/GeneratedPluginRegistrant.m",
+          "source_location": "L35"
+        }
+      ]
+    },
+    {
+      "source": "scenedelegate",
+      "target": "scenedelegate_scenedelegate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/SceneDelegate.swift",
+      "source_location": "L4",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/SceneDelegate.swift",
+          "source_location": "L4"
+        }
+      ]
+    },
+    {
+      "source": "scenedelegate_scenedelegate",
+      "target": "scenedelegate_flutterscenedelegate",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/ios/Runner/SceneDelegate.swift",
+      "source_location": "L4",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/Runner/SceneDelegate.swift",
+          "source_location": "L4"
+        }
+      ]
+    },
+    {
+      "source": "runnertests",
+      "target": "runnertests_runnertests",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/ios/RunnerTests/RunnerTests.swift",
+      "source_location": "L5",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/RunnerTests/RunnerTests.swift",
+          "source_location": "L5"
+        }
+      ]
+    },
+    {
+      "source": "runnertests_runnertests",
+      "target": "runnertests_xctestcase",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/ios/RunnerTests/RunnerTests.swift",
+      "source_location": "L5",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/RunnerTests/RunnerTests.swift",
+          "source_location": "L5"
+        }
+      ]
+    },
+    {
+      "source": "runnertests_runnertests",
+      "target": "runnertests_runnertests_testexample",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "E:/Flutter/madakhel_app/ios/RunnerTests/RunnerTests.swift",
+      "source_location": "L7",
+      "layer": "base",
+      "provenance": [
+        {
+          "capability_id": "builtin:extract:swift",
+          "stage": "extract",
+          "source_file": "E:/Flutter/madakhel_app/ios/RunnerTests/RunnerTests.swift",
+          "source_location": "L7"
+        }
+      ]
+    }
+  ],
+  "hyperedges": [],
+  "community_labels": {
+    "0": "Ios App Delegate",
+    "1": "Ios Generated Plugin Registrant",
+    "2": "Ios Runner Tests",
+    "3": "Ios Flutter Lldb Helper",
+    "4": "Android Main Activity",
+    "5": "Ios Scene Delegate",
+    "6": "Ios Flutter Lldb Helper — Lldb",
+    "7": "Android Settings Gradle",
+    "8": "Build Gradle Kts",
+    "9": "Favicon Png",
+    "10": "Ic Launcher Png",
+    "11": "Icon 192 Png",
+    "12": "Icon 512 Png",
+    "13": "Icon App 1024x1024 1x Png",
+    "14": "Icon App 20x20 1x Png",
+    "15": "Icon App 20x20 2x Png",
+    "16": "Icon App 20x20 3x Png",
+    "17": "Icon App 29x29 1x Png",
+    "18": "Icon App 29x29 2x Png",
+    "19": "Icon App 29x29 3x Png",
+    "20": "Icon App 40x40 1x Png",
+    "21": "Icon App 40x40 2x Png",
+    "22": "Icon App 40x40 3x Png",
+    "23": "Icon App 60x60 2x Png",
+    "24": "Icon App 60x60 3x Png",
+    "25": "Icon App 76x76 1x Png",
+    "26": "Icon App 76x76 2x Png",
+    "27": "Icon App 83 5x83 5 2x Png",
+    "28": "Icon Maskable 192 Png",
+    "29": "Icon Maskable 512 Png",
+    "30": "Launch Image Png",
+    "31": "Launch Image 2x Png",
+    "32": "Launch Image 3x Png",
+    "33": "Lock SVG SVG",
+    "34": "Runner Bridging Header H"
+  },
+  "semantic_anomalies": [
+    {
+      "id": "bridge_node:flutter_lldb_helper_handle_new_rx_page",
+      "kind": "bridge_node",
+      "severity": "HIGH",
+      "score": 10,
+      "summary": "handle_new_rx_page() bridges Ios Flutter Lldb Helper and Ios Flutter Lldb Helper — Lldb.",
+      "why": "High betweenness centrality (5.000) across 2 communities makes this node a likely dependency chokepoint."
+    },
+    {
+      "id": "cross_boundary_edge:GeneratedPluginRegistrant->NSObject:inherits",
+      "kind": "cross_boundary_edge",
+      "severity": "MEDIUM",
+      "score": 4,
+      "summary": "GeneratedPluginRegistrant → NSObject crosses graph boundaries in an unexpected way.",
+      "why": "cross-file semantic connection"
+    }
+  ]
+}

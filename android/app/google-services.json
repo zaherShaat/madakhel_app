@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "997046209271",
+    "project_id": "madakhelapp",
+    "storage_bucket": "madakhelapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:997046209271:android:45eb2eb9cec91c381ae1f2",
+        "android_client_info": {
+          "package_name": "com.zaher.madakhel"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "997046209271-jh0ll4tm1m94s597tc9esuh7pnalbpet.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.zaher.madakhel",
+            "certificate_hash": "5af724458ac7fac77d68907afce95f4d6c839c07"
+          }
+        },
+        {
+          "client_id": "997046209271-dsnddq39d6r7g7a6ffn4m087frvo8p01.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAavCzNfFgnXKN-Coc33zzGvvWPKqMJVog"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "997046209271-dsnddq39d6r7g7a6ffn4m087frvo8p01.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "997046209271-kj2bkf5g3j3rq42pkrhh0so0n8k0nlun.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.zaher.madakhel"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

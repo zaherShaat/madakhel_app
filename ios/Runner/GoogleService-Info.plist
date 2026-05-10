@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>997046209271-kj2bkf5g3j3rq42pkrhh0so0n8k0nlun.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.997046209271-kj2bkf5g3j3rq42pkrhh0so0n8k0nlun</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>997046209271-jh0ll4tm1m94s597tc9esuh7pnalbpet.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDxV3W1rubcaFGpdKj7vzwbxMS-_0IuUSg</string>
+	<key>GCM_SENDER_ID</key>
+	<string>997046209271</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.zaher.madakhel</string>
+	<key>PROJECT_ID</key>
+	<string>madakhelapp</string>
+	<key>STORAGE_BUCKET</key>
+	<string>madakhelapp.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:997046209271:ios:f3ae45026baab20e1ae1f2</string>
+</dict>
+</plist>
