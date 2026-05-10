@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
+import 'package:madakhel_app/data/db/app_db.dart';
 import 'package:madakhel_app/data/db/tables.dart';
 import 'package:madakhel_app/data/repositories/income_type_repository.dart';
 
@@ -47,12 +48,11 @@ class IncomeSourceController extends ChangeNotifier {
     _setState(_state.copyWith(isLoading: true, isSuccess: false));
 
     try {
-      final id = await _repository.create(
-        IncomeTypesCompanion.insert(
+      final id = await _repository.createIncomeType(
+
           name: name,
-          currency: Value(currency),
-          createdAt: DateTime.now(),
-        ),
+          currency: currency,
+        
       );
 
       _setState(
@@ -87,8 +87,10 @@ class IncomeSourceController extends ChangeNotifier {
     _setState(_state.copyWith(isLoading: true));
 
     try {
-      await _repository.update(
-        IncomeTypesCompanion(id: Value(id), name: Value(newName)),
+      await _repository.updateIncomeType(
+        id: id,
+        name: newName,
+        currency: 'USD', // Replace with actual currency if needed
       );
 
       _setState(

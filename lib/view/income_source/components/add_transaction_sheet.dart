@@ -44,6 +44,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   late TransactionDirection _selectedDirection;
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
+  final _nameController = TextEditingController();
 
   @override
   void initState() {
@@ -61,6 +62,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   void dispose() {
     _amountController.dispose();
     _noteController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
@@ -83,9 +85,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
     final controller = context.read<TransactionController>();
     await controller.createTransaction(
       incomeTypeId: widget.incomeTypeId,
-      templateName: widget.templates.isNotEmpty
-          ? _selectedTemplate.name
-          : 'معاملة جديدة',
+      transactionName: _nameController.text,
       amount: amount,
       date: _selectedDate,
       direction: _selectedDirection,
