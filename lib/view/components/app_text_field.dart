@@ -26,7 +26,7 @@ class AppTextField extends StatelessWidget {
     this.showLabelAbove = true,
     this.validator,
     this.maxLines,
-    this.minLines,
+    this.minLines,  
   });
 
   @override
@@ -39,8 +39,10 @@ class AppTextField extends StatelessWidget {
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
+      
       decoration: InputDecoration(
         hintText: hintText,
+        
         hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: scheme.onSurface.withOpacity(0.55),
         ),

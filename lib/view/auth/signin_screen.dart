@@ -75,6 +75,7 @@ class _SignInScreenState extends State<SignInScreen> {
                                 hintText: '••••••••',
                                 controller: _passwordController,
                                 obscureText: _obscurePassword,
+                                maxLines: 1,
                                 suffixIcon: Icon(
                                   _obscurePassword
                                       ? Icons.visibility_off_outlined

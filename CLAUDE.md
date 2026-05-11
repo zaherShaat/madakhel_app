@@ -1,3 +1,8 @@
+---
+description: 
+alwaysApply: false
+---
+
 ## graphify-ts
 
 IMPORTANT: This project has a graphify-ts knowledge graph. You MUST follow these rules:

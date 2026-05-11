@@ -6,13 +6,14 @@ class SourceDetailTopBar extends StatelessWidget {
   final String currency;
   final VoidCallback onMenuTap;
   final VoidCallback onBackTap;
-
+  final bool isDeleted;
   const SourceDetailTopBar({
     super.key,
     required this.sourceName,
     required this.currency,
     required this.onMenuTap,
     required this.onBackTap,
+    required this.isDeleted,
   });
 
   @override
@@ -81,25 +82,28 @@ class SourceDetailTopBar extends StatelessWidget {
             ),
           ),
           SizedBox(width: context.scaleW(8)),
-          GestureDetector(
-            onTap: onMenuTap,
-            child: Container(
-              width: context.scaleW(34),
-              height: context.scaleH(34),
-              decoration: BoxDecoration(
-                color: scheme.secondaryContainer,
-                borderRadius: BorderRadius.circular(context.scaleW(8)),
-                border: Border.all(
-                  color: scheme.outlineVariant.withOpacity(0.3),
-                  width: 0.5,
+          Visibility(
+            visible: !isDeleted,
+            child: GestureDetector(
+              onTap: onMenuTap,
+              child: Container(
+                width: context.scaleW(34),
+                height: context.scaleH(34),
+                decoration: BoxDecoration(
+                  color: scheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(context.scaleW(8)),
+                  border: Border.all(
+                    color: scheme.outlineVariant.withValues(alpha: 0.3),
+                    width: 0.5,
+                  ),
                 ),
-              ),
-              child: Center(
-                child: Text(
-                  '⋯',
-                  style: TextStyle(
-                    fontSize: context.scaleSp(16),
-                    color: scheme.onSecondaryContainer,
+                child: Center(
+                  child: Text(
+                    '⋯',
+                    style: TextStyle(
+                      fontSize: context.scaleSp(16),
+                      color: scheme.onSecondaryContainer,
+                    ),
                   ),
                 ),
               ),

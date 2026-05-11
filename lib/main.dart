@@ -5,6 +5,7 @@ import 'package:madakhel_app/core/theme/app_theme.dart';
 import 'package:madakhel_app/core/theme/theme_provider.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
 import 'package:madakhel_app/data/repositories/income_type_repository.dart';
+import 'package:madakhel_app/data/repositories/transaction_category_repository.dart';
 import 'package:madakhel_app/data/repositories/transaction_repository.dart';
 import 'package:madakhel_app/firebase_options.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +13,7 @@ import 'package:provider/provider.dart';
 import 'core/routing/app_router.dart';
 import 'data/auth/auth_service.dart';
 import 'view_controller/auth_controller.dart';
+import 'view_controller/income_source_controller.dart';
 import 'view_controller/transaction_controller.dart';
 
 Future<void> main() async {
@@ -35,10 +37,17 @@ Future<void> main() async {
         Provider<TransactionRepository>(
           create: (_) => TransactionRepository(db),
         ),
+        Provider<TransactionCategoryRepository>(
+          create: (_) => TransactionCategoryRepository(db),
+        ),
         // Controllers
         ChangeNotifierProvider<TransactionController>(
           create: (ctx) =>
               TransactionController(ctx.read<TransactionRepository>()),
+        ),
+        ChangeNotifierProvider<IncomeSourceController>(
+          create: (ctx) =>
+              IncomeSourceController(ctx.read<IncomeTypeRepository>()),
         ),
       ],
       child: const MainApp(),

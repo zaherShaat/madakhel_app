@@ -2,153 +2,184 @@ import 'package:drift/drift.dart';
 
 import '../../model/transaction_direction.dart';
 import '../db/app_db.dart';
-import '../db/generic_db_controller.dart';
 
-class TransactionRepository extends DbController<Transaction> {
+class TransactionRepository {
   final AppDatabase _db;
 
   TransactionRepository(this._db);
 
-  @override
-  Future<int> create(Transaction item) {
-    throw UnimplementedError(
-      'Use createTransaction() or createTemplate() instead',
+  Future<int> create(FinancialTransaction item) {
+    throw UnimplementedError('Use createTransaction(...) instead');
+  }
+
+  Future<FinancialTransaction?> getById(int id) {
+    return (_db.select(_db.financialTransactions)
+          ..where((t) => t.id.equals(id) & t.isDeleted.equals(false)))
+        .getSingleOrNull();
+  }
+
+  Future<List<FinancialTransaction>> getAll() {
+    return (_db.select(_db.financialTransactions)
+          ..where((t) => t.isDeleted.equals(false))
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+        .get();
+  }
+
+  Future<void> update(FinancialTransaction item) async {
+    await (_db.update(
+      _db.financialTransactions,
+    )..where((t) => t.id.equals(item.id))).write(
+      FinancialTransactionsCompanion(
+        amount: Value(item.amount),
+        note: Value(item.note),
+        date: Value(item.date),
+        updatedAt: Value(DateTime.now()),
+        syncStatus: const Value('pending'),
+      ),
     );
   }
 
-  @override
-  Future<Transaction?> getById(int id) {
-    return (_db.select(
-      _db.transactions,
-    )..where((t) => t.id.equals(id))).getSingleOrNull();
+  /// Get templates for an income source — templates removed in v3 model.
+  /// Keep API for compatibility; return empty list for now.
+  Future<List<FinancialTransaction>> getTemplates(int incomeSourceId) async {
+    return [];
   }
 
-  @override
-  Future<List<Transaction>> getAll() {
-    return (_db.select(
-      _db.transactions,
-    )..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).get();
+  Stream<List<FinancialTransaction>> watchTemplates(int incomeSourceId) {
+    return Stream.value(<FinancialTransaction>[]);
   }
 
-  @override
-  Future<void> update(Transaction item) {
-    throw UnimplementedError('Use updateTemplateName() instead');
-  }
-
-  /// Get templates for an income type (used in dropdown menus)
-  Future<List<Transaction>> getTemplates(int incomeTypeId) {
-    return (_db.select(_db.transactions)
+  /// Get real transactions for an income source
+  Future<List<FinancialTransaction>> getTransactions(int incomeSourceId) {
+    return (_db.select(_db.financialTransactions)
           ..where(
-            (t) => t.incomeTypeId.equals(incomeTypeId) & t.amount.isNull(),
-          )
-          ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
-        .get();
-  }
-
-  Stream<List<Transaction>> watchTemplates(int incomeTypeId) {
-    return (_db.select(_db.transactions)
-          ..where(
-            (t) => t.incomeTypeId.equals(incomeTypeId) & t.amount.isNull(),
-          )
-          ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
-        .watch();
-  }
-
-  /// Get real transactions for an income type
-  Future<List<Transaction>> getTransactions(int incomeTypeId) {
-    return (_db.select(_db.transactions)
-          ..where(
-            (t) => t.incomeTypeId.equals(incomeTypeId) & t.amount.isNotNull(),
+            (t) =>
+                t.incomeSourceId.equals(incomeSourceId) &
+                t.isDeleted.equals(false),
           )
           ..orderBy([(t) => OrderingTerm.desc(t.date)]))
         .get();
   }
 
-  Stream<List<Transaction>> watchTransactions(int incomeTypeId) {
-    return (_db.select(_db.transactions)
+  Stream<List<FinancialTransaction>> watchTransactions(int incomeSourceId) {
+    return (_db.select(_db.financialTransactions)
           ..where(
-            (t) => t.incomeTypeId.equals(incomeTypeId) & t.amount.isNotNull(),
+            (t) =>
+                t.incomeSourceId.equals(incomeSourceId) &
+                t.isDeleted.equals(false),
           )
           ..orderBy([(t) => OrderingTerm.desc(t.date)]))
         .watch();
   }
 
-  /// Create a template (null amount, no date)
-  Future<int> createTemplate({
-    required int incomeTypeId,
-    required String name,
-    required TransactionDirection direction,
-  }) {
-    return _db
-        .into(_db.transactions)
+  /// Create a real transaction. We accept direction and create/find a default
+  /// category for that direction to attach the transaction to.
+  Future<int> createTransaction({
+    required int incomeSourceId,
+    required String transactionName,
+    required double amount,
+    required DateTime date,
+    required int categoryId,
+    String? note,
+  }) async {
+    final now = DateTime.now();
+    return await _db
+        .into(_db.financialTransactions)
         .insert(
-          TransactionsCompanion.insert(
-            incomeTypeId: incomeTypeId,
-            isSystem: const Value(false),
-            name: name,
-            direction: direction,
-            amount: const Value(null),
-            note: const Value(null),
-            date: const Value(null),
-            createdAt: DateTime.now(),
+          FinancialTransactionsCompanion.insert(
+            incomeSourceId: incomeSourceId,
+            categoryId: categoryId,
+            amount: amount,
+            note: Value(note),
+            date: date,
+            createdAt: now,
+            updatedAt: now,
           ),
         );
   }
 
-  /// Create a real transaction
-  Future<int> createTransaction({required TransactionsCompanion tx}) async{
-    return await _db.into(_db.transactions).insert(tx);
-  }
-
-  Future<void> updateTemplateName(int templateId, String name) async {
-    final row = await (_db.select(
-      _db.transactions,
-    )..where((t) => t.id.equals(templateId))).getSingle();
-    if (row.isSystem) return;
-
-    await (_db.update(_db.transactions)..where((t) => t.id.equals(templateId)))
-        .write(TransactionsCompanion(name: Value(name)));
-  }
-
-  @override
   Future<void> deleteById(int id) async {
-    final row = await (_db.select(
-      _db.transactions,
-    )..where((t) => t.id.equals(id))).getSingleOrNull();
-    if (row?.isSystem ?? false) return;
-
-    await (_db.delete(_db.transactions)..where((t) => t.id.equals(id))).go();
+    await (_db.update(
+      _db.financialTransactions,
+    )..where((t) => t.id.equals(id))).write(
+      FinancialTransactionsCompanion(
+        isDeleted: const Value(true),
+        updatedAt: Value(DateTime.now()),
+        syncStatus: const Value('pending'),
+      ),
+    );
   }
 
-  /// Get total inflow for an income type
-  Future<double> getInSum(int incomeTypeId) async {
-    final sumExpr = _db.transactions.amount.sum();
-    return (_db.selectOnly(_db.transactions)
-          ..addColumns([sumExpr])
-          ..where(
-            _db.transactions.incomeTypeId.equals(incomeTypeId) &
-                _db.transactions.direction.equalsValue(
-                  TransactionDirection.inFlow,
-                ) &
-                _db.transactions.amount.isNotNull(),
-          ))
-        .map((row) => row.read(sumExpr) ?? 0.0)
-        .getSingle();
+  /// Get total inflow for an income source
+  Future<double> getInSum(int incomeSourceId) async {
+    final query = '''
+SELECT COALESCE(SUM(ft.amount), 0) AS s
+FROM financial_transactions ft
+JOIN transaction_categories tc ON tc.id = ft.category_id
+WHERE ft.income_source_id = ? AND tc.direction = ? AND ft.is_deleted = 0 AND tc.is_deleted = 0
+''';
+    final rows = await _db
+        .customSelect(
+          query,
+          variables: [
+            Variable<int>(incomeSourceId),
+            Variable<String>(
+              const TransactionDirectionConverter().toSql(
+                TransactionDirection.inFlow,
+              ),
+            ),
+          ],
+          readsFrom: {_db.financialTransactions, _db.transactionCategories},
+        )
+        .get();
+
+    return rows.isNotEmpty ? rows.first.read<double>('s') : 0.0;
   }
 
-  /// Get total outflow for an income type
-  Future<double> getOutSum(int incomeTypeId) async {
-    final sumExpr = _db.transactions.amount.sum();
-    return (_db.selectOnly(_db.transactions)
-          ..addColumns([sumExpr])
-          ..where(
-            _db.transactions.incomeTypeId.equals(incomeTypeId) &
-                _db.transactions.direction.equalsValue(
-                  TransactionDirection.outFlow,
-                ) &
-                _db.transactions.amount.isNotNull(),
-          ))
-        .map((row) => row.read(sumExpr) ?? 0.0)
-        .getSingle();
+  /// Get total outflow for an income source
+  Future<double> getOutSum(int incomeSourceId) async {
+    final query = '''
+SELECT COALESCE(SUM(ft.amount), 0) AS s
+FROM financial_transactions ft
+JOIN transaction_categories tc ON tc.id = ft.category_id
+WHERE ft.income_source_id = ? AND tc.direction = ? AND ft.is_deleted = 0 AND tc.is_deleted = 0
+''';
+    final rows = await _db
+        .customSelect(
+          query,
+          variables: [
+            Variable<int>(incomeSourceId),
+            Variable<String>(
+              const TransactionDirectionConverter().toSql(
+                TransactionDirection.outFlow,
+              ),
+            ),
+          ],
+          readsFrom: {_db.financialTransactions, _db.transactionCategories},
+        )
+        .get();
+
+    return rows.isNotEmpty ? rows.first.read<double>('s') : 0.0;
+  }
+
+  /// Get all transactions grouped by category
+  Future<Map<TransactionCategory, List<FinancialTransaction>>>
+  getAllGroupedByCategory() async {
+    final rows = await (_db.select(_db.financialTransactions).join([
+      innerJoin(
+        _db.transactionCategories,
+        _db.transactionCategories.id.equalsExp(
+          _db.financialTransactions.categoryId,
+        ),
+      ),
+    ])..orderBy([OrderingTerm.desc(_db.financialTransactions.date)])).get();
+
+    final Map<TransactionCategory, List<FinancialTransaction>> grouped = {};
+    for (final row in rows) {
+      final cat = row.readTable(_db.transactionCategories);
+      final tx = row.readTable(_db.financialTransactions);
+      grouped.putIfAbsent(cat, () => []).add(tx);
+    }
+    return grouped;
   }
 }

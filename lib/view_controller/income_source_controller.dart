@@ -1,7 +1,5 @@
-import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
-import 'package:madakhel_app/data/db/tables.dart';
 import 'package:madakhel_app/data/repositories/income_type_repository.dart';
 
 class IncomeSourceState {
@@ -49,10 +47,8 @@ class IncomeSourceController extends ChangeNotifier {
 
     try {
       final id = await _repository.createIncomeType(
-
-          name: name,
-          currency: currency,
-        
+        name: name,
+        currency: currency,
       );
 
       _setState(
@@ -75,6 +71,8 @@ class IncomeSourceController extends ChangeNotifier {
           errorMessage: 'خطأ: ${e.toString()}',
         ),
       );
+      await Future.delayed(const Duration(seconds: 1));
+      clearError();
       return null;
     }
   }
@@ -82,15 +80,16 @@ class IncomeSourceController extends ChangeNotifier {
   /// Update income source name
   Future<void> updateIncomeSource({
     required int id,
-    required String newName,
+    required String name,
+    required String currency,
   }) async {
     _setState(_state.copyWith(isLoading: true));
 
     try {
       await _repository.updateIncomeType(
         id: id,
-        name: newName,
-        currency: 'USD', // Replace with actual currency if needed
+        name: name,
+        currency: currency,
       );
 
       _setState(
@@ -110,6 +109,8 @@ class IncomeSourceController extends ChangeNotifier {
           errorMessage: 'خطأ في التحديث: ${e.toString()}',
         ),
       );
+      await Future.delayed(const Duration(seconds: 1));
+      clearError();
     }
   }
 
@@ -126,7 +127,7 @@ class IncomeSourceController extends ChangeNotifier {
           successMessage: 'تم حذف مصدر الدخل بنجاح',
         ),
       );
-
+      //TODO:(if this a correct approach) delete all transactions related to this source too and the user will be warned about this before confirming the deletion
       await Future.delayed(const Duration(seconds: 1));
       _setState(_state.copyWith(isSuccess: false, successMessage: null));
     } catch (e) {
@@ -136,25 +137,31 @@ class IncomeSourceController extends ChangeNotifier {
           errorMessage: 'خطأ في الحذف: ${e.toString()}',
         ),
       );
+      await Future.delayed(const Duration(seconds: 1));
+      clearError();
     }
   }
 
   /// Get single income source by ID
-  Future<IncomeType?> getIncomeSourceById(int id) async {
+  Future<IncomeSource?> getIncomeSourceById(int id) async {
     try {
       return await _repository.getById(id);
     } catch (e) {
       _setState(_state.copyWith(errorMessage: 'خطأ: ${e.toString()}'));
+      await Future.delayed(const Duration(seconds: 1));
+      clearError();
       return null;
     }
   }
 
   /// Get all income sources
-  Future<List<IncomeType>> getAllIncomeSources() async {
+  Future<List<IncomeSource>> getAllIncomeSources() async {
     try {
       return await _repository.getAll();
     } catch (e) {
       _setState(_state.copyWith(errorMessage: 'خطأ: ${e.toString()}'));
+      await Future.delayed(const Duration(seconds: 1));
+      clearError();
       return [];
     }
   }

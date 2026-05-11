@@ -10,30 +10,29 @@ import 'tables.dart';
 
 part 'app_db.g.dart';
 
-@DriftDatabase(tables: [IncomeTypes, Transactions])
+@DriftDatabase(
+  tables: [IncomeSources, TransactionCategories, FinancialTransactions],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) async {
-          await m.createAll();
-        },
-        onUpgrade: (m, from, to) async {
-          // Early-project migration policy:
-          // schema v1 -> v2 removes `starterBalance` from IncomeTypes and adds
-          // `isSystem` to Transactions. SQLite can't drop columns directly, so we
-          // recreate tables.
-          if (from < 2) {
-            await m.deleteTable('transactions');
-            await m.deleteTable('income_types');
-            await m.createAll();
-          }
-        },
-      );
+    onCreate: (m) async {
+      await m.createAll();
+    },
+    onUpgrade: (m, from, to) async {
+      if (from < 4) {
+        await m.deleteTable('financial_transactions');
+        await m.deleteTable('transaction_categories');
+        await m.deleteTable('income_sources');
+        await m.createAll();
+      }
+    },
+  );
 }
 
 LazyDatabase _openConnection() {
@@ -43,4 +42,3 @@ LazyDatabase _openConnection() {
     return NativeDatabase.createInBackground(file);
   });
 }
-

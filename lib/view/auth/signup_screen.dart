@@ -75,6 +75,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                             const SizedBox(height: 12),
                             AppTextField(
+                              maxLines: 1,
                               label: 'كلمة المرور',
                               hintText: '8 أحرف على الأقل',
                               controller: _passwordController,
@@ -92,6 +93,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                             const SizedBox(height: 12),
                             AppTextField(
+                              maxLines: 1,
                               label: 'تأكيد كلمة المرور',
                               hintText: 'أعد كتابة كلمة المرور',
                               controller: _confirmPasswordController,

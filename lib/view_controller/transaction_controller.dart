@@ -1,8 +1,5 @@
-import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
-import 'package:madakhel_app/data/db/app_db.dart';
 import 'package:madakhel_app/data/repositories/transaction_repository.dart';
-import 'package:madakhel_app/model/transaction_direction.dart';
 
 class TransactionState {
   final bool isLoading;
@@ -56,7 +53,7 @@ class TransactionController extends ChangeNotifier {
     required String transactionName,
     required double amount,
     required DateTime date,
-    required TransactionDirection direction,
+    required int categoryId,
     String? note,
     bool skipConfirmation = false,
   }) async {
@@ -71,7 +68,7 @@ class TransactionController extends ChangeNotifier {
             'transactionName': transactionName,
             'amount': amount,
             'date': date,
-            'direction': direction,
+            'categoryId': categoryId,
             'note': note,
           },
         ),
@@ -83,16 +80,12 @@ class TransactionController extends ChangeNotifier {
 
     try {
       await _repository.createTransaction(
-        tx: TransactionsCompanion.insert(
-          incomeTypeId: incomeTypeId,
-          isSystem: const Value(false),
-          name: transactionName,
-          direction: direction,
-          amount: Value(amount),
-          note: note != null ? Value(note) : const Value(null),
-          date: Value(date),
-          createdAt: DateTime.now(),
-        ),
+        incomeSourceId: incomeTypeId,
+        transactionName: transactionName,
+        amount: amount,
+        date: date,
+        categoryId: categoryId,
+        note: note,
       );
 
       _setState(
@@ -140,31 +133,6 @@ class TransactionController extends ChangeNotifier {
         _state.copyWith(
           isLoading: false,
           errorMessage: 'خطأ في الحذف: ${e.toString()}',
-        ),
-      );
-    }
-  }
-
-  Future<void> updateTemplateName(int templateId, String newName) async {
-    _setState(_state.copyWith(isLoading: true));
-
-    try {
-      await _repository.updateTemplateName(templateId, newName);
-      _setState(
-        _state.copyWith(
-          isLoading: false,
-          isSuccess: true,
-          successMessage: 'تم تحديث القالب بنجاح',
-        ),
-      );
-
-      await Future.delayed(const Duration(seconds: 1));
-      _setState(_state.copyWith(isSuccess: false, successMessage: null));
-    } catch (e) {
-      _setState(
-        _state.copyWith(
-          isLoading: false,
-          errorMessage: 'خطأ في التحديث: ${e.toString()}',
         ),
       );
     }

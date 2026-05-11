@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:madakhel_app/core/context_ext.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
-import 'package:madakhel_app/data/db/tables.dart';
-import 'package:madakhel_app/model/transaction_direction.dart';
+import 'package:madakhel_app/data/repositories/transaction_category_repository.dart';
 import 'package:madakhel_app/view_controller/transaction_controller.dart';
 import 'package:provider/provider.dart';
 
@@ -10,27 +9,25 @@ class TransactionData {
   final String templateName;
   final double amount;
   final DateTime date;
-  final TransactionDirection direction;
+  final int categoryId;
   final String? note;
 
   TransactionData({
     required this.templateName,
     required this.amount,
     required this.date,
-    required this.direction,
+    required this.categoryId,
     this.note,
   });
 }
 
 class AddTransactionSheet extends StatefulWidget {
   final int incomeTypeId;
-  final List<Transaction> templates;
   final Function(TransactionData)? onAdd;
 
   const AddTransactionSheet({
     super.key,
     required this.incomeTypeId,
-    required this.templates,
     this.onAdd,
   });
 
@@ -39,9 +36,8 @@ class AddTransactionSheet extends StatefulWidget {
 }
 
 class _AddTransactionSheetState extends State<AddTransactionSheet> {
-  late Transaction _selectedTemplate;
+  TransactionCategory? _selectedCategory;
   late DateTime _selectedDate;
-  late TransactionDirection _selectedDirection;
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
   final _nameController = TextEditingController();
@@ -49,12 +45,6 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   @override
   void initState() {
     super.initState();
-    if (widget.templates.isNotEmpty) {
-      _selectedTemplate = widget.templates.first;
-      _selectedDirection = _selectedTemplate.direction;
-    } else {
-      _selectedDirection = TransactionDirection.inFlow;
-    }
     _selectedDate = DateTime.now();
   }
 
@@ -67,6 +57,13 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   }
 
   Future<void> _handleAdd() async {
+    if (_selectedCategory == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('يرجى اختيار نوع المعاملة')));
+      return;
+    }
+
     if (_amountController.text.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -88,7 +85,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
       transactionName: _nameController.text,
       amount: amount,
       date: _selectedDate,
-      direction: _selectedDirection,
+      categoryId: _selectedCategory!.id,
       note: _noteController.text.isNotEmpty ? _noteController.text : null,
     );
 
@@ -97,12 +94,10 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
       if (state.isSuccess) {
         widget.onAdd?.call(
           TransactionData(
-            templateName: widget.templates.isNotEmpty
-                ? _selectedTemplate.name
-                : 'معاملة جديدة',
+            templateName: 'معاملة جديدة',
             amount: amount,
             date: _selectedDate,
-            direction: _selectedDirection,
+            categoryId: _selectedCategory!.id,
             note: _noteController.text.isNotEmpty ? _noteController.text : null,
           ),
         );
@@ -220,176 +215,72 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                   ),
                 if (state.isSuccess) SizedBox(height: context.scaleH(12)),
 
-                // Template Selector
-                if (widget.templates.isNotEmpty)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'قالب المعاملة',
-                        style: TextStyle(
-                          fontSize: context.scaleSp(12),
-                          color: scheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      SizedBox(height: context.scaleH(8)),
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(
-                            context.scaleW(8),
+                // Category Selector
+                FutureBuilder<List<TransactionCategory>>(
+                  future: context
+                      .read<TransactionCategoryRepository>()
+                      .getAll(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    }
+                    if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    }
+                    final categories = snapshot.data ?? [];
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'نوع المعاملة',
+                          style: TextStyle(
+                            fontSize: context.scaleSp(12),
+                            color: scheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
                           ),
-                          border: Border.all(
-                            color: scheme.outlineVariant,
-                            width: 0.5,
-                          ),
                         ),
-                        child: DropdownButton<Transaction>(
-                          value: _selectedTemplate,
-                          isExpanded: true,
-                          underline: const SizedBox(),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: context.scaleW(12),
-                            vertical: context.scaleH(8),
-                          ),
-                          items: widget.templates
-                              .map(
-                                (template) => DropdownMenuItem(
-                                  value: template,
-                                  child: Text(template.name),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (value) {
-                            if (value != null) {
-                              setState(() {
-                                _selectedTemplate = value;
-                                _selectedDirection = value.direction;
-                              });
-                            }
-                          },
-                        ),
-                      ),
-                      SizedBox(height: context.scaleH(12)),
-                    ],
-                  ),
-
-                // Direction Selector (if no templates)
-                if (widget.templates.isEmpty)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'نوع المعاملة',
-                        style: TextStyle(
-                          fontSize: context.scaleSp(12),
-                          color: scheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      SizedBox(height: context.scaleH(8)),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                setState(
-                                  () => _selectedDirection =
-                                      TransactionDirection.inFlow,
-                                );
-                              },
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  vertical: context.scaleH(10),
-                                ),
-                                decoration: BoxDecoration(
-                                  color:
-                                      _selectedDirection ==
-                                          TransactionDirection.inFlow
-                                      ? Colors.green.withAlpha(30)
-                                      : scheme.surface,
-                                  borderRadius: BorderRadius.circular(
-                                    context.scaleW(8),
-                                  ),
-                                  border: Border.all(
-                                    color:
-                                        _selectedDirection ==
-                                            TransactionDirection.inFlow
-                                        ? Colors.green
-                                        : scheme.outlineVariant,
-                                    width: 0.5,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    'دخل',
-                                    style: TextStyle(
-                                      fontSize: context.scaleSp(12),
-                                      color:
-                                          _selectedDirection ==
-                                              TransactionDirection.inFlow
-                                          ? Colors.green
-                                          : scheme.onSurfaceVariant,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ),
+                        SizedBox(height: context.scaleH(8)),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(
+                              context.scaleW(8),
+                            ),
+                            border: Border.all(
+                              color: scheme.outlineVariant,
+                              width: 0.5,
                             ),
                           ),
-                          SizedBox(width: context.scaleW(8)),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                setState(
-                                  () => _selectedDirection =
-                                      TransactionDirection.outFlow,
-                                );
-                              },
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  vertical: context.scaleH(10),
-                                ),
-                                decoration: BoxDecoration(
-                                  color:
-                                      _selectedDirection ==
-                                          TransactionDirection.outFlow
-                                      ? Colors.red.withAlpha(30)
-                                      : scheme.surface,
-                                  borderRadius: BorderRadius.circular(
-                                    context.scaleW(8),
-                                  ),
-                                  border: Border.all(
-                                    color:
-                                        _selectedDirection ==
-                                            TransactionDirection.outFlow
-                                        ? Colors.red
-                                        : scheme.outlineVariant,
-                                    width: 0.5,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    'مصروف',
-                                    style: TextStyle(
-                                      fontSize: context.scaleSp(12),
-                                      color:
-                                          _selectedDirection ==
-                                              TransactionDirection.outFlow
-                                          ? Colors.red
-                                          : scheme.onSurfaceVariant,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ),
+                          child: DropdownButton<TransactionCategory>(
+                            value: _selectedCategory,
+                            isExpanded: true,
+                            underline: const SizedBox(),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: context.scaleW(12),
+                              vertical: context.scaleH(8),
                             ),
+                            hint: const Text('اختر نوع المعاملة'),
+                            items: categories
+                                .map(
+                                  (category) => DropdownMenuItem(
+                                    value: category,
+                                    child: Text(category.name),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() {
+                                  _selectedCategory = value;
+                                });
+                              }
+                            },
                           ),
-                        ],
-                      ),
-                      SizedBox(height: context.scaleH(12)),
-                    ],
-                  ),
+                        ),
+                        SizedBox(height: context.scaleH(12)),
+                      ],
+                    );
+                  },
+                ),
 
                 // Amount Input
                 Column(

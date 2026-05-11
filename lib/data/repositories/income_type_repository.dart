@@ -1,102 +1,52 @@
 import 'package:drift/drift.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:madakhel_app/model/transaction_direction.dart';
 
 import '../../model/income_source_with_balance.dart';
 import '../db/app_db.dart';
-import '../db/generic_db_controller.dart';
 
-class IncomeTypeRepository extends DbController<IncomeType> {
+class IncomeTypeRepository {
   final AppDatabase _db;
 
   IncomeTypeRepository(this._db);
 
-  @override
-  Future<int> create(IncomeType item) {
-    throw UnimplementedError('Use create() with named parameters instead');
-  }
-
   /// Create with named parameters (business logic wrapper)
   Future<int> createIncomeType({
     required String name,
-    String currency = 'USD',
-  }) {
-    return _db
-        .into(_db.incomeTypes)
+    required String currency,
+  }) async {
+    final now = DateTime.now();
+    return await _db
+        .into(_db.incomeSources)
         .insert(
-          IncomeTypesCompanion.insert(
+          IncomeSourcesCompanion.insert(
             name: name,
             currency: Value(currency),
-            createdAt: DateTime.now(),
+            starterBalance: const Value(0),
+            createdAt: now,
+            updatedAt: now,
           ),
         );
   }
 
-  @override
-  Future<IncomeType?> getById(int id) {
-    return (_db.select(
-      _db.incomeTypes,
-    )..where((t) => t.id.equals(id))).getSingleOrNull();
+  Future<IncomeSource?> getById(int id) async {
+    return (_db.select(_db.incomeSources)
+          ..where((t) => t.id.equals(id) & t.isDeleted.equals(false)))
+        .getSingleOrNull();
   }
 
-  @override
-  Future<List<IncomeType>> getAll() {
-    return (_db.select(
-      _db.incomeTypes,
-    )..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).get();
+  Future<List<IncomeSource>> getAll() async {
+    return (_db.select(_db.incomeSources)
+          ..where((t) => t.isDeleted.equals(false))
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+        .get();
   }
 
-  Stream<List<IncomeType>> watchAll() {
-    return (_db.select(
-      _db.incomeTypes,
-    )..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).watch();
-  }
-
-  Stream<List<IncomeSourceWithBalance>> watchIncomeSourcesWithBalance() {
-    const query = '''
-SELECT
-  it.id AS id,
-  it.name AS name,
-  it.currency AS currency,
-  COALESCE(
-    SUM(
-      CASE
-        WHEN tr.amount IS NULL THEN 0
-        WHEN tr.direction = 'in' THEN tr.amount
-        WHEN tr.direction = 'out' THEN -tr.amount
-        ELSE 0
-      END
-    ),
-    0
-  ) AS balance
-FROM income_types it
-LEFT JOIN transactions tr ON tr.income_type_id = it.id
-GROUP BY it.id, it.name, it.currency, it.created_at
-ORDER BY it.created_at DESC
-''';
-
-    return _db
-        .customSelect(query, readsFrom: {_db.incomeTypes, _db.transactions})
-        .watch()
-        .map(
-          (rows) => rows
-              .map(
-                (row) => IncomeSourceWithBalance(
-                  id: row.read<int>('id'),
-                  name: row.read<String>('name'),
-                  currency: row.read<String>('currency'),
-                  balance: row.read<double>('balance'),
-                ),
-              )
-              .toList(),
-        );
-  }
-
-  @override
-  Future<void> update(IncomeType item) {
-    return updateIncomeType(
-      id: item.id,
-      name: item.name,
-      currency: item.currency,
-    );
+  Stream<List<IncomeSource>> watchAll() {
+    return (_db.select(_db.incomeSources)
+          ..where((t) => t.isDeleted.equals(false))
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+        .watch();
   }
 
   /// Update with named parameters (business logic wrapper)
@@ -105,13 +55,126 @@ ORDER BY it.created_at DESC
     required String name,
     required String currency,
   }) async {
-    await (_db.update(_db.incomeTypes)..where((t) => t.id.equals(id))).write(
-      IncomeTypesCompanion(name: Value(name), currency: Value(currency)),
+    await (_db.update(_db.incomeSources)..where((t) => t.id.equals(id))).write(
+      IncomeSourcesCompanion(
+        name: Value(name),
+        currency: Value(currency),
+        updatedAt: Value(DateTime.now()),
+        syncStatus: const Value('pending'),
+      ),
     );
   }
 
-  @override
   Future<void> deleteById(int id) async {
-    await (_db.delete(_db.incomeTypes)..where((t) => t.id.equals(id))).go();
+    final now = DateTime.now();
+
+    await _db.transaction(() async {
+      // 1) Soft-delete all transactions belonging to this source
+      await (_db.update(
+        _db.financialTransactions,
+      )..where((t) => t.incomeSourceId.equals(id))).write(
+        FinancialTransactionsCompanion(
+          isDeleted: const Value(true),
+          updatedAt: Value(now),
+          syncStatus: const Value('pending'),
+        ),
+      );
+
+      // 2) Soft-delete the source itself
+      await (_db.update(
+        _db.incomeSources,
+      )..where((t) => t.id.equals(id))).write(
+        IncomeSourcesCompanion(
+          isDeleted: const Value(true),
+          updatedAt: Value(now),
+          syncStatus: const Value('pending'),
+        ),
+      );
+    });
   }
+
+  Stream<List<IncomeSourceWithBalance>> watchIncomeSourcesWithBalance() {
+    // Base select from income_sources
+    final query = _db.select(_db.incomeSources).join([
+      // Left join financial_transactions (all rows, including deleted)
+      leftOuterJoin(
+        _db.financialTransactions,
+        _db.financialTransactions.incomeSourceId.equalsExp(
+          _db.incomeSources.id,
+        ),
+      ),
+      // Left join transaction_categories to get direction
+      leftOuterJoin(
+        _db.transactionCategories,
+        _db.transactionCategories.id.equalsExp(
+          _db.financialTransactions.categoryId,
+        ),
+      ),
+    ])..orderBy([OrderingTerm.desc(_db.incomeSources.createdAt)]);
+
+    // Convert the stream of rows to List<IncomeSourceWithBalance>
+    return query.watch().map((rows) {
+      final Map<int, _BalanceAccumulator> accumulators = {};
+
+      for (final row in rows) {
+        // Read the income source (always present)
+        final source = row.readTable(_db.incomeSources);
+        final id = source.id;
+
+        // Get or create accumulator for this source
+        final acc = accumulators.putIfAbsent(
+          id,
+          () => _BalanceAccumulator(
+            id: id,
+            name: source.name,
+            currency: source.currency,
+            isDeleted: source.isDeleted,
+          ),
+        );
+
+        // Read transaction and category (may be null because of left outer joins)
+        final transaction = row.readTableOrNull(_db.financialTransactions);
+        final category = transaction != null
+            ? row.readTableOrNull(_db.transactionCategories)
+            : null;
+
+        // If we have a valid transaction (not null), add its signed amount to balance
+        if (transaction != null && category != null) {
+          final signedAmount = category.direction == TransactionDirection.inFlow
+              ? transaction.amount
+              : -transaction.amount;
+          acc.balance += signedAmount;
+        }
+      }
+
+      // Convert accumulators to final model list
+      return accumulators.values
+          .map(
+            (acc) => IncomeSourceWithBalance(
+              id: acc.id,
+              name: acc.name,
+              currency: acc.currency,
+              balance: acc.balance,
+              isDeleted: acc.isDeleted,
+            ),
+          )
+          .toList();
+    });
+  }
+}
+
+// Helper class to accumulate balance while processing rows
+class _BalanceAccumulator {
+  final int id;
+  final String name;
+  final String currency;
+  final bool isDeleted;
+  double balance = 0.0;
+
+  _BalanceAccumulator({
+    required this.id,
+    required this.name,
+    required this.currency,
+    required this.isDeleted,
+  });
 }

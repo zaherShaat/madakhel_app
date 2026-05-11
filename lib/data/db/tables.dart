@@ -2,32 +2,56 @@ import 'package:drift/drift.dart';
 
 import '../../model/transaction_direction.dart';
 
-class IncomeTypes extends Table {
+class IncomeSources extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
   TextColumn get currency => text().withDefault(const Constant('USD'))();
+  RealColumn get starterBalance => real().withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime()();
+
+  // Sync flags
+  DateTimeColumn get updatedAt => dateTime()();
+  TextColumn get syncStatus => text().withDefault(const Constant('pending'))();
+  TextColumn get remoteId => text().nullable()();
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
 }
 
-class Transactions extends Table {
+class TransactionCategories extends Table {
   IntColumn get id => integer().autoIncrement()();
-  IntColumn get incomeTypeId => integer().references(IncomeTypes, #id)();
+  TextColumn get name => text()();
+  TextColumn get direction =>
+      text().map(const TransactionDirectionConverter())();
+  DateTimeColumn get createdAt => dateTime()();
 
-  /// True for system-generated transactions (e.g. opening balance).
-  /// System rows are included in sums but must not be editable.
+  // Sync flags
+  DateTimeColumn get updatedAt => dateTime()();
+  TextColumn get syncStatus => text().withDefault(const Constant('pending'))();
+  TextColumn get remoteId => text().nullable()();
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
+}
+
+class FinancialTransactions extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  // Belongs to one income source
+  IntColumn get incomeSourceId => integer().references(IncomeSources, #id)();
+
+  // Belongs to one transaction category
+  IntColumn get categoryId =>
+      integer().references(TransactionCategories, #id)();
+
+  /// True for system-generated rows (e.g. opening balance).
+  /// System rows are included in sums but must NOT be editable by the user.
   BoolColumn get isSystem => boolean().withDefault(const Constant(false))();
 
-  /// Template name (or displayed name for real transactions).
-  TextColumn get name => text()();
-
-  /// 'in' | 'out' (stored as text via converter)
-  TextColumn get direction => text().map(const TransactionDirectionConverter())();
-
-  /// Null = template row; non-null = real transaction row.
-  RealColumn get amount => real().nullable()();
-
+  RealColumn get amount => real()();
   TextColumn get note => text().nullable()();
-  DateTimeColumn get date => dateTime().nullable()();
+  DateTimeColumn get date => dateTime()();
   DateTimeColumn get createdAt => dateTime()();
-}
 
+  // Sync flags
+  DateTimeColumn get updatedAt => dateTime()();
+  TextColumn get syncStatus => text().withDefault(const Constant('pending'))();
+  TextColumn get remoteId => text().nullable()();
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
+}

@@ -8,6 +8,7 @@ import 'package:madakhel_app/view/auth/start_page.dart';
 
 import '../../model/income_source_with_balance.dart';
 import '../../view/home/home_screen.dart';
+import '../../view/income_source/income_source_form_screen.dart';
 import '../../view/income_source/source_detail_screen.dart';
 import '../../view_controller/auth_controller.dart';
 
@@ -75,12 +76,30 @@ GoRouter createAppRouter(AuthController auth) {
       GoRoute(
         path: '/source-detail',
         pageBuilder: (context, state) {
-          // final sourceId = int.parse(state.pathParameters['sourceId']!);
           final extra = state.extra as IncomeSourceWithBalance;
           return AppTransitions.fadeScale(
             context: context,
             state: state,
             child: SourceDetailScreen(source: extra),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/income-source/new',
+        pageBuilder: (context, state) => AppTransitions.slideVertical(
+          context: context,
+          state: state,
+          child: const IncomeSourceFormScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/income-source/edit',
+        pageBuilder: (context, state) {
+          final extra = state.extra as IncomeSourceWithBalance;
+          return AppTransitions.slideVertical(
+            context: context,
+            state: state,
+            child: IncomeSourceFormScreen(initial: extra),
           );
         },
       ),

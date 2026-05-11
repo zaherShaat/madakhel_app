@@ -47,6 +47,7 @@ class AppPrimaryButton extends StatelessWidget {
       style: FilledButton.styleFrom(
         minimumSize: const Size.fromHeight(50),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        foregroundColor: scheme.onSurface,
       ),
       child: child,
     );

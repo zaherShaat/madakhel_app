@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:madakhel_app/core/context_ext.dart';
+import 'package:madakhel_app/data/db/app_db.dart';
 import 'package:madakhel_app/data/repositories/transaction_repository.dart';
 import 'package:madakhel_app/model/income_source_with_balance.dart';
+import 'package:madakhel_app/view/components/app_confirm_action_dialog.dart';
 import 'package:madakhel_app/view/income_source/components/add_transaction_sheet.dart';
 import 'package:madakhel_app/view/income_source/components/bottom_nav_bar.dart';
 import 'package:madakhel_app/view/income_source/components/source_detail_top_bar.dart';
 import 'package:madakhel_app/view/income_source/components/stat_card.dart';
 import 'package:madakhel_app/view/income_source/components/transaction_row.dart';
+import 'package:madakhel_app/view_controller/income_source_controller.dart';
 import 'package:madakhel_app/view_controller/transaction_controller.dart';
 import 'package:provider/provider.dart';
 
@@ -33,13 +37,14 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
         child: Column(
           children: [
             SourceDetailTopBar(
+              isDeleted: widget.source.isDeleted,
               sourceName: widget.source.name,
               currency: widget.source.currency,
-              onMenuTap: () {},
+              onMenuTap: () => _showSourceActions(context),
               onBackTap: () => Navigator.pop(context),
             ),
             Expanded(
-              child: StreamBuilder<List<dynamic>>(
+              child: StreamBuilder<List<FinancialTransaction>>(
                 stream: txRepo.watchTransactions(widget.source.id),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
@@ -57,47 +62,52 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: EdgeInsets.all(context.scaleW(14)),
                     children: [
-                      // Stats Grid
-                      GridView.count(
-                        crossAxisCount: 2,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        mainAxisSpacing: context.scaleH(8),
-                        crossAxisSpacing: context.scaleW(8),
-                        children: [
-                          StatCard(
-                            value: widget.source.balance.toString(),
-                            label: 'الرصيد',
-                          ),
-                          StatCard(
-                            value: transactions
-                                .where(
-                                  (t) =>
-                                      t.direction.toString() ==
-                                      'TransactionDirection.inFlow',
-                                )
-                                .length
-                                .toString(),
-                            label: 'إجمالي الدخل',
-                            isIncome: true,
-                          ),
-                          StatCard(
-                            value: transactions
-                                .where(
-                                  (t) =>
-                                      t.direction.toString() ==
-                                      'TransactionDirection.outFlow',
-                                )
-                                .length
-                                .toString(),
-                            label: 'إجمالي المصروف',
-                            isIncome: false,
-                          ),
-                          StatCard(
-                            value: transactions.length.toString(),
-                            label: 'عدد المعاملات',
-                          ),
-                        ],
+                      // Stats Grid — fetch sums asynchronously
+                      FutureBuilder<List<double>>(
+                        future: Future.wait([
+                          txRepo.getInSum(widget.source.id),
+                          txRepo.getOutSum(widget.source.id),
+                        ]),
+                        builder: (context, sumsSnap) {
+                          final inSum =
+                              (sumsSnap.data != null &&
+                                  sumsSnap.data!.isNotEmpty)
+                              ? sumsSnap.data![0]
+                              : 0.0;
+                          final outSum =
+                              (sumsSnap.data != null &&
+                                  sumsSnap.data!.length > 1)
+                              ? sumsSnap.data![1]
+                              : 0.0;
+
+                          return GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            mainAxisSpacing: context.scaleH(8),
+                            crossAxisSpacing: context.scaleW(8),
+                            children: [
+                              StatCard(
+                                value: widget.source.balance.toString(),
+                                label: 'الرصيد',
+                              ),
+                              StatCard(
+                                value: inSum.toStringAsFixed(2),
+                                label: 'إجمالي الدخل',
+                                isIncome: true,
+                              ),
+                              StatCard(
+                                value: outSum.toStringAsFixed(2),
+                                label: 'إجمالي المصروف',
+                                isIncome: false,
+                              ),
+                              StatCard(
+                                value: transactions.length.toString(),
+                                label: 'عدد المعاملات',
+                              ),
+                            ],
+                          );
+                        },
                       ),
                       SizedBox(height: context.scaleH(12)),
                       // Divider
@@ -180,65 +190,120 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
         ),
       ),
       // FAB - Triggers Add Transaction Sheet
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final txRepo = context.read<TransactionRepository>();
-          final templates = await txRepo.getTemplates(widget.source.id);
-          if (!context.mounted) return;
-
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(context.scaleW(20)),
+      floatingActionButton: widget.source.isDeleted
+          ? null
+          : FloatingActionButton(
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(context.scaleW(20)),
+                    ),
+                  ),
+                  builder: (context) =>
+                      AddTransactionSheet(incomeTypeId: widget.source.id),
+                );
+              },
+              backgroundColor: scheme.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(context.scaleW(50)),
+              ),
+              child: Text(
+                '+',
+                style: TextStyle(
+                  fontSize: context.scaleSp(22),
+                  color: Colors.white,
+                ),
               ),
             ),
-            builder: (context) => AddTransactionSheet(
-              incomeTypeId: widget.source.id,
-              templates: templates,
-            ),
-          );
-        },
-        backgroundColor: scheme.primary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(context.scaleW(50)),
-        ),
-        child: Text(
-          '+',
-          style: TextStyle(fontSize: context.scaleSp(22), color: Colors.white),
-        ),
-      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
     );
   }
 
   void _showDeleteConfirmation(BuildContext context, dynamic transaction) {
-    final scheme = Theme.of(context).colorScheme;
-
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('حذف المعاملة'),
-        content: Text('هل أنت متأكد من حذف هذه المعاملة؟'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('إلغاء'),
+      builder: (dialogContext) => AppConfirmActionDialog(
+        title: 'تأكيد الحذف',
+        message:
+            'هل أنت متأكد من حذف هذه المعاملة؟ لا يمكن التراجع عن هذا الإجراء.',
+        confirmLabel: 'نعم، احذف',
+        cancelLabel: 'إلغاء',
+        isDanger: true,
+        onConfirm: () {
+          context.read<TransactionController>().deleteTransaction(
+            transaction.id,
+          );
+          Navigator.pop(dialogContext);
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('تم حذف المعاملة')));
+        },
+      ),
+    );
+  }
+
+  void _showSourceActions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(context.scaleW(16)),
+        ),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.all(context.scaleW(16)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.edit_outlined),
+                  title: const Text('تعديل المصدر'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/income-source/edit', extra: widget.source);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete_outline),
+                  title: const Text('حذف المصدر'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showDeleteSourceConfirmation(context);
+                  },
+                ),
+              ],
+            ),
           ),
-          FilledButton(
-            onPressed: () {
-              context.read<TransactionController>().deleteTransaction(
-                transaction.id,
-              );
-              Navigator.pop(context);
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('تم حذف المعاملة')));
-            },
-            child: Text('حذف'),
-          ),
-        ],
+        );
+      },
+    );
+  }
+
+  void _showDeleteSourceConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Consumer(
+        builder: (context, value, child) => AppConfirmActionDialog(
+          title: 'تأكيد حذف المصدر',
+          message:
+              'سيتم حذف مصدر الدخل وجميع المعاملات المرتبطة به. لا يمكن التراجع عن هذا الإجراء.',
+          confirmLabel: 'نعم، احذف',
+          cancelLabel: 'إلغاء',
+          isDanger: true,
+          onConfirm: () async {
+            await context.read<IncomeSourceController>().deleteIncomeSource(
+              widget.source.id,
+            );
+            if (!context.mounted) return;
+            Navigator.pop(dialogContext);
+            context.pop();
+          },
+        ),
       ),
     );
   }
