@@ -4,9 +4,9 @@ import 'package:madakhel_app/core/context_ext.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
 import 'package:madakhel_app/data/repositories/transaction_repository.dart';
 import 'package:madakhel_app/model/income_source_with_balance.dart';
+import 'package:madakhel_app/view/shared/components/bottom_nav_bar.dart';
 import 'package:madakhel_app/view/components/app_confirm_action_dialog.dart';
 import 'package:madakhel_app/view/income_source/components/add_transaction_sheet.dart';
-import 'package:madakhel_app/view/income_source/components/bottom_nav_bar.dart';
 import 'package:madakhel_app/view/income_source/components/source_detail_top_bar.dart';
 import 'package:madakhel_app/view/income_source/components/stat_card.dart';
 import 'package:madakhel_app/view/income_source/components/transaction_row.dart';
@@ -178,14 +178,7 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                 },
               ),
             ),
-            // Bottom Tab Bar
-            BottomNavBar(
-              activeIndex: _activeNavIndex,
-              onTap: (index) {
-                setState(() => _activeNavIndex = index);
-                // TODO: Handle navigation based on index
-              },
-            ),
+         
           ],
         ),
       ),

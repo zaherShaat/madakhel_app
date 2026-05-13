@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../model/auth_user.dart';
+
 class AuthService {
   final FirebaseAuth _auth;
   final GoogleSignIn _googleSignIn;
@@ -10,13 +12,29 @@ class AuthService {
       _googleSignIn = googleSignIn ?? GoogleSignIn.instance;
 
   Stream<User?> authStateChanges() => _auth.authStateChanges();
-  // Stream<GoogleSignInAuthenticationEvent?> gAuthStateChanges() => _googleSignIn.;
+  Stream<AuthUser?> authUserChanges() => _auth.authStateChanges().map(
+    (user) => user == null ? null : AuthUser.fromFirebase(user),
+  );
 
   User? get currentUser => _auth.currentUser;
+  AuthUser? get currentAuthUser => _auth.currentUser == null
+      ? null
+      : AuthUser.fromFirebase(_auth.currentUser!);
+  GoogleSignInAccount? get currentGoogleUser => _googleSignIn.currentUser;
+
+  Future<GoogleSignInAccount?> signInSilently() async {
+    return await _googleSignIn.signInSilently();
+  }
+
+  Future<AuthUser?> currentGoogleAuthUser() async {
+    final googleUser = _googleSignIn.currentUser ?? await signInSilently();
+    if (googleUser == null) return null;
+    return AuthUser.fromGoogleSignInAccount(googleUser);
+  }
 
   Future<UserCredential> signInWithGoogle() async {
     // await _googleSignIn.initialize();
-  
+
     final googleUser = await _googleSignIn.authenticate();
 
     final googleAuth = googleUser.authentication;
@@ -24,7 +42,20 @@ class AuthService {
       idToken: googleAuth.idToken,
     );
 
-    return await _auth.signInWithCredential(credential);
+    final result = await _auth.signInWithCredential(credential);
+    return result;
+  }
+
+  Future<AuthUser> signInWithGoogleUser() async {
+    final result = await signInWithGoogle();
+    final user = result.user;
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'NO_USER',
+        message: 'Google sign-in completed without a Firebase user.',
+      );
+    }
+    return AuthUser.fromFirebase(user);
   }
 
   Future<void> signOut() async {

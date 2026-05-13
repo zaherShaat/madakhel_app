@@ -99,7 +99,7 @@ class _SignInScreenState extends State<SignInScreen> {
                               SizedBox(height: context.scaleH(16)),
                               Selector<AuthController, bool>(
                                 selector: (_, controller) => controller.busy,
-                                builder: (context, busy, _) {
+                                builder: (bCntxt, busy, _) {
                                   return AppPrimaryButton(
                                     label: busy
                                         ? 'جاري تسجيل الدخول...'
@@ -131,7 +131,7 @@ class _SignInScreenState extends State<SignInScreen> {
                                             if (_formKey.currentState!
                                                 .validate()) {
                                               try {
-                                                await context
+                                                await bCntxt
                                                     .read<AuthController>()
                                                     .signInWithGoogle();
                                               } catch (error) {

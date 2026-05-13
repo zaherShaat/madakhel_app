@@ -2,12 +2,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:madakhel_app/core/theme/app_theme.dart';
-import 'package:madakhel_app/core/theme/theme_provider.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
 import 'package:madakhel_app/data/repositories/income_type_repository.dart';
 import 'package:madakhel_app/data/repositories/transaction_category_repository.dart';
 import 'package:madakhel_app/data/repositories/transaction_repository.dart';
 import 'package:madakhel_app/firebase_options.dart';
+import 'package:madakhel_app/model/auth_user.dart';
+import 'package:madakhel_app/view_controller/theme_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'core/routing/app_router.dart';
@@ -30,6 +31,9 @@ Future<void> main() async {
         Provider<AuthService>(create: (_) => AuthService()),
         ChangeNotifierProvider<AuthController>(
           create: (ctx) => AuthController(ctx.read<AuthService>()),
+        ),
+        ProxyProvider<AuthController, AuthUser?>(
+          update: (_, authController, __) => authController.user,
         ),
         ChangeNotifierProvider<ThemeProvider>(create: (ctx) => ThemeProvider()),
         // Repositories
@@ -62,7 +66,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Builder(
       builder: (context) {
-        final auth = context.watch<AuthController>();
+        final auth = context.read<AuthController>();
         final themeProvider = context.watch<ThemeProvider>();
         final router = createAppRouter(auth);
         return MaterialApp.router(

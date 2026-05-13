@@ -1,46 +1,122 @@
 import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+
 import '../data/auth/auth_service.dart';
+import '../data/auth/auth_storage.dart';
+import '../model/auth_user.dart';
 
 class AuthController extends ChangeNotifier {
   final AuthService _service;
-  // final GoogleSignIn gAuthInstance = GoogleSignIn.instance;
+  late final AuthUserStorage _storage;
+  final Completer<void> _readyCompleter = Completer<void>();
+
   AuthController(this._service) {
-    _sub = _service.authStateChanges().listen((user) {
-      _user = user;
-      notifyListeners();
-    });
+    _initialize();
   }
 
   StreamSubscription<User?>? _sub;
-  User? _user;
+  AuthUser? _user;
   Object? _lastError;
   bool _busy = false;
+  bool _initialized = false;
 
-  User? get user => _user;
+  AuthUser? get user => _user;
   bool get isSignedIn => _user != null;
+  bool get ready => _initialized;
   bool get busy => _busy;
   Object? get lastError => _lastError;
 
-  Future<UserCredential?> signInWithGoogle() async {
+  Future<void> _initialize() async {
+    _storage = await AuthUserStorage.instance();
+    _sub = _service.authStateChanges().listen(_handleAuthState);
+    await _loadInitialAuthState();
+  }
+
+  Future<void> _loadInitialAuthState() async {
+    final firebaseUser = _service.currentUser;
+    if (firebaseUser != null) {
+      await _handleAuthState(firebaseUser);
+      return;
+    }
+
+    await _recoverCachedAuthUser();
+  }
+
+  Future<void> _recoverCachedAuthUser() async {
+    final googleUser = await _service.currentGoogleAuthUser();
+    if (googleUser != null) {
+      _user = googleUser;
+      await _storage.saveAuthUser(googleUser);
+    } else {
+      _user = _storage.storedAuthUser;
+      if (_user == null) {
+        await _storage.clearAuthUser();
+      }
+    }
+
+    _initialized = true;
+    if (!_readyCompleter.isCompleted) {
+      _readyCompleter.complete();
+    }
+    notifyListeners();
+  }
+
+  Future<void> _handleAuthState(User? firebaseUser) async {
+    if (firebaseUser == null) {
+      final googleUser = await _service.currentGoogleAuthUser();
+      if (googleUser != null) {
+        _user = googleUser;
+        await _storage.saveAuthUser(googleUser);
+      } else {
+        _user = _storage.storedAuthUser;
+        if (_user == null) {
+          await _storage.clearAuthUser();
+        }
+      }
+    } else {
+      final authUser = AuthUser.fromFirebase(firebaseUser);
+      _user = authUser;
+      await _storage.saveAuthUser(authUser);
+    }
+
+    _initialized = true;
+    if (!_readyCompleter.isCompleted) {
+      _readyCompleter.complete();
+    }
+    notifyListeners();
+  }
+
+  Future<void> _ensureReady() => _readyCompleter.future;
+
+  Future<AuthUser?> signInWithGoogle() async {
+    await _ensureReady();
+    _setBusy(true);
     try {
-      // 1. Trigger Google auth flow
-      return await _service.signInWithGoogle();
+      final authUser = await _service.signInWithGoogleUser();
+      _user = authUser;
+      await _storage.saveAuthUser(authUser);
+      notifyListeners();
+      return authUser;
     } on FirebaseAuthException catch (e) {
       debugPrint("$e >>> error g Auth");
       rethrow; // let UI handle Firebase errors
     } catch (e) {
       debugPrint("$e >>> error g Auth catch");
       throw Exception('فشل تسجيل الدخول عبر Google');
+    } finally {
+      _setBusy(false);
     }
   }
 
   Future<void> signOut() async {
+    await _ensureReady();
     _setBusy(true);
     try {
       _lastError = null;
       await _service.signOut();
+      await _storage.clearAuthUser();
     } catch (e) {
       _lastError = e;
       rethrow;
