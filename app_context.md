@@ -1,310 +1,333 @@
-# مداخيل — Incomes App — Cursor Agent Context
+# Madakhel App - Project Context
 
-> Full project context. Use this as the single source of truth for building the app.
-> Last updated: May 2026 — v3 entity model (sync flags added).
-
----
-
-## 1. Project Overview
-
-A Flutter mobile app to help a friend organize multiple income sources (e.g. Internet Café, Source B, Source C). Each income source is fully standalone with its own financial transactions, balance, and statistics.
-
-- **Platform:** Flutter (mobile)
-- **Storage:** Local — Drift (SQLite ORM, pure Dart, no raw SQL)
-- **Auth:** Firebase Authentication only (online sign-in, local data)
-- **Future:** Online backup via Supabase (PostgreSQL — same SQL structure, smooth migration)
-- **Language:** Arabic (RTL)
+> Current source of truth for the Flutter app.
+> Updated: May 23, 2026.
+> This file compares the intended app design with what is already implemented in the project and lists the remaining work.
 
 ---
 
-## 2. Core Decisions
+## 1. App Goal
 
-| Decision | Choice | Reason |
-|---|---|---|
-| Local DB | Drift (SQLite) | Type-safe, pure Dart queries, supports SUM/GROUP BY/JOIN |
-| Auth | Firebase Auth | Lightweight, gives `uid` for future sync, no backend needed |
-| State management | Provider | Simple, scalable |
-| No capital tracking | MVP scope | Avoid complex calculations for now |
-| No hardcoded income sources | User creates them | Flexible, reusable for any business |
-| Transaction categories global | Shared across sources | One category can be used in many income sources |
+Madakhel is a Flutter mobile app for tracking multiple income sources. Each income source has its own financial transactions, balance, and statistics.
 
----
-
-## 3. Database — Final Entity Model
-
-### 3 Tables
-
-```
-IncomeSource  ──<  FinancialTransaction  >── TransactionCategory
-```
+- Platform: Flutter mobile
+- Language/UI direction: Arabic / RTL intended
+- Local storage: Drift over SQLite
+- Auth: Firebase Authentication, currently focused on Google sign-in
+- State management: Provider + ChangeNotifier ViewModels
+- Future backup: Supabase, using the existing sync fields as preparation
 
 ---
 
-#### `IncomeSource` (مصدر الدخل)
-```dart
-class IncomeSources extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get name => text()();
-  TextColumn get currency => text().withDefault(const Constant('USD'))();
-  RealColumn get starterBalance => real().withDefault(const Constant(0))();
-  DateTimeColumn get createdAt => dateTime()();
+## 2. Current Architecture
 
-  // ── Sync flags (future Supabase backup) ─────
-  DateTimeColumn get updatedAt => dateTime()();
-  TextColumn get syncStatus => text().withDefault(const Constant('pending'))();
-  TextColumn get remoteId => text().nullable()();
-  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
-}
-```
+The actual project structure does not match the older `screens/`, `providers/`, and `repositories/` layout from the previous context file. The current code uses:
 
-**Notes:**
-- `starterBalance` = sum of all history before the app (user calculates manually)
-- Formula: `Balance = starterBalance + Σ in − Σ out`
-- One table only — no income type concept
-
----
-
-#### `TransactionCategory` (نوع المعاملة)
-```dart
-class TransactionCategories extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get name => text()();
-  // 'in' | 'out' stored via TransactionDirectionConverter
-  TextColumn get direction => text().map(const TransactionDirectionConverter())();
-  DateTimeColumn get createdAt => dateTime()();
-
-  // ── Sync flags (future Supabase backup) ─────
-  DateTimeColumn get updatedAt => dateTime()();
-  TextColumn get syncStatus => text().withDefault(const Constant('pending'))();
-  TextColumn get remoteId => text().nullable()();
-  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
-}
-```
-
-**Notes:**
-- Global — not tied to any specific income source
-- One category can be used across many income sources
-- Direction is fixed at creation (in/out) and cannot be changed
-- User manages categories independently from income sources
-
----
-
-#### `FinancialTransaction` (الحركة المالية)
-```dart
-class FinancialTransactions extends Table {
-  IntColumn get id => integer().autoIncrement()();
-
-  // Belongs to one income source
-  IntColumn get incomeSourceId => integer().references(IncomeSources, #id)();
-
-  // Belongs to one transaction category
-  IntColumn get categoryId => integer().references(TransactionCategories, #id)();
-
-  /// True for system-generated rows (e.g. opening balance).
-  /// System rows are included in sums but must NOT be editable by the user.
-  BoolColumn get isSystem => boolean().withDefault(const Constant(false))();
-
-  RealColumn get amount => real()();
-  TextColumn get note => text().nullable()();
-  DateTimeColumn get date => dateTime()();
-  DateTimeColumn get createdAt => dateTime()();
-
-  // ── Sync flags (future Supabase backup) ─────
-  DateTimeColumn get updatedAt => dateTime()();
-  TextColumn get syncStatus => text().withDefault(const Constant('pending'))();
-  TextColumn get remoteId => text().nullable()();
-  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
-}
-```
-
-**Notes:**
-- Every financial transaction belongs to exactly ONE income source
-- Every financial transaction belongs to exactly ONE transaction category
-- `direction` is NOT stored here — inherited from `TransactionCategory.direction`
-- `amount` is always non-null — no template concept
-- `isSystem = true` rows are auto-created (e.g. opening balance) and must not be editable
-
----
-
-### Relationships Summary
-
-```
-IncomeSource (1) ──────────────── (∞) FinancialTransaction
-TransactionCategory (1) ────────── (∞) FinancialTransaction
-
-IncomeSource        ←→  TransactionCategory  (many-to-many via FinancialTransaction)
-FinancialTransaction →  IncomeSource          (belongs to one)
-FinancialTransaction →  TransactionCategory   (belongs to one)
-```
-
----
-
-## 4. Business Logic
-
-### Balance Calculation (per IncomeSource)
-```
-Balance = starterBalance
-        + Σ amount WHERE incomeSourceId = X AND category.direction = 'in'
-        − Σ amount WHERE incomeSourceId = X AND category.direction = 'out'
-```
-
-> Direction is resolved by joining FinancialTransaction with TransactionCategory.
-
-### Statistics
-- Per IncomeSource: total in, total out, balance, transaction count
-- Per TransactionCategory: subtotal grouped by category across all or one source
-- Filter by date range (daily / weekly / monthly)
-
----
-
-## 5. User Flow
-
-```
-Splash
-  └── Sign Up / Sign In (Firebase Auth)
-        ├── Home (مصادر الدخل)
-        │     └── List of IncomeSource cards with balance
-        │           ├── Add IncomeSource (name, currency, starterBalance)
-        │           └── IncomeSource Detail
-        │                 ├── Stats: balance, total in, total out, count
-        │                 ├── Financial transactions list (paginated)
-        │                 ├── FAB (+) → Add FinancialTransaction
-        │                 │     └── Pick category → fill amount, note, date
-        │                 └── (⋯) Context menu
-        │                       ├── Edit IncomeSource
-        │                       └── Delete IncomeSource
-        │
-        ├── المعاملات (Financial Transactions)
-        │     └── All financial transactions grouped by TransactionCategory
-        │           └── Expandable section per category (paginated)
-        │                 └── Future: Export PDF report per category
-        │
-        └── Settings
-              └── Manage Categories (CRUD for TransactionCategories)
-```
-
----
-
-## 6. Screens List
-
-| # | Screen | Type | Notes |
-|---|---|---|---|
-| 1 | Splash | Full screen | App logo + get started / sign in |
-| 2 | Sign In | Full screen | Email + password + Google, forgot password |
-| 3 | Sign Up | Full screen | Name + email + password + confirm |
-| 4 | Forgot Password | Full screen | Email input → send reset link |
-| 4b | Reset Sent | Full screen | Confirmation + resend option |
-| 5 | Home | Full screen | List of IncomeSource cards with balance |
-| 6 | Add IncomeSource | Full screen | Name, starterBalance, currency |
-| 7 | IncomeSource Detail | Full screen | Stats grid + transactions list + FAB |
-| 8 | Add FinancialTransaction | Bottom sheet | Pick category + amount + date + note |
-| 9 | Edit FinancialTransaction | Bottom sheet | Same as add but pre-filled |
-| 10 | Context Menu — IncomeSource | Overlay sheet | Edit / Delete |
-| 11 | Edit IncomeSource | Full screen | Same as Add but pre-filled |
-| 12 | Delete Confirmation | Dialog overlay | Confirm / Cancel |
-| 13 | المعاملات | Full screen | All transactions grouped by category — expandable + paginated |
-| 14 | Manage Categories | Full screen | CRUD for TransactionCategories (in Settings) |
-| 15 | Add/Edit Category | Bottom sheet | Name + direction chip (in/out) |
-| 16 | Settings | Full screen | Profile, change password, manage categories, sign out |
-
----
-
-## 7. المعاملات Screen — UI/UX Detail
-
-- Bottom nav bar tab — shows ALL financial transactions across all income sources
-- Grouped by **TransactionCategory** — one expandable section per category
-- Each section header shows: category name, direction badge, subtotal
-- Each section body: paginated list of transactions (15 per page, load more on scroll)
-- All sections collapsed by default — user expands what they need
-- Pull to refresh
-- **Future:** Export PDF button per category section
-
-```
-المعاملات Screen
-  ├── [دخل الإنترنت  +]  ──── subtotal: $1,200   ▾ (expanded)
-  │     ├── مقهى الإنترنت   |  $120  |  اليوم
-  │     ├── مقهى الإنترنت   |  $80   |  أمس
-  │     └── ... (load more)
-  │
-  ├── [مباريات كرة القدم  +]  ── subtotal: $340   › (collapsed)
-  │
-  └── [فواتير الإنترنت  −]  ─── subtotal: $200   › (collapsed)
-```
-
----
-
-## 8. Project Structure
-
-```
+```text
 lib/
-├── main.dart
-├── firebase_options.dart
-│
-├── db/
-│   ├── tables.dart                      # Drift table definitions
-│   ├── app_db.dart                      # Database class + connection
-│   └── app_db.g.dart                    # Generated — do not edit
-│
-├── model/
-│   ├── transaction_direction.dart       # enum TransactionDirection + converter
-│   └── app_state.dart                   # sealed AppState<T> + ActionState
-│
-├── repositories/
-│   ├── db_controller.dart               # abstract DbController<T>
-│   ├── income_source_repo.dart          # CRUD for IncomeSources
-│   ├── transaction_category_repo.dart   # CRUD for TransactionCategories
-│   └── financial_transaction_repo.dart  # CRUD + stats + balance
-│
-├── providers/
-│   ├── auth_provider.dart
-│   ├── home_provider.dart               # income sources list + actions
-│   ├── income_source_detail_provider.dart
-│   ├── transactions_page_provider.dart  # المعاملات grouped by category
-│   └── category_provider.dart
-│
-├── screens/
-│   ├── auth/
-│   │   ├── splash_screen.dart
-│   │   ├── signin_screen.dart
-│   │   ├── signup_screen.dart
-│   │   └── forgot_password_screen.dart
-│   ├── home/
-│   │   └── home_screen.dart
-│   ├── income_source/
-│   │   ├── add_income_source_screen.dart
-│   │   ├── edit_income_source_screen.dart
-│   │   └── income_source_detail_screen.dart
-│   ├── transactions/
-│   │   └── transactions_screen.dart     # المعاملات — grouped expandable
-│   ├── categories/
-│   │   └── manage_categories_screen.dart
-│   └── settings/
-│       └── settings_screen.dart
-│
-├── widgets/
-│   ├── components.dart                  # shared reusable components
-│   ├── income_source/
-│   │   ├── income_source_card.dart
-│   │   ├── stat_grid.dart
-│   │   ├── financial_transaction_item.dart
-│   │   ├── add_transaction_sheet.dart
-│   │   └── source_context_menu.dart
-│   └── transactions/
-│       └── category_expandable_section.dart
-│
-├── router/
-│   ├── app_router.dart
-│   └── app_transitions.dart
-│
-└── utils/
-    ├── source_color.dart                # color derived from ID
-    ├── constants.dart                   # currencies list
-    └── formatters.dart                  # date, currency formatters
+  main.dart
+  firebase_options.dart
+
+  core/
+    routing/
+      app_router.dart
+      app_transition.dart
+    theme/
+      app_theme.dart
+      app_colors.dart
+    app_states.dart
+    actions_states.dart
+    color_helper.dart
+    context_ext.dart
+    utils.dart
+
+  data/
+    auth/
+      auth_service.dart
+      auth_storage.dart
+    db/
+      app_db.dart
+      app_db.g.dart
+      tables.dart
+    repositories/
+      income_type_repository.dart
+      transaction_category_repository.dart
+      transaction_repository.dart
+
+  model/
+    auth_user.dart
+    income_source_with_balance.dart
+    transaction_direction.dart
+
+  view/
+    auth/
+    home/
+    income_source/
+    settings/
+    shared/
+    transactions/
+
+  view_model/
+    auth_view_model.dart
+    category_view_model.dart
+    home_view_model.dart
+    income_source_detail_view_model.dart
+    income_source_view_model.dart
+    splash_view_model.dart
+    theme_view_model.dart
+    transaction_view_model.dart
+    transactions_view_model.dart
+
+Views should not read repositories directly. Repositories are injected into ViewModels in `main.dart`, and screens consume ViewModels.
 ```
 
 ---
 
-## 9. Dependencies
+## 3. Intended Data Model
+
+The intended v3 model is implemented in `lib/data/db/tables.dart`.
+
+```text
+IncomeSources
+  id
+  name
+  currency
+  starterBalance
+  createdAt
+  updatedAt
+  syncStatus
+  remoteId
+  isDeleted
+
+TransactionCategories
+  id
+  name
+  direction
+  createdAt
+  updatedAt
+  syncStatus
+  remoteId
+  isDeleted
+
+FinancialTransactions
+  id
+  incomeSourceId
+  categoryId
+  isSystem
+  amount
+  note
+  date
+  createdAt
+  updatedAt
+  syncStatus
+  remoteId
+  isDeleted
+```
+
+Relationships:
+
+```text
+IncomeSources 1 -> many FinancialTransactions
+TransactionCategories 1 -> many FinancialTransactions
+FinancialTransactions belongs to one IncomeSource and one TransactionCategory
+```
+
+Important rule: transaction direction is not stored on `FinancialTransactions`; it is resolved through `TransactionCategories.direction`.
+
+---
+
+## 4. What Is Done
+
+### Project setup
+
+- Flutter app is present for Android and iOS.
+- Firebase configuration files are present.
+- `main.dart` initializes Firebase and Google Sign-In.
+- Provider wiring exists for auth, theme, repositories, and ViewModels.
+- Light/dark theme support exists through `ThemeViewModel`.
+
+### Database
+
+- Drift database exists in `lib/data/db/app_db.dart`.
+- Schema version is `4`.
+- The three core tables are implemented.
+- Sync fields are already included on all tables:
+  - `updatedAt`
+  - `syncStatus`
+  - `remoteId`
+  - `isDeleted`
+- Migration currently drops and recreates the three app tables when upgrading from versions below 4.
+
+### Repositories
+
+- `IncomeTypeRepository` handles income source create/read/update/soft-delete.
+- `TransactionRepository` handles transaction create/read/update/soft-delete and sum queries.
+- `TransactionCategoryRepository` handles category create/read/update/soft-delete.
+- Soft delete is used for income sources, categories, and transactions.
+- Deleting an income source soft-deletes only the source. Related transactions are preserved and excluded from active source balance and grouped transaction lists because the source is no longer active.
+
+### Home and income sources
+
+- Home screen exists at `lib/view/home/home_screen.dart`.
+- Home lists income sources from the local database.
+- Income source cards show computed balances.
+- Add/edit income source screen exists at `lib/view/income_source/income_source_form_screen.dart`.
+- Income source detail screen exists at `lib/view/income_source/source_detail_screen.dart`.
+- Source detail shows:
+  - balance
+  - total income
+  - total expense
+  - transaction count
+  - latest transactions, currently limited to 3
+- Source edit/delete actions exist through a bottom sheet.
+
+### Transactions
+
+- Add transaction bottom sheet exists.
+- Transactions can be created with:
+  - category
+  - amount
+  - date
+  - optional note
+- Transactions can be soft-deleted from source detail by long-pressing a row.
+- Total income and total expense queries use category direction.
+
+### Categories
+
+- Category table and repository exist.
+- Category management screens exist:
+  - `lib/view/transactions/categories_screen.dart`
+  - `lib/view/transactions/add_category_screen.dart`
+- Settings links to the categories screen.
+
+### Auth
+
+- Firebase Auth and Google Sign-In service/controller exist.
+- Start screen is the active auth screen.
+- Sign-in, sign-up, forgot password, and forgot password sent files still exist but are intentionally outside the active router.
+- Splash screen exists and routes after auth readiness.
+- Google sign-in is wired through `AuthViewModel` and `AuthService`.
+- Auth user can be persisted locally through `AuthUserStorage`.
+
+### Navigation and UI
+
+- GoRouter is used.
+- Routes exist for:
+  - `/start`
+  - `/home`
+  - `/source-detail`
+  - `/income-source/new`
+  - `/income-source/edit`
+  - `/transactions`
+  - `/settings`
+  - `/categories`
+  - `/add-category`
+- Shared bottom navigation exists with Settings, Transactions, and Home tabs.
+- Shared UI components exist for app bars, buttons, dialogs, text fields, cards, and transaction rows.
+
+---
+
+## 5. Partially Done / Needs Correction
+
+### Balance calculation
+
+Current behavior:
+
+- `watchIncomeSourcesWithBalance()` joins income sources, transactions, and categories.
+- It calculates signed transaction totals by category direction.
+- Deleted sources, deleted transactions, and deleted categories are filtered out of the balance query.
+
+Issues to fix:
+
+- `starterBalance` is not included in the computed balance.
+- The income source form does not expose `starterBalance`; it always creates sources with `0`.
+- The code still uses the old name `IncomeTypeRepository` and `incomeTypeId` in several places, even though the domain model is now `IncomeSource`.
+
+### Transactions page
+
+Current behavior:
+
+- `/transactions` route exists.
+- `TransactionsScreen` shows real grouped transactions by category.
+- Source detail "Show all" navigates to the transactions tab.
+
+Missing:
+
+- Pagination or progressive loading.
+
+### Category management UI
+
+Current behavior:
+
+- Category screens exist visually.
+- `TransactionCategoryRepository.createCategory()` exists.
+- Category CRUD is wired to the local database.
+- Category add/edit opens as a bottom sheet.
+- Category direction is selected at creation and locked during edit.
+
+Issues to fix:
+
+- Add stronger UX around categories that are already used by transactions if needed.
+
+### Auth flow
+
+Current behavior:
+
+- Google sign-in is implemented.
+- `/start` is the active auth entry point.
+- Start page shows only a Google sign-in action.
+- Sign-out is available from Settings and returns to `/start`.
+- Email/password, sign-up, and forgot-password screen files still exist but are intentionally not routed in the active app flow.
+- Router starts at `/splash`, then sends signed-in users to `/home` and signed-out users to `/start`.
+
+Issues to fix:
+
+- Remove or archive the unused email/password auth files later if the project is ready for that cleanup. Do not mix that deletion with behavior work.
+
+### Add transaction flow
+
+Current behavior:
+
+- Add transaction sheet creates a transaction through `TransactionViewModel`.
+- Add/edit transaction sheet is wired.
+
+Issues to fix:
+
+- Verify edit transaction UX on the full transactions tab after UI polish.
+
+### Source detail
+
+Current behavior:
+
+- Source detail shows stats and the latest three transactions.
+
+Issues to fix:
+
+- Transaction rows only receive `FinancialTransaction`; category name/direction may not be available for display unless fetched elsewhere.
+- "Show all" navigates to the transactions tab.
+- Bottom navigation variable exists but is not rendered on this screen.
+- `isSystem` rows are not treated specially in UI or repository operations yet.
+
+### Sync flags
+
+Current behavior:
+
+- Sync fields exist and many writes set `updatedAt` and `syncStatus`.
+
+Issues to fix:
+
+- Not every query filters `isDeleted = false`.
+- There is no sync service yet, which is expected for MVP.
+
+### Text encoding
+
+Many Arabic strings in source files and the old context file appear mojibake/encoding-corrupted, for example text rendered as `ط§...`. This should be fixed separately by restoring proper UTF-8 Arabic strings across source files.
+
+---
+
+## 6. Current Dependencies
+
+Actual dependencies from `pubspec.yaml`:
 
 ```yaml
 dependencies:
@@ -314,290 +337,154 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.0
   path_provider: ^2.1.0
   path: ^1.9.0
-  firebase_core: ^3.0.0
+  intl: ^0.19.0
+  provider: ^6.1.0
+  firebase_core: ^4.7.0
   firebase_auth: ^6.4.0
   google_sign_in: ^7.2.0
-  provider: ^6.1.0
-  intl: ^0.19.0
-  go_router: ^14.0.0
+  currency_picker: ^2.0.21
+  go_router: ^17.2.3
+  shared_preferences: ^2.2.0
+```
 
+Dev dependencies:
+
+```yaml
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_lints: ^6.0.0
   drift_dev: ^2.18.0
   build_runner: ^2.4.0
+  change_app_package_name: ^1.5.0
 ```
 
 ---
 
-## 10. Database Class (app_db.dart)
+## 7. Recommended Next Steps
 
-```dart
-import 'dart:io';
-import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
-import '../../model/transaction_direction.dart';
-import 'tables.dart';
+### Step 1 - Verify navigation/auth correctness
 
-part 'app_db.g.dart';
+Success criteria:
 
-@DriftDatabase(tables: [IncomeSources, TransactionCategories, FinancialTransactions])
-class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+- Signed-out user lands on `/start`.
+- Signed-in user lands on `/home`.
+- Google sign-in redirects correctly.
+- Sign-out returns to the auth flow.
 
-  @override
-  int get schemaVersion => 4;
+Tasks:
 
-  @override
-  MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) async {
-          await m.createAll();
-        },
-        onUpgrade: (m, from, to) async {
-          if (from < 4) {
-            await m.deleteTable('financial_transactions');
-            await m.deleteTable('transaction_categories');
-            await m.deleteTable('income_sources');
-            await m.createAll();
-          }
-        },
-      );
-}
+- Current MVP supports only Google sign-in.
+- Smoke-test splash, Google sign-in, app restart, and sign-out.
+- Keep unused email/password auth screens out of the active router.
 
-LazyDatabase _openConnection() {
-  return LazyDatabase(() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dir.path, 'madakhel.db'));
-    return NativeDatabase.createInBackground(file);
-  });
-}
-```
+### Step 2 - Fix income source balance
 
----
+Success criteria:
 
-## 11. Key Queries (Repositories)
+- Home balance equals `starterBalance + income - expense`.
+- Deleted transactions/categories do not affect balance.
+- Deleted sources do not appear on Home.
 
-```dart
-// Balance for an IncomeSource
-Future<double> getBalance(int incomeSourceId) async {
-  final source = await (db.select(db.incomeSources)
-    ..where((s) => s.id.equals(incomeSourceId))).getSingle();
+Tasks:
 
-  final rows = await (db.select(db.financialTransactions).join([
-    innerJoin(db.transactionCategories,
-        db.transactionCategories.id
-            .equalsExp(db.financialTransactions.categoryId))
-  ])
-    ..where(db.financialTransactions.incomeSourceId.equals(incomeSourceId)
-        & db.financialTransactions.isSystem.equals(false)))
-  .get();
+- Add `starterBalance` to income source create/edit UI or explicitly remove it from MVP.
+- Include `starterBalance` in `watchIncomeSourcesWithBalance()`.
+- Deleted source and transaction filters are in the balance query; confirm whether deleted categories should hide old transaction impact or preserve historical direction.
+- Rename `IncomeTypeRepository` and `incomeTypeId` later if desired; do this as a separate cleanup, not mixed with behavior fixes.
 
-  double totalIn = 0;
-  double totalOut = 0;
-  for (final row in rows) {
-    final tx = row.readTable(db.financialTransactions);
-    final cat = row.readTable(db.transactionCategories);
-    if (cat.direction == TransactionDirection.inbound) {
-      totalIn += tx.amount;
-    } else {
-      totalOut += tx.amount;
-    }
-  }
-  return source.starterBalance + totalIn - totalOut;
-}
+### Step 3 - Verify category CRUD
 
-// Get transactions for an income source — paginated
-Future<List<TypedResult>> getTransactionsPaginated({
-  required int incomeSourceId,
-  required int page,
-  int pageSize = 15,
-}) {
-  return (db.select(db.financialTransactions).join([
-    innerJoin(db.transactionCategories,
-        db.transactionCategories.id
-            .equalsExp(db.financialTransactions.categoryId))
-  ])
-    ..where(db.financialTransactions.incomeSourceId.equals(incomeSourceId))
-    ..orderBy([OrderingTerm.desc(db.financialTransactions.date)])
-    ..limit(pageSize, offset: page * pageSize))
-  .get();
-}
+Success criteria:
 
-// Get all transactions grouped by category — for المعاملات screen
-Future<Map<TransactionCategory, List<FinancialTransaction>>>
-    getAllGroupedByCategory() async {
-  final rows = await (db.select(db.financialTransactions).join([
-    innerJoin(db.transactionCategories,
-        db.transactionCategories.id
-            .equalsExp(db.financialTransactions.categoryId))
-  ])
-    ..orderBy([OrderingTerm.desc(db.financialTransactions.date)]))
-  .get();
+- Categories screen reads from Drift.
+- Add category saves to Drift.
+- Edit category name works.
+- Delete category soft-deletes it.
+- Direction is selected at create time and cannot be changed after.
 
-  final Map<TransactionCategory, List<FinancialTransaction>> grouped = {};
-  for (final row in rows) {
-    final cat = row.readTable(db.transactionCategories);
-    final tx = row.readTable(db.financialTransactions);
-    grouped.putIfAbsent(cat, () => []).add(tx);
-  }
-  return grouped;
-}
-```
+Tasks:
+
+- Smoke-test create/edit/delete from Settings -> categories.
+- Add guardrails if deleting a category that has transactions should be restricted instead of soft-hidden.
+
+### Step 4 - Fix add transaction flow
+
+Success criteria:
+
+- Pressing Add in `AddTransactionSheet` inserts exactly one transaction.
+- The sheet closes after successful insert.
+- Invalid amount/category input shows validation feedback.
+
+Tasks:
+
+- The unused transaction confirmation state has been removed.
+- Remove unused `transactionName` from the transaction creation path.
+- Ensure selected category direction determines income/expense behavior.
+
+### Step 5 - Build the Transactions tab
+
+Success criteria:
+
+- `/transactions` shows real database transactions grouped by category.
+- Each category section shows name, direction, subtotal, and rows.
+- Deleted transactions, deleted categories, and transactions from deleted sources are excluded.
+
+Tasks:
+
+- Smoke-test grouped transaction sections with active and deleted data.
+- Add pagination/progressive loading if needed after the basic screen works.
+
+### Step 6 - Add edit transaction support
+
+Success criteria:
+
+- User can edit amount, date, note, and category.
+- System transactions cannot be edited.
+- Updated rows set `updatedAt` and `syncStatus = pending`.
+
+Tasks:
+
+- Add edit transaction bottom sheet.
+- Wire transaction row tap or menu to edit.
+- Preserve soft-delete and sync rules.
+
+### Step 7 - Clean up Arabic text encoding
+
+Success criteria:
+
+- All visible Arabic text renders correctly in UTF-8.
+- No mojibake strings remain in `lib/`.
+
+Tasks:
+
+- Restore proper Arabic strings in source files.
+- Confirm editor and repository encoding are UTF-8.
+- Run the app and inspect key screens.
 
 ---
 
-## 12. UI Design Decisions
+## 8. Future Roadmap - Do Not Build Until MVP Is Stable
 
-- **Minimal colors:** green for `in`, red for `out`, black/white for everything else
-- **RTL Arabic layout** throughout
-- **Bottom nav bar:** Home (مصادر الدخل), المعاملات, Settings
-- **Bottom sheets** for: Add/Edit FinancialTransaction, Add/Edit Category
-- **Overlay context menu** for: IncomeSource actions
-- **Stats grid (2×2):** balance, total in, total out, transaction count
-- **FAB** on IncomeSource detail to add financial transactions
-- **Expandable sections** on المعاملات screen — collapsed by default
-- **Source dot color** derived from ID via `SourceColor.fromId(id)` — no DB column needed
-- **Pagination:** 15 rows per page, load more on scroll
+- Supabase online backup/sync.
+- PDF export per transaction category.
+- CSV export.
+- Recurring transactions.
+- Date range reports.
+- Saved report snapshots.
+- Multi-currency conversion.
 
 ---
 
-## 13. Auth Flow (Firebase)
+## 9. Current MVP Definition
 
-```dart
-// Sign up
-await FirebaseAuth.instance.createUserWithEmailAndPassword(
-  email: email, password: password);
+The practical MVP should be:
 
-// Sign in with email
-await FirebaseAuth.instance.signInWithEmailAndPassword(
-  email: email, password: password);
-
-// Sign in with Google (google_sign_in ^7.2.0)
-final googleUser = await GoogleSignIn.instance.authenticate();
-final googleAuth = await googleUser.authentication;
-final credential = GoogleAuthProvider.credential(
-  idToken: googleAuth.idToken,
-  accessToken: googleAuth.accessToken,
-);
-await FirebaseAuth.instance.signInWithCredential(credential);
-
-// Reset password
-await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-
-// Sign out
-await FirebaseAuth.instance.signOut();
-
-// UID for future Supabase sync
-final uid = FirebaseAuth.instance.currentUser?.uid;
-```
-
----
-
-## 14. State Handling Pattern
-
-```dart
-// lib/model/app_state.dart
-
-sealed class AppState<T> {}
-class IdleState<T> extends AppState<T> {}
-class LoadingState<T> extends AppState<T> {}
-class SuccessState<T> extends AppState<T> { final T data; }
-class ErrorState<T> extends AppState<T> { final String message; }
-
-sealed class ActionState {}
-class ActionIdle extends ActionState {}
-class ActionLoading extends ActionState {}
-class ActionSuccess extends ActionState { final String? message; }
-class ActionError extends ActionState { final String message; }
-```
-
----
-
-## 15. Router (GoRouter)
-
-```
-Transitions:
-  fadeScale       → root screens (splash, signin, home)
-  slideHorizontal → push deeper (detail, edit)
-  slideVertical   → sheet-like screens
-  fadeThrough     → tab switches
-
-Routes:
-  /splash
-  /signin
-  /signup
-  /forgot-password
-  /home
-  /income-source/:id              → IncomeSourceDetailScreen
-  /income-source/:id/edit         → EditIncomeSourceScreen
-  /categories                     → ManageCategoriesScreen
-  /transactions                   → TransactionsScreen (المعاملات)
-  /settings
-```
-
----
-
-## 16. Sync Flags — Rules & Usage
-
-Every table has 4 sync flags for future Supabase backup:
-
-| Flag | Type | Default | Purpose |
-|---|---|---|---|
-| `updatedAt` | `DateTime` | now | Updated on every local change — conflict resolution |
-| `syncStatus` | `String` | `'pending'` | `pending` = not synced, `synced` = pushed, `failed` = retry |
-| `remoteId` | `String?` | `null` | Supabase UUID — null until first sync |
-| `isDeleted` | `bool` | `false` | Soft delete — row stays until synced then purged |
-
-### Rules
-
-**1. Always filter deleted rows in every query:**
-```dart
-..where((t) => t.isDeleted.equals(false))
-```
-
-**2. Set `updatedAt` on every insert and update:**
-```dart
-// insert
-createdAt: DateTime.now(),
-updatedAt: DateTime.now(),
-syncStatus: const Value('pending'),
-
-// update
-updatedAt: DateTime.now(),
-syncStatus: const Value('pending'),  // re-mark for sync
-```
-
-**3. Soft delete — never hard delete until synced:**
-```dart
-// instead of db.delete(...)
-await (db.update(db.incomeSources)..where((t) => t.id.equals(id)))
-    .write(IncomeSourcesCompanion(
-      isDeleted: const Value(true),
-      updatedAt: Value(DateTime.now()),
-      syncStatus: const Value('pending'),
-    ));
-```
-
-**4. Why soft delete:**
-```
-Hard delete → row gone locally → Supabase never knows → ghost data
-Soft delete → isDeleted=true → sync sends delete → purge locally
-```
-
----
-
-## 17. Future Roadmap (do NOT build in MVP)
-
-- [ ] PDF export per TransactionCategory from المعاملات screen
-- [ ] Online backup → Supabase (PostgreSQL, same SQL structure)
-- [ ] Recurring financial transactions
-- [ ] Date range filters (daily/weekly/monthly reports)
-- [ ] Export to CSV
-- [ ] Snapshot/saved reports
-- [ ] Multi-currency conversion
-
----
-
-*Generated from full design conversation. Last updated: May 2026 — v3 (sync flags added).*
+- Google sign-in works.
+- User can create/edit/delete income sources.
+- User can create/edit/delete categories.
+- User can create/delete transactions and later edit them.
+- Home shows accurate balances.
+- Source detail shows accurate stats and recent transactions.
+- Transactions tab shows grouped transactions.
+- Soft-delete and sync flags are consistently maintained.

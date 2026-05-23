@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/context_ext.dart';
+import 'package:madakhel_app/core/utils.dart';
 import '../../model/income_source_with_balance.dart';
-import '../../view_controller/income_source_controller.dart';
+import '../../view_model/income_source_view_model.dart';
 import '../components/app_primary_button.dart';
 import '../components/app_screen_header.dart';
 import '../components/app_text_field.dart';
@@ -46,7 +46,7 @@ class _IncomeSourceFormScreenState extends State<IncomeSourceFormScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final ctrl = context.watch<IncomeSourceController>();
+    final ctrl = context.watch<IncomeSourceViewModel>();
     const List<String> currencies = ['USD', 'ILS', 'EGP', 'EUR', 'SAR'];
 
     return Scaffold(
@@ -132,7 +132,7 @@ class _IncomeSourceFormScreenState extends State<IncomeSourceFormScreen> {
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
       final name = _nameController.text;
-      final ctrl = context.read<IncomeSourceController>();
+      final ctrl = context.read<IncomeSourceViewModel>();
       if (widget.isEdit) {
         await ctrl.updateIncomeSource(
           id: widget.initial!.id,

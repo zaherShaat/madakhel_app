@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:madakhel_app/core/color_helper.dart';
-import 'package:madakhel_app/core/context_ext.dart';
+import 'package:madakhel_app/core/utils.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
-import 'package:madakhel_app/data/repositories/transaction_category_repository.dart';
 import 'package:madakhel_app/model/transaction_direction.dart';
+import 'package:madakhel_app/view_model/category_view_model.dart';
 import 'package:provider/provider.dart';
 
 class TransactionRow extends StatelessWidget {
@@ -117,7 +116,6 @@ class TransactionRow extends StatelessWidget {
     BuildContext context,
     int categoryId,
   ) async {
-    final repo = context.read<TransactionCategoryRepository>();
-    return await repo.getById(categoryId);
+    return context.read<CategoryViewModel>().getCategoryById(categoryId);
   }
 }

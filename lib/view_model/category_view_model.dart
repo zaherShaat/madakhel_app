@@ -1,0 +1,53 @@
+import 'package:flutter/material.dart';
+import 'package:madakhel_app/core/actions_states.dart';
+import 'package:madakhel_app/data/db/app_db.dart';
+import 'package:madakhel_app/data/repositories/transaction_category_repository.dart';
+import 'package:madakhel_app/model/transaction_direction.dart';
+
+class CategoryViewModel extends ChangeNotifier {
+  final TransactionCategoryRepository _repository;
+  ActionState _actionState = const ActionIdle();
+
+  CategoryViewModel(this._repository);
+
+  ActionState get actionState => _actionState;
+  Stream<List<TransactionCategory>> watchCategories() => _repository.watchAll();
+  Future<List<TransactionCategory>> getCategories() => _repository.getAll();
+  Future<TransactionCategory?> getCategoryById(int id) =>
+      _repository.getById(id);
+
+  Future<void> saveCategory({
+    int? id,
+    required String name,
+    required TransactionDirection direction,
+  }) async {
+    _setActionState(const ActionLoading());
+    try {
+      if (id == null) {
+        await _repository.createCategory(name: name, direction: direction);
+      } else {
+        await _repository.updateCategory(id: id, name: name);
+      }
+      _setActionState(const ActionSuccess());
+    } catch (e) {
+      _setActionState(ActionError(e.toString()));
+    }
+  }
+
+  Future<void> deleteCategory(int id) async {
+    _setActionState(const ActionLoading());
+    try {
+      await _repository.deleteById(id);
+      _setActionState(const ActionSuccess());
+    } catch (e) {
+      _setActionState(ActionError(e.toString()));
+    }
+  }
+
+  void clearActionState() => _setActionState(const ActionIdle());
+
+  void _setActionState(ActionState state) {
+    _actionState = state;
+    notifyListeners();
+  }
+}

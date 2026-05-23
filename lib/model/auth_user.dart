@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthUser {
   final String uid;
@@ -33,18 +32,6 @@ class AuthUser {
       emailVerified: user.emailVerified,
       providerId: providerId,
       isAnonymous: user.isAnonymous,
-    );
-  }
-
-  factory AuthUser.fromGoogleSignInAccount(GoogleSignInAccount account) {
-    return AuthUser(
-      uid: account.id,
-      email: account.email,
-      displayName: account.displayName,
-      photoURL: account.photoUrl,
-      emailVerified: true,
-      providerId: 'google.com',
-      isAnonymous: false,
     );
   }
 

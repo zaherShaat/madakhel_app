@@ -67,60 +67,41 @@ class IncomeTypeRepository {
   Future<void> deleteById(int id) async {
     final now = DateTime.now();
 
-    await _db.transaction(() async {
-      // 1) Soft-delete all transactions belonging to this source
-      await (_db.update(
-        _db.financialTransactions,
-      )..where((t) => t.incomeSourceId.equals(id))).write(
-        FinancialTransactionsCompanion(
-          isDeleted: const Value(true),
-          updatedAt: Value(now),
-          syncStatus: const Value('pending'),
-        ),
-      );
-
-      // 2) Soft-delete the source itself
-      await (_db.update(
-        _db.incomeSources,
-      )..where((t) => t.id.equals(id))).write(
-        IncomeSourcesCompanion(
-          isDeleted: const Value(true),
-          updatedAt: Value(now),
-          syncStatus: const Value('pending'),
-        ),
-      );
-    });
+    await (_db.update(_db.incomeSources)..where((t) => t.id.equals(id))).write(
+      IncomeSourcesCompanion(
+        isDeleted: const Value(true),
+        updatedAt: Value(now),
+        syncStatus: const Value('pending'),
+      ),
+    );
   }
 
   Stream<List<IncomeSourceWithBalance>> watchIncomeSourcesWithBalance() {
-    // Base select from income_sources
     final query = _db.select(_db.incomeSources).join([
-      // Left join financial_transactions (all rows, including deleted)
       leftOuterJoin(
         _db.financialTransactions,
-        _db.financialTransactions.incomeSourceId.equalsExp(
-          _db.incomeSources.id,
-        ),
+        _db.financialTransactions.incomeSourceId
+                .equalsExp(_db.incomeSources.id) &
+            _db.financialTransactions.isDeleted.equals(false),
       ),
-      // Left join transaction_categories to get direction
       leftOuterJoin(
         _db.transactionCategories,
         _db.transactionCategories.id.equalsExp(
-          _db.financialTransactions.categoryId,
-        ),
+              _db.financialTransactions.categoryId,
+            ) &
+            _db.transactionCategories.isDeleted.equals(false),
       ),
-    ])..orderBy([OrderingTerm.desc(_db.incomeSources.createdAt)]);
+    ])
+      ..where(_db.incomeSources.isDeleted.equals(false))
+      ..orderBy([OrderingTerm.desc(_db.incomeSources.createdAt)]);
 
-    // Convert the stream of rows to List<IncomeSourceWithBalance>
     return query.watch().map((rows) {
       final Map<int, _BalanceAccumulator> accumulators = {};
 
       for (final row in rows) {
-        // Read the income source (always present)
         final source = row.readTable(_db.incomeSources);
         final id = source.id;
 
-        // Get or create accumulator for this source
         final acc = accumulators.putIfAbsent(
           id,
           () => _BalanceAccumulator(
@@ -137,7 +118,6 @@ class IncomeTypeRepository {
             ? row.readTableOrNull(_db.transactionCategories)
             : null;
 
-        // If we have a valid transaction (not null), add its signed amount to balance
         if (transaction != null && category != null) {
           final signedAmount = category.direction == TransactionDirection.inFlow
               ? transaction.amount
@@ -146,7 +126,6 @@ class IncomeTypeRepository {
         }
       }
 
-      // Convert accumulators to final model list
       return accumulators.values
           .map(
             (acc) => IncomeSourceWithBalance(

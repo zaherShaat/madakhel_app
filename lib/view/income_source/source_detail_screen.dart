@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:madakhel_app/core/context_ext.dart';
+import 'package:madakhel_app/core/utils.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
-import 'package:madakhel_app/data/repositories/transaction_repository.dart';
 import 'package:madakhel_app/model/income_source_with_balance.dart';
-import 'package:madakhel_app/view/shared/components/bottom_nav_bar.dart';
 import 'package:madakhel_app/view/components/app_confirm_action_dialog.dart';
 import 'package:madakhel_app/view/income_source/components/add_transaction_sheet.dart';
 import 'package:madakhel_app/view/income_source/components/source_detail_top_bar.dart';
 import 'package:madakhel_app/view/income_source/components/stat_card.dart';
 import 'package:madakhel_app/view/income_source/components/transaction_row.dart';
-import 'package:madakhel_app/view_controller/income_source_controller.dart';
-import 'package:madakhel_app/view_controller/transaction_controller.dart';
+import 'package:madakhel_app/view_model/income_source_detail_view_model.dart';
+import 'package:madakhel_app/view_model/income_source_view_model.dart';
+import 'package:madakhel_app/view_model/transaction_view_model.dart';
 import 'package:provider/provider.dart';
 
 class SourceDetailScreen extends StatefulWidget {
@@ -24,12 +23,10 @@ class SourceDetailScreen extends StatefulWidget {
 }
 
 class _SourceDetailScreenState extends State<SourceDetailScreen> {
-  int _activeNavIndex = 1; // Transactions tab is active by default
-
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final txRepo = context.read<TransactionRepository>();
+    final detailViewModel = context.read<IncomeSourceDetailViewModel>();
 
     return Scaffold(
       backgroundColor: scheme.surface,
@@ -45,7 +42,7 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
             ),
             Expanded(
               child: StreamBuilder<List<FinancialTransaction>>(
-                stream: txRepo.watchTransactions(widget.source.id),
+                stream: detailViewModel.watchTransactions(widget.source.id),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return Center(
@@ -65,10 +62,11 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                       // Stats Grid — fetch sums asynchronously
                       FutureBuilder<List<double>>(
                         future: Future.wait([
-                          txRepo.getInSum(widget.source.id),
-                          txRepo.getOutSum(widget.source.id),
+                          detailViewModel.getInSum(widget.source.id),
+                          detailViewModel.getOutSum(widget.source.id),
                         ]),
                         builder: (context, sumsSnap) {
+
                           final inSum =
                               (sumsSnap.data != null &&
                                   sumsSnap.data!.isNotEmpty)
@@ -88,7 +86,7 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                             crossAxisSpacing: context.scaleW(8),
                             children: [
                               StatCard(
-                                value: widget.source.balance.toString(),
+                                value: "${inSum - outSum}",
                                 label: 'الرصيد',
                               ),
                               StatCard(
@@ -145,6 +143,8 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                       else
                         ...displayTransactions.asMap().entries.map(
                           (entry) => GestureDetector(
+                            onTap: () =>
+                                _showEditTransactionSheet(context, entry.value),
                             onLongPress: () =>
                                 _showDeleteConfirmation(context, entry.value),
                             child: TransactionRow(
@@ -159,9 +159,7 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                       if (transactions.length > 3)
                         Center(
                           child: GestureDetector(
-                            onTap: () {
-                              // TODO: Navigate to all transactions screen
-                            },
+                            onTap: () => context.go('/transactions'),
                             child: Text(
                               'عرض الكل',
                               style: TextStyle(
@@ -216,6 +214,13 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
   }
 
   void _showDeleteConfirmation(BuildContext context, dynamic transaction) {
+    if (transaction.isSystem == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('لا يمكن حذف معاملة نظامية')),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (dialogContext) => AppConfirmActionDialog(
@@ -226,7 +231,7 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
         cancelLabel: 'إلغاء',
         isDanger: true,
         onConfirm: () {
-          context.read<TransactionController>().deleteTransaction(
+          context.read<TransactionViewModel>().deleteTransaction(
             transaction.id,
           );
           Navigator.pop(dialogContext);
@@ -234,6 +239,32 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
             context,
           ).showSnackBar(const SnackBar(content: Text('تم حذف المعاملة')));
         },
+      ),
+    );
+  }
+
+  void _showEditTransactionSheet(
+    BuildContext context,
+    FinancialTransaction transaction,
+  ) {
+    if (transaction.isSystem) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('لا يمكن تعديل معاملة نظامية')),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(context.scaleW(20)),
+        ),
+      ),
+      builder: (context) => AddTransactionSheet(
+        incomeTypeId: widget.source.id,
+        initial: transaction,
       ),
     );
   }
@@ -289,7 +320,7 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
           cancelLabel: 'إلغاء',
           isDanger: true,
           onConfirm: () async {
-            await context.read<IncomeSourceController>().deleteIncomeSource(
+            await context.read<IncomeSourceViewModel>().deleteIncomeSource(
               widget.source.id,
             );
             if (!context.mounted) return;

@@ -7,6 +7,6 @@
 
 ## Must NOT be here
 - Flutter UI widgets/screens
-- Screen state/controllers (keep in `view_controller/`)
+- Screen state/controllers (keep in `view_model/`)
 - Pure domain types that don't depend on persistence (keep in `model/`)
 

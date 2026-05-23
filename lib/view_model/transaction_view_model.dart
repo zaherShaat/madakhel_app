@@ -6,17 +6,12 @@ class TransactionState {
   final bool isSuccess;
   final String? successMessage;
   final String? errorMessage;
-  // Confirmation state
-  final bool showConfirmation;
-  final Map<String, dynamic>? confirmationData;
 
   const TransactionState({
     this.isLoading = false,
     this.isSuccess = false,
     this.successMessage,
     this.errorMessage,
-    this.showConfirmation = false,
-    this.confirmationData,
   });
 
   TransactionState copyWith({
@@ -24,64 +19,36 @@ class TransactionState {
     bool? isSuccess,
     String? successMessage,
     String? errorMessage,
-    bool? showConfirmation,
-    Map<String, dynamic>? confirmationData,
   }) {
     return TransactionState(
       isLoading: isLoading ?? this.isLoading,
       isSuccess: isSuccess ?? this.isSuccess,
       successMessage: successMessage ?? this.successMessage,
       errorMessage: errorMessage ?? this.errorMessage,
-      showConfirmation: showConfirmation ?? this.showConfirmation,
-      confirmationData: confirmationData ?? this.confirmationData,
     );
   }
-
-  void reset() {}
 }
 
-class TransactionController extends ChangeNotifier {
+class TransactionViewModel extends ChangeNotifier {
   final TransactionRepository _repository;
   TransactionState _state = const TransactionState();
 
-  TransactionController(this._repository);
+  TransactionViewModel(this._repository);
 
   TransactionState get state => _state;
 
   Future<void> createTransaction({
     required int incomeTypeId,
-    required String transactionName,
     required double amount,
     required DateTime date,
     required int categoryId,
     String? note,
-    bool skipConfirmation = false,
   }) async {
-    if (!skipConfirmation) {
-      // Show confirmation dialog
-      _setState(
-        _state.copyWith(
-          showConfirmation: true,
-          confirmationData: {
-            'type': 'create',
-            'incomeTypeId': incomeTypeId,
-            'transactionName': transactionName,
-            'amount': amount,
-            'date': date,
-            'categoryId': categoryId,
-            'note': note,
-          },
-        ),
-      );
-      return;
-    }
-
     _setState(_state.copyWith(isLoading: true, isSuccess: false));
 
     try {
       await _repository.createTransaction(
         incomeSourceId: incomeTypeId,
-        transactionName: transactionName,
         amount: amount,
         date: date,
         categoryId: categoryId,
@@ -92,10 +59,8 @@ class TransactionController extends ChangeNotifier {
         _state.copyWith(
           isLoading: false,
           isSuccess: true,
-          successMessage: 'تمت إضافة المعاملة: $transactionName بنجاح',
+          successMessage: 'تمت إضافة المعاملة بنجاح',
           errorMessage: null,
-          showConfirmation: false,
-          confirmationData: null,
         ),
       );
 
@@ -107,7 +72,46 @@ class TransactionController extends ChangeNotifier {
           isLoading: false,
           isSuccess: false,
           errorMessage: 'خطأ: ${e.toString()}',
-          showConfirmation: false,
+        ),
+      );
+    }
+  }
+
+  Future<void> updateTransaction({
+    required int id,
+    required double amount,
+    required DateTime date,
+    required int categoryId,
+    String? note,
+  }) async {
+    _setState(_state.copyWith(isLoading: true, isSuccess: false));
+
+    try {
+      await _repository.updateTransaction(
+        id: id,
+        amount: amount,
+        date: date,
+        categoryId: categoryId,
+        note: note,
+      );
+
+      _setState(
+        _state.copyWith(
+          isLoading: false,
+          isSuccess: true,
+          successMessage: 'تم تحديث المعاملة بنجاح',
+          errorMessage: null,
+        ),
+      );
+
+      await Future.delayed(const Duration(seconds: 1));
+      _setState(_state.copyWith(isSuccess: false, successMessage: null));
+    } catch (e) {
+      _setState(
+        _state.copyWith(
+          isLoading: false,
+          isSuccess: false,
+          errorMessage: 'خطأ: ${e.toString()}',
         ),
       );
     }

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:madakhel_app/core/utils.dart';
-import 'package:madakhel_app/view_controller/auth_controller.dart';
+import 'package:madakhel_app/view_model/auth_view_model.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/context_ext.dart';
 import '../components/app_action_link.dart';
 import '../components/app_screen_header.dart';
 import '../components/app_text_field.dart';
@@ -97,7 +96,7 @@ class _SignInScreenState extends State<SignInScreen> {
                                 ),
                               ),
                               SizedBox(height: context.scaleH(16)),
-                              Selector<AuthController, bool>(
+                              Selector<AuthViewModel, bool>(
                                 selector: (_, controller) => controller.busy,
                                 builder: (bCntxt, busy, _) {
                                   return AppPrimaryButton(
@@ -132,11 +131,10 @@ class _SignInScreenState extends State<SignInScreen> {
                                                 .validate()) {
                                               try {
                                                 await bCntxt
-                                                    .read<AuthController>()
+                                                    .read<AuthViewModel>()
                                                     .signInWithGoogle();
                                               } catch (error) {
                                                 if (!context.mounted) return;
-                                                debugPrint("$error < error>");
                                                 ScaffoldMessenger.of(
                                                   context,
                                                 ).showSnackBar(

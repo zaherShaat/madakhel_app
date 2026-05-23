@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:madakhel_app/core/utils.dart';
 
-import '../../core/context_ext.dart';
 import '../components/app_ghost_button.dart';
 import '../components/app_primary_button.dart';
 import '../components/app_screen_header.dart';
@@ -32,7 +32,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         child: Column(
           children: [
             AppScreenHeader(
-              title: 'إعادة تعيين كلمة المرور',
+              title: 'ط¥ط¹ط§ط¯ط© طھط¹ظٹظٹظ† ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±',
               onBack: () => context.go('/start'),
             ),
             Expanded(
@@ -54,7 +54,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              'أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين.',
+                              'ط£ط¯ط®ظ„ ط¨ط±ظٹط¯ظƒ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ ظˆط³ظ†ط±ط³ظ„ ظ„ظƒ ط±ط§ط¨ط· ط¥ط¹ط§ط¯ط© ط§ظ„طھط¹ظٹظٹظ†.',
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                     height: 1.7,
                                     color: scheme.onSurface.withValues(alpha: 0.8),
@@ -62,21 +62,20 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             ),
                             SizedBox(height: context.scaleH(12)),
                             AppTextField(
-                              label: 'البريد الإلكتروني',
+                              label: 'ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ',
                               hintText: 'you@email.com',
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                             ),
                             SizedBox(height: context.scaleH(16)),
                             AppPrimaryButton(
-                              label: 'إرسال الرابط',
-                              // TODO: Implement forgot password logic
-                              onPressed: () => context.go('/sign-in'),
+                              label: 'ط¥ط±ط³ط§ظ„ ط§ظ„ط±ط§ط¨ط·',
+                              onPressed: () => context.go('/start'),
                             ),
                             SizedBox(height: context.scaleH(10)),
                             AppGhostButton(
-                              label: 'العودة لتسجيل الدخول',
-                              onPressed: () => context.go('/sign-in'),
+                              label: 'ط§ظ„ط¹ظˆط¯ط© ظ„طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„',
+                              onPressed: () => context.go('/start'),
                             ),
                           ],
                         ),

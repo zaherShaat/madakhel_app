@@ -8,50 +8,81 @@ import 'package:madakhel_app/data/repositories/transaction_category_repository.d
 import 'package:madakhel_app/data/repositories/transaction_repository.dart';
 import 'package:madakhel_app/firebase_options.dart';
 import 'package:madakhel_app/model/auth_user.dart';
-import 'package:madakhel_app/view_controller/theme_provider.dart';
+import 'package:madakhel_app/view_model/theme_view_model.dart';
 import 'package:provider/provider.dart';
 
 import 'core/routing/app_router.dart';
 import 'data/auth/auth_service.dart';
-import 'view_controller/auth_controller.dart';
-import 'view_controller/income_source_controller.dart';
-import 'view_controller/transaction_controller.dart';
+import 'view_model/auth_view_model.dart';
+import 'view_model/category_view_model.dart';
+import 'view_model/home_view_model.dart';
+import 'view_model/income_source_detail_view_model.dart';
+import 'view_model/income_source_view_model.dart';
+import 'view_model/splash_view_model.dart';
+import 'view_model/transaction_view_model.dart';
+import 'view_model/transactions_view_model.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await GoogleSignIn.instance.initialize(
     clientId:
         '997046209271-jh0ll4tm1m94s597tc9esuh7pnalbpet.apps.googleusercontent.com',
   );
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  final authService = AuthService();
   final db = AppDatabase();
   runApp(
     MultiProvider(
       providers: [
-        Provider<AuthService>(create: (_) => AuthService()),
-        ChangeNotifierProvider<AuthController>(
-          create: (ctx) => AuthController(ctx.read<AuthService>()),
+        // Provider<AuthService>(create: (ctx) => AuthService()),
+        ChangeNotifierProvider<AuthViewModel>(
+          create: (ctx) => AuthViewModel(authService),
         ),
-        ProxyProvider<AuthController, AuthUser?>(
-          update: (_, authController, __) => authController.user,
+        ProxyProvider<AuthViewModel, AuthUser?>(
+          update: (ctx, authViewModel, authUser) => authViewModel.user,
         ),
-        ChangeNotifierProvider<ThemeProvider>(create: (ctx) => ThemeProvider()),
+        ChangeNotifierProvider<ThemeViewModel>(
+          create: (ctx) => ThemeViewModel()..loadThemeMode(),
+        ),
         // Repositories
-        Provider<IncomeTypeRepository>(create: (_) => IncomeTypeRepository(db)),
+        Provider<IncomeTypeRepository>(
+          create: (ctx) => IncomeTypeRepository(db),
+        ),
         Provider<TransactionRepository>(
-          create: (_) => TransactionRepository(db),
+          create: (ctx) => TransactionRepository(db),
         ),
         Provider<TransactionCategoryRepository>(
-          create: (_) => TransactionCategoryRepository(db),
+          create: (ctx) => TransactionCategoryRepository(db),
         ),
-        // Controllers
-        ChangeNotifierProvider<TransactionController>(
+        // ViewModels
+        ChangeNotifierProvider<TransactionViewModel>(
           create: (ctx) =>
-              TransactionController(ctx.read<TransactionRepository>()),
+              TransactionViewModel(ctx.read<TransactionRepository>()),
         ),
-        ChangeNotifierProvider<IncomeSourceController>(
+        ChangeNotifierProvider<TransactionsViewModel>(
           create: (ctx) =>
-              IncomeSourceController(ctx.read<IncomeTypeRepository>()),
+              TransactionsViewModel(ctx.read<TransactionRepository>()),
+        ),
+        ChangeNotifierProvider<CategoryViewModel>(
+          create: (ctx) =>
+              CategoryViewModel(ctx.read<TransactionCategoryRepository>()),
+        ),
+        ChangeNotifierProvider<IncomeSourceViewModel>(
+          create: (ctx) =>
+              IncomeSourceViewModel(ctx.read<IncomeTypeRepository>()),
+        ),
+        ChangeNotifierProvider<HomeViewModel>(
+          create: (ctx) => HomeViewModel(ctx.read<IncomeTypeRepository>()),
+        ),
+        ChangeNotifierProvider<IncomeSourceDetailViewModel>(
+          create: (ctx) =>
+              IncomeSourceDetailViewModel(ctx.read<TransactionRepository>()),
+        ),
+        ChangeNotifierProvider<SplashViewModel>(
+          create: (ctx) => SplashViewModel(
+            ctx.read<AuthViewModel>(),
+            ctx.read<IncomeTypeRepository>(),
+          ),
         ),
       ],
       child: const MainApp(),
@@ -66,13 +97,13 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Builder(
       builder: (context) {
-        final auth = context.read<AuthController>();
-        final themeProvider = context.watch<ThemeProvider>();
+        final auth = context.read<AuthViewModel>();
+        final themeViewModel = context.watch<ThemeViewModel>();
         final router = createAppRouter(auth);
         return MaterialApp.router(
           theme: AppTheme.light(),
           darkTheme: AppTheme.dark(),
-          themeMode: themeProvider.mode,
+          themeMode: themeViewModel.mode,
           debugShowCheckedModeBanner: false,
           routerConfig: router,
         );

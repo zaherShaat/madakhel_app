@@ -1,0 +1,77 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:madakhel_app/core/utils.dart';
+import 'package:madakhel_app/view_model/splash_view_model.dart';
+import 'package:provider/provider.dart';
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadAndRoute());
+  }
+
+  Future<void> _loadAndRoute() async {
+    final signedIn = await context.read<SplashViewModel>().load();
+
+    if (!mounted) return;
+    context.go(signedIn ? '/home' : '/start');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      backgroundColor: scheme.background,
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: context.scaleW(24)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: context.scaleW(72),
+                  height: context.scaleW(72),
+                  decoration: BoxDecoration(
+                    color: scheme.onBackground,
+                    borderRadius: BorderRadius.circular(context.scaleW(20)),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.account_balance_wallet_outlined,
+                    color: scheme.background,
+                    size: context.scaleW(36),
+                  ),
+                ),
+                SizedBox(height: context.scaleH(24)),
+                Text(
+                  'مداخيل',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: scheme.onBackground,
+                  ),
+                ),
+                SizedBox(height: context.scaleH(8)),
+                Text(
+                  'تحميل بياناتك...',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: scheme.onSurface),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -30,11 +30,11 @@ class IncomeSourceState {
   }
 }
 
-class IncomeSourceController extends ChangeNotifier {
+class IncomeSourceViewModel extends ChangeNotifier {
   final IncomeTypeRepository _repository;
   IncomeSourceState _state = const IncomeSourceState();
 
-  IncomeSourceController(this._repository);
+  IncomeSourceViewModel(this._repository);
 
   IncomeSourceState get state => _state;
 
@@ -127,7 +127,6 @@ class IncomeSourceController extends ChangeNotifier {
           successMessage: 'تم حذف مصدر الدخل بنجاح',
         ),
       );
-      //TODO:(if this a correct approach) delete all transactions related to this source too and the user will be warned about this before confirming the deletion
       await Future.delayed(const Duration(seconds: 1));
       _setState(_state.copyWith(isSuccess: false, successMessage: null));
     } catch (e) {

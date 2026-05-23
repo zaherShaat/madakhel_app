@@ -7,12 +7,12 @@ import '../data/auth/auth_service.dart';
 import '../data/auth/auth_storage.dart';
 import '../model/auth_user.dart';
 
-class AuthController extends ChangeNotifier {
+class AuthViewModel extends ChangeNotifier {
   final AuthService _service;
   late final AuthUserStorage _storage;
   final Completer<void> _readyCompleter = Completer<void>();
 
-  AuthController(this._service) {
+  AuthViewModel(this._service) {
     _initialize();
   }
 
@@ -31,50 +31,13 @@ class AuthController extends ChangeNotifier {
   Future<void> _initialize() async {
     _storage = await AuthUserStorage.instance();
     _sub = _service.authStateChanges().listen(_handleAuthState);
-    await _loadInitialAuthState();
-  }
-
-  Future<void> _loadInitialAuthState() async {
-    final firebaseUser = _service.currentUser;
-    if (firebaseUser != null) {
-      await _handleAuthState(firebaseUser);
-      return;
-    }
-
-    await _recoverCachedAuthUser();
-  }
-
-  Future<void> _recoverCachedAuthUser() async {
-    final googleUser = await _service.currentGoogleAuthUser();
-    if (googleUser != null) {
-      _user = googleUser;
-      await _storage.saveAuthUser(googleUser);
-    } else {
-      _user = _storage.storedAuthUser;
-      if (_user == null) {
-        await _storage.clearAuthUser();
-      }
-    }
-
-    _initialized = true;
-    if (!_readyCompleter.isCompleted) {
-      _readyCompleter.complete();
-    }
-    notifyListeners();
+    await _handleAuthState(_service.currentUser);
   }
 
   Future<void> _handleAuthState(User? firebaseUser) async {
     if (firebaseUser == null) {
-      final googleUser = await _service.currentGoogleAuthUser();
-      if (googleUser != null) {
-        _user = googleUser;
-        await _storage.saveAuthUser(googleUser);
-      } else {
-        _user = _storage.storedAuthUser;
-        if (_user == null) {
-          await _storage.clearAuthUser();
-        }
-      }
+      _user = null;
+      await _storage.clearAuthUser();
     } else {
       final authUser = AuthUser.fromFirebase(firebaseUser);
       _user = authUser;
@@ -88,10 +51,10 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _ensureReady() => _readyCompleter.future;
+  Future<void> ensureReady() => _readyCompleter.future;
 
   Future<AuthUser?> signInWithGoogle() async {
-    await _ensureReady();
+    await ensureReady();
     _setBusy(true);
     try {
       final authUser = await _service.signInWithGoogleUser();
@@ -111,7 +74,7 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    await _ensureReady();
+    await ensureReady();
     _setBusy(true);
     try {
       _lastError = null;
@@ -124,7 +87,7 @@ class AuthController extends ChangeNotifier {
       _setBusy(false);
     }
   }
-
+/// Let provider announce busy(loading state)
   void _setBusy(bool v) {
     if (_busy == v) return;
     _busy = v;

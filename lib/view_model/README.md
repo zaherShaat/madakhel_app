@@ -1,4 +1,4 @@
-# MVVC - ViewController
+# MVVM - ViewModel
 
 ## Must be here
 - Presentation/state logic (screen state, loading/error handling)

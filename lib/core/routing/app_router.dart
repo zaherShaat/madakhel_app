@@ -1,9 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:madakhel_app/core/routing/app_transition.dart';
-import 'package:madakhel_app/view/auth/forgot_password_screen.dart';
-import 'package:madakhel_app/view/auth/forgot_password_sent_screen.dart';
-import 'package:madakhel_app/view/auth/signin_screen.dart';
-import 'package:madakhel_app/view/auth/signup_screen.dart';
+import 'package:madakhel_app/data/db/app_db.dart';
+import 'package:madakhel_app/view/auth/splash_screen.dart';
 import 'package:madakhel_app/view/auth/start_page.dart';
 import 'package:madakhel_app/view/settings/settings_screen.dart';
 import 'package:madakhel_app/view/transactions/add_category_screen.dart';
@@ -14,84 +12,37 @@ import '../../model/income_source_with_balance.dart';
 import '../../view/home/home_screen.dart';
 import '../../view/income_source/income_source_form_screen.dart';
 import '../../view/income_source/source_detail_screen.dart';
-import '../../view_controller/auth_controller.dart';
+import '../../view_model/auth_view_model.dart';
 
-GoRouter createAppRouter(AuthController auth) {
-  String? lastSignedInState;
-
+GoRouter createAppRouter(AuthViewModel auth) {
   return GoRouter(
-    initialLocation: '/start',
+    initialLocation: '/splash',
     refreshListenable: auth,
     redirect: (context, GoRouterState state) {
-      if (!auth.ready) {
-        return null;
-      }
+      if (!auth.ready || state.matchedLocation == '/splash') return null;
 
       final signedIn = auth.isSignedIn;
-      final signedInStr = signedIn.toString();
+      final isAuthRoute = state.matchedLocation == '/start';
 
-      // Skip if state hasn't changed
-      if (lastSignedInState == signedInStr) {
-        return null;
-      }
-
-      lastSignedInState = signedInStr;
-
-      final isAuthRoute =
-          state.matchedLocation == '/start' ||
-          state.matchedLocation == '/forgot-password' ||
-          state.matchedLocation == '/forgot-sent' ||
-          state.matchedLocation == '/sign-in' ||
-          state.matchedLocation == '/sign-up';
-
-      if (!signedIn) {
-        return isAuthRoute ? null : '/start';
-      }
-
-      if (isAuthRoute) return '/home';
+      if (!signedIn && !isAuthRoute) return '/start';
+      if (signedIn && isAuthRoute) return '/home';
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/splash',
+        pageBuilder: (context, state) => AppTransitions.fadeScale(
+          context: context,
+          state: state,
+          child: const SplashScreen(),
+        ),
+      ),
       GoRoute(
         path: '/start',
         pageBuilder: (context, state) => AppTransitions.fadeScale(
           context: context,
           state: state,
           child: const StartPage(),
-        ),
-      ),
-      GoRoute(
-        path: '/sign-in',
-        pageBuilder: (context, state) => AppTransitions.slideVertical(
-          context: context,
-          state: state,
-          child: const SignInScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/forgot-password',
-        pageBuilder: (context, state) => AppTransitions.slideVertical(
-          context: context,
-          state: state,
-          child: const ForgotPasswordScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/forgot-sent',
-        pageBuilder: (context, state) => AppTransitions.slideVertical(
-          context: context,
-          state: state,
-          child: ForgotPasswordSentScreen(
-            email: state.uri.queryParameters['email'] ?? 'your@email.com',
-          ),
-        ),
-      ),
-      GoRoute(
-        path: '/sign-up',
-        pageBuilder: (context, state) => AppTransitions.slideVertical(
-          context: context,
-          state: state,
-          child: const SignUpScreen(),
         ),
       ),
       GoRoute(
@@ -161,7 +112,11 @@ GoRouter createAppRouter(AuthController auth) {
         pageBuilder: (context, state) => AppTransitions.fadeScale(
           context: context,
           state: state,
-          child: const AddCategoryScreen(),
+          child: AddCategoryScreen(
+            initial: state.extra is TransactionCategory
+                ? state.extra as TransactionCategory
+                : null,
+          ),
         ),
       ),
     ],

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:madakhel_app/core/context_ext.dart';
+import 'package:madakhel_app/core/utils.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int activeIndex;

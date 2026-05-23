@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:madakhel_app/core/context_ext.dart';
+import 'package:madakhel_app/core/utils.dart';
 import 'package:madakhel_app/model/auth_user.dart';
-import 'package:madakhel_app/view/components/app_ghost_button.dart';
+import 'package:madakhel_app/view/components/app_confirm_action_dialog.dart';
 import 'package:madakhel_app/view/shared/components/app_top_bar.dart';
 import 'package:madakhel_app/view/shared/components/bottom_nav_bar.dart';
-import 'package:madakhel_app/view_controller/theme_provider.dart';
+import 'package:madakhel_app/view_model/auth_view_model.dart';
+import 'package:madakhel_app/view_model/theme_view_model.dart';
 import 'package:provider/provider.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -105,14 +106,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   // Account section
                   _SectionTitle('الحساب', context),
                   _SettingRow('تعديل الملف الشخصي', context),
-                  _SettingRow('تغيير كلمة المرور', context),
                   SizedBox(height: context.scaleH(16)),
                   // Data section
                   _SectionTitle('إدارة البيانات', context),
                   _SettingRow(
                     'إدارة فئات المعاملات',
                     context,
-                    onTap: () => context.go('/categories'),
+                    onTap: () => context.push('/categories'),
                   ),
                   _SettingRow('تصدير إلى CSV', context),
                   _SettingRow('النسخ الاحتياطي', context, isComingSoon: true),
@@ -120,35 +120,58 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   // Appearance section
                   _SectionTitle('المظهر', context),
                   SizedBox(height: context.scaleH(8)),
-                  Consumer<ThemeProvider>(
-                    builder: (context, themeProvider, child) => Wrap(
+                  Consumer<ThemeViewModel>(
+                    builder: (context, themeViewModel, child) => Wrap(
                       alignment: WrapAlignment.center,
                       spacing: context.scaleW(6),
                       children: AppThemeMode.values.asMap().entries.map((e) {
-                        return AppGhostButton(
-                          onPressed: () => themeProvider.setThemeMode(
-                            AppThemeMode.values[e.key],
+                        return InkWell(
+                          onTap: () async {
+                            themeViewModel.setThemeMode(
+                              AppThemeMode.values[e.key],
+                            );
+                          },
+                          child: Chip(
+                            // isActive: themeViewModel.themeMode.index == e.key,
+                            label: Text(e.value.name),
                           ),
-                          // isActive: themeProvider.themeMode.index == e.key,
-                          label: e.value.name,
                         );
                       }).toList(),
                     ),
                   ),
                   SizedBox(height: context.scaleH(24)),
                   // Logout button
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFCEBEB),
-                      minimumSize: Size(double.infinity, context.scaleH(44)),
-                    ),
-                    child: Text(
-                      'تسجيل الخروج',
-                      style: TextStyle(
-                        color: const Color(0xFFA32D2D),
-                        fontSize: context.scaleSp(13),
-                        fontWeight: FontWeight.w600,
+                  Consumer<AuthViewModel>(
+                    builder: (context, authProvider, child) => ElevatedButton(
+                      onPressed: () async {
+                        showDialog(
+                          context: context,
+                          builder: (dialogContext) => AppConfirmActionDialog(
+                            title: "أنت على وشك تسجيل الخروج",
+                            message: "هل تريد فعلاً تسجيل الخروج",
+                            confirmLabel: "تأكيد",
+                            cancelLabel: "إلغاء",
+                            onConfirm: () async {
+                              await authProvider.signOut();
+                              if (!dialogContext.mounted) return;
+                              Navigator.pop(dialogContext);
+                              if (!context.mounted) return;
+                              context.go('/start');
+                            },
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFCEBEB),
+                        minimumSize: Size(double.infinity, context.scaleH(44)),
+                      ),
+                      child: Text(
+                        'تسجيل الخروج',
+                        style: TextStyle(
+                          color: const Color(0xFFA32D2D),
+                          fontSize: context.scaleSp(13),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),

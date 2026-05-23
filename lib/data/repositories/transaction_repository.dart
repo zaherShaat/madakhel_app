@@ -76,7 +76,6 @@ class TransactionRepository {
   /// category for that direction to attach the transaction to.
   Future<int> createTransaction({
     required int incomeSourceId,
-    required String transactionName,
     required double amount,
     required DateTime date,
     required int categoryId,
@@ -98,10 +97,31 @@ class TransactionRepository {
         );
   }
 
+  Future<void> updateTransaction({
+    required int id,
+    required double amount,
+    required DateTime date,
+    required int categoryId,
+    String? note,
+  }) async {
+    await (_db.update(
+      _db.financialTransactions,
+    )..where((t) => t.id.equals(id) & t.isSystem.equals(false))).write(
+      FinancialTransactionsCompanion(
+        categoryId: Value(categoryId),
+        amount: Value(amount),
+        note: Value(note),
+        date: Value(date),
+        updatedAt: Value(DateTime.now()),
+        syncStatus: const Value('pending'),
+      ),
+    );
+  }
+
   Future<void> deleteById(int id) async {
     await (_db.update(
       _db.financialTransactions,
-    )..where((t) => t.id.equals(id))).write(
+    )..where((t) => t.id.equals(id) & t.isSystem.equals(false))).write(
       FinancialTransactionsCompanion(
         isDeleted: const Value(true),
         updatedAt: Value(DateTime.now()),
@@ -172,7 +192,20 @@ WHERE ft.income_source_id = ? AND tc.direction = ? AND ft.is_deleted = 0 AND tc.
           _db.financialTransactions.categoryId,
         ),
       ),
-    ])..orderBy([OrderingTerm.desc(_db.financialTransactions.date)])).get();
+      innerJoin(
+        _db.incomeSources,
+        _db.incomeSources.id.equalsExp(
+          _db.financialTransactions.incomeSourceId,
+        ),
+      ),
+    ])
+          ..where(
+            _db.financialTransactions.isDeleted.equals(false) &
+                _db.transactionCategories.isDeleted.equals(false) &
+                _db.incomeSources.isDeleted.equals(false),
+          )
+          ..orderBy([OrderingTerm.desc(_db.financialTransactions.date)]))
+        .get();
 
     final Map<TransactionCategory, List<FinancialTransaction>> grouped = {};
     for (final row in rows) {

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:madakhel_app/core/utils.dart';
+import 'package:madakhel_app/view_model/auth_view_model.dart';
+import 'package:provider/provider.dart';
 
-import '../../core/context_ext.dart';
-import '../components/app_ghost_button.dart';
 import '../components/app_primary_button.dart';
 
 class StartPage extends StatelessWidget {
@@ -31,7 +32,6 @@ class StartPage extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // const Spacer(),
                     const _AppLogoCard(),
                     SizedBox(height: context.scaleH(24)),
                     Text(
@@ -44,22 +44,61 @@ class StartPage extends StatelessWidget {
                     ),
                     SizedBox(height: context.scaleH(8)),
                     Text(
-                      'تتبّع كل مصدر دخل بدقة،\nواعرف رصيدك في أي وقت.',
+                      'تتبع كل مصدر دخل بدقة،\nواعرف رصيدك في أي وقت.',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         height: 1.7,
                         color: scheme.onSurface.withValues(alpha: 0.85),
                       ),
                     ),
-                    SizedBox(height: context.scaleH(12)),
-                    AppPrimaryButton(
-                      label: 'ابدأ الآن',
-                      onPressed: () => context.push('/sign-up'),
-                    ),
-                    SizedBox(height: context.scaleH(12)),
-                    AppGhostButton(
-                      label: 'لديّ حساب بالفعل',
-                      onPressed: () => context.push('/sign-in'),
+                    SizedBox(height: context.scaleH(24)),
+                    Selector<AuthViewModel, bool>(
+                      selector: (_, viewModel) => viewModel.busy,
+                      builder: (context, busy, _) => AppPrimaryButton(
+                        label: busy
+                            ? 'جاري تسجيل الدخول...'
+                            : 'المتابعة مع Google',
+                        leading: Container(
+                          width: 22,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: scheme.outline,
+                              width: 0.6,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            'G',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF4285F4),
+                            ),
+                          ),
+                        ),
+                        onPressed: busy
+                            ? null
+                            : () async {
+                                try {
+                                  await context
+                                      .read<AuthViewModel>()
+                                      .signInWithGoogle();
+                                  if (!context.mounted) return;
+                                  context.go('/home');
+                                } catch (_) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'فشل تسجيل الدخول عبر Google',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                      ),
                     ),
                   ],
                 ),
@@ -87,7 +126,7 @@ class _AppLogoCard extends StatelessWidget {
       ),
       alignment: Alignment.center,
       child: Icon(
-        Icons.lock_outline_rounded,
+        Icons.account_balance_wallet_outlined,
         color: scheme.background,
         size: context.scaleW(36),
       ),

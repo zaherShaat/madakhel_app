@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:madakhel_app/core/context_ext.dart';
-import 'package:madakhel_app/core/color_helper.dart';
+import 'package:madakhel_app/core/utils.dart';
 
 class StatCard extends StatelessWidget {
   final String value;

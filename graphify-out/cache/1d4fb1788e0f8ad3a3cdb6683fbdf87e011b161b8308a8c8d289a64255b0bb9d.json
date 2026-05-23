@@ -1,1 +1,22 @@
-{"__graphifyTsExtractorVersion":61,"nodes":[{"id":"build_gradle","label":"build.gradle.kts","file_type":"code","source_file":"E:/Flutter/madakhel_app/android/build.gradle.kts","source_location":"L1","layer":"base","provenance":[{"capability_id":"builtin:extract:kotlin","stage":"extract","source_file":"E:/Flutter/madakhel_app/android/build.gradle.kts","source_location":"L1"}]}],"edges":[]}
+{
+    "__graphifyTsExtractorVersion": 61,
+    "nodes": [
+        {
+            "id": "build_gradle",
+            "label": "build.gradle.kts",
+            "file_type": "code",
+            "source_file": "E:/Flutter/madakhel_app/android/build.gradle.kts",
+            "source_location": "L1",
+            "layer": "base",
+            "provenance": [
+                {
+                    "capability_id": "builtin:extract:kotlin",
+                    "stage": "extract",
+                    "source_file": "E:/Flutter/madakhel_app/android/build.gradle.kts",
+                    "source_location": "L1"
+                }
+            ]
+        }
+    ],
+    "edges": []
+}

@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:madakhel_app/core/context_ext.dart';
+import 'package:madakhel_app/core/utils.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
-import 'package:madakhel_app/data/repositories/transaction_category_repository.dart';
-import 'package:madakhel_app/view_controller/transaction_controller.dart';
+import 'package:madakhel_app/view_model/category_view_model.dart';
+import 'package:madakhel_app/view_model/transaction_view_model.dart';
 import 'package:provider/provider.dart';
 
 class TransactionData {
-  final String templateName;
   final double amount;
   final DateTime date;
   final int categoryId;
   final String? note;
 
   TransactionData({
-    required this.templateName,
     required this.amount,
     required this.date,
     required this.categoryId,
@@ -23,13 +21,17 @@ class TransactionData {
 
 class AddTransactionSheet extends StatefulWidget {
   final int incomeTypeId;
+  final FinancialTransaction? initial;
   final Function(TransactionData)? onAdd;
 
   const AddTransactionSheet({
     super.key,
     required this.incomeTypeId,
+    this.initial,
     this.onAdd,
   });
+
+  bool get isEdit => initial != null;
 
   @override
   State<AddTransactionSheet> createState() => _AddTransactionSheetState();
@@ -40,77 +42,30 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   late DateTime _selectedDate;
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
-  final _nameController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _selectedDate = DateTime.now();
+    final initial = widget.initial;
+    _selectedDate = initial?.date ?? DateTime.now();
+    if (initial != null) {
+      _amountController.text = initial.amount.toString();
+      _noteController.text = initial.note ?? '';
+    }
   }
 
   @override
   void dispose() {
     _amountController.dispose();
     _noteController.dispose();
-    _nameController.dispose();
     super.dispose();
-  }
-
-  Future<void> _handleAdd() async {
-    if (_selectedCategory == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('يرجى اختيار نوع المعاملة')));
-      return;
-    }
-
-    if (_amountController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('يرجى إدخال المبلغ')));
-      return;
-    }
-
-    final amount = double.tryParse(_amountController.text);
-    if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('يرجى إدخال مبلغ صحيح')));
-      return;
-    }
-
-    final controller = context.read<TransactionController>();
-    await controller.createTransaction(
-      incomeTypeId: widget.incomeTypeId,
-      transactionName: _nameController.text,
-      amount: amount,
-      date: _selectedDate,
-      categoryId: _selectedCategory!.id,
-      note: _noteController.text.isNotEmpty ? _noteController.text : null,
-    );
-
-    if (mounted) {
-      final state = controller.state;
-      if (state.isSuccess) {
-        widget.onAdd?.call(
-          TransactionData(
-            templateName: 'معاملة جديدة',
-            amount: amount,
-            date: _selectedDate,
-            categoryId: _selectedCategory!.id,
-            note: _noteController.text.isNotEmpty ? _noteController.text : null,
-          ),
-        );
-        Navigator.pop(context);
-      }
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return Consumer<TransactionController>(
+    return Consumer<TransactionViewModel>(
       builder: (context, controller, _) {
         final state = controller.state;
         final isLoading = state.isLoading;
@@ -120,16 +75,26 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
             bottom: MediaQuery.of(context).viewInsets.bottom,
             left: context.scaleW(16),
             right: context.scaleW(16),
-            top: context.scaleH(16),
           ),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header
+                SizedBox(height: context.scaleH(10)),
+                Center(
+                  child: Container(
+                    width: context.scaleW(36),
+                    height: context.scaleH(4),
+                    decoration: BoxDecoration(
+                      color: scheme.outline.withAlpha(100),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                SizedBox(height: context.scaleH(14)),
                 Text(
-                  'إضافة معاملة',
+                  widget.isEdit ? 'تعديل معاملة' : 'إضافة معاملة',
                   style: TextStyle(
                     fontSize: context.scaleSp(18),
                     fontWeight: FontWeight.bold,
@@ -137,296 +102,37 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                   ),
                 ),
                 SizedBox(height: context.scaleH(16)),
-
-                // Error Message
-                if (state.errorMessage != null)
-                  Container(
-                    padding: EdgeInsets.all(context.scaleW(12)),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withAlpha(30),
-                      borderRadius: BorderRadius.circular(context.scaleW(8)),
-                      border: Border.all(
-                        color: Colors.red.withAlpha(100),
-                        width: 0.5,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          color: Colors.red,
-                          size: context.scaleW(20),
-                        ),
-                        SizedBox(width: context.scaleW(8)),
-                        Expanded(
-                          child: Text(
-                            state.errorMessage!,
-                            style: TextStyle(
-                              fontSize: context.scaleSp(12),
-                              color: Colors.red,
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: controller.clearError,
-                          child: Icon(
-                            Icons.close,
-                            color: Colors.red,
-                            size: context.scaleW(16),
-                          ),
-                        ),
-                      ],
-                    ),
+                if (state.errorMessage != null) ...[
+                  _MessageBox(
+                    message: state.errorMessage!,
+                    color: scheme.error,
+                    icon: Icons.error_outline,
+                    onClose: controller.clearError,
                   ),
-                if (state.errorMessage != null)
                   SizedBox(height: context.scaleH(12)),
-
-                // Success Message
-                if (state.isSuccess && state.successMessage != null)
-                  Container(
-                    padding: EdgeInsets.all(context.scaleW(12)),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withAlpha(30),
-                      borderRadius: BorderRadius.circular(context.scaleW(8)),
-                      border: Border.all(
-                        color: Colors.green.withAlpha(100),
-                        width: 0.5,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.check_circle_outline,
-                          color: Colors.green,
-                          size: context.scaleW(20),
-                        ),
-                        SizedBox(width: context.scaleW(8)),
-                        Expanded(
-                          child: Text(
-                            state.successMessage!,
-                            style: TextStyle(
-                              fontSize: context.scaleSp(12),
-                              color: Colors.green,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                if (state.isSuccess) SizedBox(height: context.scaleH(12)),
-
-                // Category Selector
-                FutureBuilder<List<TransactionCategory>>(
-                  future: context
-                      .read<TransactionCategoryRepository>()
-                      .getAll(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const CircularProgressIndicator();
-                    }
-                    if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    }
-                    final categories = snapshot.data ?? [];
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'نوع المعاملة',
-                          style: TextStyle(
-                            fontSize: context.scaleSp(12),
-                            color: scheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        SizedBox(height: context.scaleH(8)),
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(
-                              context.scaleW(8),
-                            ),
-                            border: Border.all(
-                              color: scheme.outlineVariant,
-                              width: 0.5,
-                            ),
-                          ),
-                          child: DropdownButton<TransactionCategory>(
-                            value: _selectedCategory,
-                            isExpanded: true,
-                            underline: const SizedBox(),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: context.scaleW(12),
-                              vertical: context.scaleH(8),
-                            ),
-                            hint: const Text('اختر نوع المعاملة'),
-                            items: categories
-                                .map(
-                                  (category) => DropdownMenuItem(
-                                    value: category,
-                                    child: Text(category.name),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (value) {
-                              if (value != null) {
-                                setState(() {
-                                  _selectedCategory = value;
-                                });
-                              }
-                            },
-                          ),
-                        ),
-                        SizedBox(height: context.scaleH(12)),
-                      ],
-                    );
+                ],
+                _CategoryField(
+                  selected: _selectedCategory,
+                  initialCategoryId: widget.initial?.categoryId,
+                  enabled: !isLoading,
+                  onChanged: (value) {
+                    setState(() => _selectedCategory = value);
                   },
                 ),
-
-                // Amount Input
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'المبلغ',
-                      style: TextStyle(
-                        fontSize: context.scaleSp(12),
-                        color: scheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: context.scaleH(8)),
-                    TextField(
-                      controller: _amountController,
-                      enabled: !isLoading,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: '0.00',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            context.scaleW(8),
-                          ),
-                          borderSide: BorderSide(
-                            color: scheme.outlineVariant,
-                            width: 0.5,
-                          ),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: context.scaleW(12),
-                          vertical: context.scaleH(12),
-                        ),
-                      ),
-                      textAlign: TextAlign.end,
-                    ),
-                    SizedBox(height: context.scaleH(12)),
-                  ],
+                SizedBox(height: context.scaleH(12)),
+                _AmountField(
+                  controller: _amountController,
+                  enabled: !isLoading,
                 ),
-
-                // Date Picker
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'التاريخ',
-                      style: TextStyle(
-                        fontSize: context.scaleSp(12),
-                        color: scheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: context.scaleH(8)),
-                    GestureDetector(
-                      onTap: isLoading
-                          ? null
-                          : () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: _selectedDate,
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime.now(),
-                              );
-                              if (picked != null) {
-                                setState(() => _selectedDate = picked);
-                              }
-                            },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(
-                            context.scaleW(8),
-                          ),
-                          border: Border.all(
-                            color: scheme.outlineVariant,
-                            width: 0.5,
-                          ),
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: context.scaleW(12),
-                          vertical: context.scaleH(12),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Icon(
-                              Icons.calendar_today_outlined,
-                              size: context.scaleW(20),
-                              color: scheme.onSurfaceVariant,
-                            ),
-                            Text(
-                              '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}',
-                              style: TextStyle(
-                                fontSize: context.scaleSp(14),
-                                color: scheme.onSurface,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: context.scaleH(12)),
-                  ],
+                SizedBox(height: context.scaleH(12)),
+                _DateField(
+                  selectedDate: _selectedDate,
+                  enabled: !isLoading,
+                  onChanged: (date) => setState(() => _selectedDate = date),
                 ),
-
-                // Note Field
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'ملاحظات (اختياري)',
-                      style: TextStyle(
-                        fontSize: context.scaleSp(12),
-                        color: scheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: context.scaleH(8)),
-                    TextField(
-                      controller: _noteController,
-                      enabled: !isLoading,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        hintText: 'أضف ملاحظة...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            context.scaleW(8),
-                          ),
-                          borderSide: BorderSide(
-                            color: scheme.outlineVariant,
-                            width: 0.5,
-                          ),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: context.scaleW(12),
-                          vertical: context.scaleH(12),
-                        ),
-                      ),
-                      textAlign: TextAlign.end,
-                    ),
-                    SizedBox(height: context.scaleH(16)),
-                  ],
-                ),
-
-                // Action Buttons
+                SizedBox(height: context.scaleH(12)),
+                _NoteField(controller: _noteController, enabled: !isLoading),
+                SizedBox(height: context.scaleH(16)),
                 Row(
                   children: [
                     Expanded(
@@ -434,21 +140,13 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                         onPressed: isLoading
                             ? null
                             : () => Navigator.pop(context),
-                        child: Text(
-                          'إلغاء',
-                          style: TextStyle(
-                            fontSize: context.scaleSp(14),
-                            color: isLoading
-                                ? scheme.onSurfaceVariant.withAlpha(128)
-                                : scheme.onSurfaceVariant,
-                          ),
-                        ),
+                        child: const Text('إلغاء'),
                       ),
                     ),
                     SizedBox(width: context.scaleW(8)),
                     Expanded(
-                      child: FilledButton(
-                        onPressed: isLoading ? null : _handleAdd,
+                      child: ElevatedButton(
+                        onPressed: isLoading ? null : _handleSave,
                         child: isLoading
                             ? SizedBox(
                                 height: context.scaleH(20),
@@ -460,13 +158,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                                   ),
                                 ),
                               )
-                            : Text(
-                                'إضافة',
-                                style: TextStyle(
-                                  fontSize: context.scaleSp(14),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                            : Text(widget.isEdit ? 'حفظ' : 'إضافة'),
                       ),
                     ),
                   ],
@@ -477,6 +169,299 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
           ),
         );
       },
+    );
+  }
+
+  Future<void> _handleSave() async {
+    if (_selectedCategory == null) {
+      _showMessage('يرجى اختيار نوع المعاملة');
+      return;
+    }
+
+    final amount = double.tryParse(_amountController.text.trim());
+    if (amount == null || amount <= 0) {
+      _showMessage('يرجى إدخال مبلغ صحيح');
+      return;
+    }
+
+    final note = _noteController.text.trim();
+    final controller = context.read<TransactionViewModel>();
+
+    if (widget.isEdit) {
+      await controller.updateTransaction(
+        id: widget.initial!.id,
+        amount: amount,
+        date: _selectedDate,
+        categoryId: _selectedCategory!.id,
+        note: note.isEmpty ? null : note,
+      );
+    } else {
+      await controller.createTransaction(
+        incomeTypeId: widget.incomeTypeId,
+        amount: amount,
+        date: _selectedDate,
+        categoryId: _selectedCategory!.id,
+        note: note.isEmpty ? null : note,
+      );
+    }
+
+    if (!mounted) return;
+    if (controller.state.errorMessage == null) {
+      widget.onAdd?.call(
+        TransactionData(
+          amount: amount,
+          date: _selectedDate,
+          categoryId: _selectedCategory!.id,
+          note: note.isEmpty ? null : note,
+        ),
+      );
+      Navigator.pop(context);
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _CategoryField extends StatelessWidget {
+  final TransactionCategory? selected;
+  final int? initialCategoryId;
+  final bool enabled;
+  final ValueChanged<TransactionCategory?> onChanged;
+
+  const _CategoryField({
+    required this.selected,
+    required this.initialCategoryId,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return FutureBuilder<List<TransactionCategory>>(
+      future: context.read<CategoryViewModel>().getCategories(),
+      builder: (context, snapshot) {
+        final categories = snapshot.data ?? [];
+        var value = selected;
+
+        if (value == null && initialCategoryId != null) {
+          for (final category in categories) {
+            if (category.id == initialCategoryId) {
+              value = category;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (context.mounted) onChanged(category);
+              });
+              break;
+            }
+          }
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'نوع المعاملة',
+              style: TextStyle(
+                fontSize: context.scaleSp(12),
+                color: scheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            SizedBox(height: context.scaleH(8)),
+            DropdownButtonFormField<TransactionCategory>(
+              value: value,
+              isExpanded: true,
+              decoration: const InputDecoration(),
+              hint: const Text('اختر نوع المعاملة'),
+              items: categories
+                  .map(
+                    (category) => DropdownMenuItem(
+                      value: category,
+                      child: Text(category.name),
+                    ),
+                  )
+                  .toList(),
+              onChanged: enabled ? onChanged : null,
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _AmountField extends StatelessWidget {
+  final TextEditingController controller;
+  final bool enabled;
+
+  const _AmountField({required this.controller, required this.enabled});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'المبلغ',
+          style: TextStyle(
+            fontSize: context.scaleSp(12),
+            color: scheme.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        SizedBox(height: context.scaleH(8)),
+        TextField(
+          controller: controller,
+          enabled: enabled,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(hintText: '0.00'),
+          textAlign: TextAlign.end,
+        ),
+      ],
+    );
+  }
+}
+
+class _DateField extends StatelessWidget {
+  final DateTime selectedDate;
+  final bool enabled;
+  final ValueChanged<DateTime> onChanged;
+
+  const _DateField({
+    required this.selectedDate,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final label =
+        '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'التاريخ',
+          style: TextStyle(
+            fontSize: context.scaleSp(12),
+            color: scheme.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        SizedBox(height: context.scaleH(8)),
+        InkWell(
+          onTap: !enabled
+              ? null
+              : () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDate,
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null) onChanged(picked);
+                },
+          child: InputDecorator(
+            decoration: const InputDecoration(),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(
+                  Icons.calendar_today_outlined,
+                  size: context.scaleW(18),
+                  color: scheme.onSurfaceVariant,
+                ),
+                Text(label),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _NoteField extends StatelessWidget {
+  final TextEditingController controller;
+  final bool enabled;
+
+  const _NoteField({required this.controller, required this.enabled});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'ملاحظات (اختياري)',
+          style: TextStyle(
+            fontSize: context.scaleSp(12),
+            color: scheme.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        SizedBox(height: context.scaleH(8)),
+        TextField(
+          controller: controller,
+          enabled: enabled,
+          maxLines: 3,
+          decoration: const InputDecoration(hintText: 'أضف ملاحظة...'),
+          textAlign: TextAlign.end,
+        ),
+      ],
+    );
+  }
+}
+
+class _MessageBox extends StatelessWidget {
+  final String message;
+  final Color color;
+  final IconData icon;
+  final VoidCallback onClose;
+
+  const _MessageBox({
+    required this.message,
+    required this.color,
+    required this.icon,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(context.scaleW(12)),
+      decoration: BoxDecoration(
+        color: color.withAlpha(30),
+        borderRadius: BorderRadius.circular(context.scaleW(8)),
+        border: Border.all(color: color.withAlpha(100), width: 0.5),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: context.scaleW(20)),
+          SizedBox(width: context.scaleW(8)),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(fontSize: context.scaleSp(12), color: color),
+            ),
+          ),
+          IconButton(
+            onPressed: onClose,
+            icon: Icon(Icons.close, color: color, size: context.scaleW(16)),
+          ),
+        ],
+      ),
     );
   }
 }

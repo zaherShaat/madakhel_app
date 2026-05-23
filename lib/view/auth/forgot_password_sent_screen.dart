@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:madakhel_app/core/context_ext.dart';
+import 'package:madakhel_app/core/utils.dart';
 import 'package:madakhel_app/view/shared/components/app_top_bar.dart';
 import 'package:madakhel_app/view/shared/components/circle_icon_button.dart';
 
@@ -19,7 +19,7 @@ class ForgotPasswordSentScreen extends StatelessWidget {
         child: Column(
           children: [
             AppTopBar(
-              title: 'تأكيد الإرسال',
+              title: 'طھط£ظƒظٹط¯ ط§ظ„ط¥ط±ط³ط§ظ„',
               leading: CircleIconButton(
                 icon: Icons.arrow_back,
                 onTap: () => context.pop(),
@@ -46,13 +46,13 @@ class ForgotPasswordSentScreen extends StatelessWidget {
                     ),
                     SizedBox(height: context.scaleH(16)),
                     Text(
-                      'تحقق من بريدك',
+                      'طھط­ظ‚ظ‚ ظ…ظ† ط¨ط±ظٹط¯ظƒ',
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     SizedBox(height: context.scaleH(8)),
                     Text(
-                      'أرسلنا رابط إعادة التعيين إلى\n$email',
+                      'ط£ط±ط³ظ„ظ†ط§ ط±ط§ط¨ط· ط¥ط¹ط§ط¯ط© ط§ظ„طھط¹ظٹظٹظ† ط¥ظ„ظ‰\n$email',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
@@ -60,30 +60,17 @@ class ForgotPasswordSentScreen extends StatelessWidget {
                     ),
                     SizedBox(height: context.scaleH(24)),
                     ElevatedButton(
-                      onPressed: () => context.go('/sign-in'),
+                      onPressed: () => context.go('/start'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: scheme.onSurface,
                         minimumSize: Size(double.infinity, context.scaleH(44)),
                       ),
                       child: Text(
-                        'العودة لتسجيل الدخول',
+                        'ط§ظ„ط¹ظˆط¯ط© ظ„طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„',
                         style: TextStyle(
                           color: scheme.surface,
                           fontSize: context.scaleSp(13),
                           fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: context.scaleH(12)),
-                    TextButton(
-                      onPressed: () {
-                        // TODO: Implement resend
-                      },
-                      child: Text(
-                        'إعادة الإرسال',
-                        style: TextStyle(
-                          fontSize: context.scaleSp(12),
-                          color: scheme.onSurfaceVariant,
                         ),
                       ),
                     ),

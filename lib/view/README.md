@@ -1,9 +1,9 @@
-# MVVC - View
+# MVVM - View
 
 ## Must be here
 - Screens and UI widgets only
 - UI-only formatting (layout, colors, RTL)
-- Calling ViewController methods (no direct DB access)
+- Calling ViewModel methods (no direct DB access)
 
 ## Must NOT be here
 - SQL/Drift queries, repositories, or DB objects

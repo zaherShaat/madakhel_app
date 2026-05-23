@@ -8,9 +8,6 @@ class TransactionCategoryRepository  {
 
   TransactionCategoryRepository(this._db);
 
-  Future<int> create(TransactionCategory item) {
-    throw UnimplementedError('Use createCategory() with named parameters');
-  }
 
   Future<int> createCategory({
     required String name,
@@ -49,12 +46,16 @@ class TransactionCategoryRepository  {
         .watch();
   }
 
-  Future<void> update(TransactionCategory item) async {
+
+  Future<void> updateCategory({
+    required int id,
+    required String name,
+  }) async {
     await (_db.update(
       _db.transactionCategories,
-    )..where((t) => t.id.equals(item.id))).write(
+    )..where((t) => t.id.equals(id))).write(
       TransactionCategoriesCompanion(
-        name: Value(item.name),
+        name: Value(name),
         updatedAt: Value(DateTime.now()),
         syncStatus: const Value('pending'),
       ),

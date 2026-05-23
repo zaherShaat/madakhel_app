@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:madakhel_app/core/context_ext.dart';
+import 'package:madakhel_app/core/utils.dart';
 
 class AddSourceRow extends StatelessWidget {
   final VoidCallback onTap;
 
-  const AddSourceRow({
-    super.key,
-    required this.onTap,
-  });
+  const AddSourceRow({super.key, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -25,11 +22,10 @@ class AddSourceRow extends StatelessWidget {
         child: Text(
           '+ إضافة مصدر دخل',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: scheme.onSurface.withValues(alpha: 0.85),
-              ),
+            color: scheme.onSurface.withValues(alpha: 0.85),
+          ),
         ),
       ),
     );
   }
 }
-

@@ -20,19 +20,8 @@ class AuthService {
   AuthUser? get currentAuthUser => _auth.currentUser == null
       ? null
       : AuthUser.fromFirebase(_auth.currentUser!);
-  GoogleSignInAccount? get currentGoogleUser => _googleSignIn.currentUser;
 
-  Future<GoogleSignInAccount?> signInSilently() async {
-    return await _googleSignIn.signInSilently();
-  }
-
-  Future<AuthUser?> currentGoogleAuthUser() async {
-    final googleUser = _googleSignIn.currentUser ?? await signInSilently();
-    if (googleUser == null) return null;
-    return AuthUser.fromGoogleSignInAccount(googleUser);
-  }
-
-  Future<UserCredential> signInWithGoogle() async {
+  Future<UserCredential> _signInWithGoogle() async {
     // await _googleSignIn.initialize();
 
     final googleUser = await _googleSignIn.authenticate();
@@ -47,7 +36,7 @@ class AuthService {
   }
 
   Future<AuthUser> signInWithGoogleUser() async {
-    final result = await signInWithGoogle();
+    final result = await _signInWithGoogle();
     final user = result.user;
     if (user == null) {
       throw FirebaseAuthException(

@@ -1,4 +1,4 @@
-# MVVC - Model
+# MVVM - Model
 
 ## Must be here
 - Data models / entities (immutable where possible)
