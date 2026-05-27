@@ -61,6 +61,43 @@ class TransactionRepository {
         .get();
   }
 
+  /// Count real transactions for an income source without loading all rows.
+  Future<int> countTransactions(int incomeSourceId) async {
+    final countExp = _db.financialTransactions.id.count();
+    final row =
+        await (_db.selectOnly(_db.financialTransactions)
+              ..addColumns([countExp])
+              ..where(
+                _db.financialTransactions.incomeSourceId.equals(
+                      incomeSourceId,
+                    ) &
+                    _db.financialTransactions.isDeleted.equals(false),
+              ))
+            .getSingle();
+
+    return row.read(countExp) ?? 0;
+  }
+
+  /// Load one transaction page from SQLite using LIMIT/OFFSET.
+  Future<List<FinancialTransaction>> getTransactionsPage({
+    required int incomeSourceId,
+    required int limit,
+    required int offset,
+  }) {
+    return (_db.select(_db.financialTransactions)
+          ..where(
+            (t) =>
+                t.incomeSourceId.equals(incomeSourceId) &
+                t.isDeleted.equals(false),
+          )
+          ..orderBy([
+            (t) => OrderingTerm.desc(t.date),
+            (t) => OrderingTerm.desc(t.id),
+          ])
+          ..limit(limit, offset: offset))
+        .get();
+  }
+
   Stream<List<FinancialTransaction>> watchTransactions(int incomeSourceId) {
     return (_db.select(_db.financialTransactions)
           ..where(

@@ -24,9 +24,34 @@ class SourceDetailScreen extends StatefulWidget {
 
 class _SourceDetailScreenState extends State<SourceDetailScreen> {
   @override
+  void initState() {
+    super.initState();
+    _loadInitialTransactions();
+  }
+
+  @override
+  void didUpdateWidget(covariant SourceDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.source.id != widget.source.id) {
+      _loadInitialTransactions();
+    }
+  }
+
+  void _loadInitialTransactions() {
+    context.read<IncomeSourceDetailViewModel>().loadInitialTransactions(
+      widget.source.id,
+    );
+  }
+
+  Future<void> _refreshTransactions() {
+    return context.read<IncomeSourceDetailViewModel>().refreshTransactions(
+      widget.source.id,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final detailViewModel = context.read<IncomeSourceDetailViewModel>();
 
     return Scaffold(
       backgroundColor: scheme.surface,
@@ -41,142 +66,202 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
               onBackTap: () => Navigator.pop(context),
             ),
             Expanded(
-              child: StreamBuilder<List<FinancialTransaction>>(
-                stream: detailViewModel.watchTransactions(widget.source.id),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
+              child: Consumer<IncomeSourceDetailViewModel>(
+                builder: (context, detailViewModel, child) {
+                  final state = detailViewModel.state;
+                  final transactions = state.transactions;
+
+                  if (state.isInitialLoading && transactions.isEmpty) {
                     return Center(
                       child: CircularProgressIndicator(color: scheme.primary),
                     );
                   }
 
-                  final transactions = snapshot.data ?? [];
-                  final displayTransactions = transactions.length > 3
-                      ? transactions.sublist(0, 3)
-                      : transactions;
-
-                  return ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.all(context.scaleW(14)),
-                    children: [
-                      // Stats Grid — fetch sums asynchronously
-                      FutureBuilder<List<double>>(
-                        future: Future.wait([
-                          detailViewModel.getInSum(widget.source.id),
-                          detailViewModel.getOutSum(widget.source.id),
-                        ]),
-                        builder: (context, sumsSnap) {
-
-                          final inSum =
-                              (sumsSnap.data != null &&
-                                  sumsSnap.data!.isNotEmpty)
-                              ? sumsSnap.data![0]
-                              : 0.0;
-                          final outSum =
-                              (sumsSnap.data != null &&
-                                  sumsSnap.data!.length > 1)
-                              ? sumsSnap.data![1]
-                              : 0.0;
-
-                          return GridView.count(
-                            crossAxisCount: 2,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            mainAxisSpacing: context.scaleH(8),
-                            crossAxisSpacing: context.scaleW(8),
-                            children: [
-                              StatCard(
-                                value: "${inSum - outSum}",
-                                label: 'الرصيد',
-                              ),
-                              StatCard(
-                                value: inSum.toStringAsFixed(2),
-                                label: 'إجمالي الدخل',
-                                isIncome: true,
-                              ),
-                              StatCard(
-                                value: outSum.toStringAsFixed(2),
-                                label: 'إجمالي المصروف',
-                                isIncome: false,
-                              ),
-                              StatCard(
-                                value: transactions.length.toString(),
-                                label: 'عدد المعاملات',
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                      SizedBox(height: context.scaleH(12)),
-                      // Divider
-                      Container(
-                        height: 0.5,
-                        color: scheme.outlineVariant.withAlpha(30),
-                      ),
-                      SizedBox(height: context.scaleH(12)),
-                      // Recent Transactions Section
-                      Text(
-                        'آخر المعاملات',
-                        style: TextStyle(
-                          fontSize: context.scaleSp(14),
-                          color: scheme.onSurfaceVariant,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.04,
-                        ),
-                      ),
-                      SizedBox(height: context.scaleH(10)),
-                      if (displayTransactions.isEmpty)
-                        Center(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: context.scaleH(20),
-                            ),
+                  if (state.errorMessage != null && transactions.isEmpty) {
+                    return RefreshIndicator(
+                      onRefresh: _refreshTransactions,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.all(context.scaleW(14)),
+                        children: [
+                          SizedBox(height: context.scaleH(160)),
+                          Center(
                             child: Text(
-                              'لا توجد معاملات',
+                              'تعذر تحميل المعاملات',
                               style: TextStyle(
                                 fontSize: context.scaleSp(14),
-                                color: scheme.onSurfaceVariant,
+                                color: scheme.error,
                               ),
                             ),
                           ),
-                        )
-                      else
-                        ...displayTransactions.asMap().entries.map(
-                          (entry) => GestureDetector(
-                            onTap: () =>
-                                _showEditTransactionSheet(context, entry.value),
-                            onLongPress: () =>
-                                _showDeleteConfirmation(context, entry.value),
-                            child: TransactionRow(
-                              transaction: entry.value,
-                              showBorder:
-                                  entry.key < displayTransactions.length - 1,
+                          Center(
+                            child: TextButton(
+                              onPressed: _loadInitialTransactions,
+                              child: const Text('إعادة المحاولة'),
                             ),
                           ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  final loadMoreLabel =
+                      transactions.length <=
+                          IncomeSourceDetailViewModel.initialPageSize
+                      ? 'عرض الكل'
+                      : 'عرض المزيد';
+
+                  return RefreshIndicator(
+                    onRefresh: _refreshTransactions,
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.all(context.scaleW(14)),
+                      children: [
+                        // Stats Grid — fetch sums asynchronously
+                        FutureBuilder<List<double>>(
+                          future: Future.wait([
+                            detailViewModel.getInSum(widget.source.id),
+                            detailViewModel.getOutSum(widget.source.id),
+                          ]),
+                          builder: (context, sumsSnap) {
+                            final inSum =
+                                (sumsSnap.data != null &&
+                                    sumsSnap.data!.isNotEmpty)
+                                ? sumsSnap.data![0]
+                                : 0.0;
+                            final outSum =
+                                (sumsSnap.data != null &&
+                                    sumsSnap.data!.length > 1)
+                                ? sumsSnap.data![1]
+                                : 0.0;
+
+                            return GridView.count(
+                              crossAxisCount: 2,
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              mainAxisSpacing: context.scaleH(8),
+                              crossAxisSpacing: context.scaleW(8),
+                              children: [
+                                StatCard(
+                                  value: "${inSum - outSum}",
+                                  label: 'الرصيد',
+                                ),
+                                StatCard(
+                                  value: inSum.toStringAsFixed(2),
+                                  label: 'إجمالي الدخل',
+                                  isIncome: true,
+                                ),
+                                StatCard(
+                                  value: outSum.toStringAsFixed(2),
+                                  label: 'إجمالي المصروف',
+                                  isIncome: false,
+                                ),
+                                StatCard(
+                                  value: state.totalCount.toString(),
+                                  label: 'عدد المعاملات',
+                                ),
+                              ],
+                            );
+                          },
                         ),
-                      if (transactions.isNotEmpty)
-                        SizedBox(height: context.scaleH(8)),
-                      if (transactions.length > 3)
-                        Center(
-                          child: GestureDetector(
-                            onTap: () => context.go('/transactions'),
+                        SizedBox(height: context.scaleH(12)),
+                        // Divider
+                        Container(
+                          height: 0.5,
+                          color: scheme.outlineVariant.withAlpha(30),
+                        ),
+                        SizedBox(height: context.scaleH(12)),
+                        // Recent Transactions Section
+                        Text(
+                          'آخر المعاملات',
+                          style: TextStyle(
+                            fontSize: context.scaleSp(14),
+                            color: scheme.onSurfaceVariant,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.04,
+                          ),
+                        ),
+                        SizedBox(height: context.scaleH(10)),
+                        if (transactions.isEmpty)
+                          Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: context.scaleH(20),
+                              ),
+                              child: Text(
+                                'لا توجد معاملات',
+                                style: TextStyle(
+                                  fontSize: context.scaleSp(14),
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          ...transactions.asMap().entries.map(
+                            (entry) => GestureDetector(
+                              onTap: () => _showEditTransactionSheet(
+                                context,
+                                entry.value,
+                              ),
+                              onLongPress: () =>
+                                  _showDeleteConfirmation(context, entry.value),
+                              child: TransactionRow(
+                                transaction: entry.value,
+                                showBorder: entry.key < transactions.length - 1,
+                              ),
+                            ),
+                          ),
+                        if (transactions.isNotEmpty)
+                          SizedBox(height: context.scaleH(8)),
+                        if (state.errorMessage != null)
+                          Padding(
+                            padding: EdgeInsets.only(bottom: context.scaleH(8)),
                             child: Text(
-                              'عرض الكل',
+                              'تعذر تحميل المزيد من المعاملات',
+                              textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: context.scaleSp(12),
-                                color: scheme.primary,
-                                fontWeight: FontWeight.w500,
+                                color: scheme.error,
                               ),
                             ),
                           ),
-                        ),
-                      SizedBox(height: context.scaleH(16)),
-                    ],
+                        if (state.hasMore)
+                          Center(
+                            // Pagination action: stay on this screen and fetch
+                            // the next DB page instead of opening /transactions.
+                            child: TextButton(
+                              onPressed: state.isLoadingMore
+                                  ? null
+                                  : () {
+                                      detailViewModel.loadMoreTransactions();
+                                    },
+                              child: state.isLoadingMore
+                                  ? SizedBox(
+                                      height: context.scaleH(18),
+                                      width: context.scaleW(18),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: scheme.primary,
+                                      ),
+                                    )
+                                  : Text(
+                                      loadMoreLabel,
+                                      style: TextStyle(
+                                        fontSize: context.scaleSp(12),
+                                        color: scheme.primary,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        SizedBox(height: context.scaleH(16)),
+                      ],
+                    ),
                   );
                 },
               ),
             ),
-         
           ],
         ),
       ),
@@ -195,7 +280,7 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                   ),
                   builder: (context) =>
                       AddTransactionSheet(incomeTypeId: widget.source.id),
-                );
+                ).whenComplete(_refreshTransactions);
               },
               backgroundColor: scheme.primary,
               shape: RoundedRectangleBorder(
@@ -230,11 +315,15 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
         confirmLabel: 'نعم، احذف',
         cancelLabel: 'إلغاء',
         isDanger: true,
-        onConfirm: () {
-          context.read<TransactionViewModel>().deleteTransaction(
+        onConfirm: () async {
+          await context.read<TransactionViewModel>().deleteTransaction(
             transaction.id,
           );
+          if (!dialogContext.mounted) return;
           Navigator.pop(dialogContext);
+          if (!context.mounted) return;
+          await _refreshTransactions();
+          if (!context.mounted) return;
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(const SnackBar(content: Text('تم حذف المعاملة')));
@@ -266,7 +355,7 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
         incomeTypeId: widget.source.id,
         initial: transaction,
       ),
-    );
+    ).whenComplete(_refreshTransactions);
   }
 
   void _showSourceActions(BuildContext context) {
