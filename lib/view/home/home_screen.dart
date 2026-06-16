@@ -29,25 +29,25 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: scheme.surface,
       body: SafeArea(
-        child: Column(
-          children: [
-            HomeTopBar(
-              sourceCount: 0,
-              onAddTap: () => context.push('/income-source/new'),
-              onSettingsTap: () {
-                setState(() => _activeTabIndex = 0);
-                context.go('/settings');
-              },
-            ),
-            Expanded(
-              child: StreamBuilder<List<IncomeSourceWithBalance>>(
-                stream: viewModel.watchIncomeSourcesWithBalance(),
-                builder: (context, snapshot) {
-                  final status = snapshot.connectionState;
-                  final dbSources =
-                      snapshot.data ?? const <IncomeSourceWithBalance>[];
+        child: StreamBuilder<List<IncomeSourceWithBalance>>(
+          stream: viewModel.watchIncomeSourcesWithBalance(),
+          builder: (context, snapshot) {
+            final status = snapshot.connectionState;
+            final dbSources =
+                snapshot.data ?? const <IncomeSourceWithBalance>[];
 
-                  return Builder(
+            return Column(
+              children: [
+                HomeTopBar(
+                  sourceCount: dbSources.length,
+                  onAddTap: () => context.push('/income-source/new'),
+                  onSettingsTap: () {
+                    setState(() => _activeTabIndex = 0);
+                    context.go('/settings');
+                  },
+                ),
+                Expanded(
+                  child: Builder(
                     builder: (context) {
                       switch (status) {
                         case ConnectionState.waiting:
@@ -86,23 +86,23 @@ class _HomeScreenState extends State<HomeScreen> {
                           return const HomeEmptyState();
                       }
                     },
-                  );
-                },
-              ),
-            ),
-            BottomNavBar(
-              activeIndex: _activeTabIndex,
-              onTap: (index) {
-                setState(() => _activeTabIndex = index);
-                if (index == 0) {
-                  context.go('/settings');
-                } else if (index == 1) {
-                  context.go('/transactions');
-                }
-                // index 2 is home, no need to navigate
-              },
-            ),
-          ],
+                  ),
+                ),
+                BottomNavBar(
+                  activeIndex: _activeTabIndex,
+                  onTap: (index) {
+                    setState(() => _activeTabIndex = index);
+                    if (index == 0) {
+                      context.go('/settings');
+                    } else if (index == 1) {
+                      context.go('/transactions');
+                    }
+                    // index 2 is home, no need to navigate
+                  },
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

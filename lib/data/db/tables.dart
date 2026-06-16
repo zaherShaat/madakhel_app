@@ -4,6 +4,7 @@ import '../../model/transaction_direction.dart';
 
 class IncomeSources extends Table {
   IntColumn get id => integer().autoIncrement()();
+  TextColumn get userId => text().withDefault(const Constant(''))();
   TextColumn get name => text()();
   TextColumn get currency => text().withDefault(const Constant('USD'))();
   RealColumn get starterBalance => real().withDefault(const Constant(0))();
@@ -18,6 +19,7 @@ class IncomeSources extends Table {
 
 class TransactionCategories extends Table {
   IntColumn get id => integer().autoIncrement()();
+  TextColumn get userId => text().withDefault(const Constant(''))();
   TextColumn get name => text()();
   TextColumn get direction =>
       text().map(const TransactionDirectionConverter())();
@@ -32,6 +34,7 @@ class TransactionCategories extends Table {
 
 class FinancialTransactions extends Table {
   IntColumn get id => integer().autoIncrement()();
+  TextColumn get userId => text().withDefault(const Constant(''))();
 
   // Belongs to one income source
   IntColumn get incomeSourceId => integer().references(IncomeSources, #id)();

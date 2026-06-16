@@ -37,8 +37,8 @@ class IncomeSourceDetailState {
 }
 
 class IncomeSourceDetailViewModel extends ChangeNotifier {
-  static const int initialPageSize = 3;
-  static const int pageSize = 10;
+  static const int initialPageSize = 5;
+  static const int pageSize = 5;
 
   final TransactionRepository _repository;
   IncomeSourceDetailState _state = const IncomeSourceDetailState();

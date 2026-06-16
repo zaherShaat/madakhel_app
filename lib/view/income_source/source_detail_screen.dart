@@ -255,6 +255,21 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                                     ),
                             ),
                           ),
+                        if (transactions.isNotEmpty && !state.hasMore)
+                          Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: context.scaleH(12),
+                              ),
+                              child: Text(
+                                'لا مزيد من المعاملات لعرضها',
+                                style: TextStyle(
+                                  fontSize: context.scaleSp(12),
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          ),
                         SizedBox(height: context.scaleH(16)),
                       ],
                     ),

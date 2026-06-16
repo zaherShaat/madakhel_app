@@ -5,30 +5,55 @@ import '../db/app_db.dart';
 
 class TransactionRepository {
   final AppDatabase _db;
+  final String? Function() _currentUserId;
 
-  TransactionRepository(this._db);
+  TransactionRepository(this._db, this._currentUserId);
+
+  String? get _userId {
+    final userId = _currentUserId();
+    return userId == null || userId.isEmpty ? null : userId;
+  }
+
+  String _requireUserId() {
+    final userId = _userId;
+    if (userId == null) {
+      throw StateError('No signed-in user for local transaction data.');
+    }
+    return userId;
+  }
 
   Future<int> create(FinancialTransaction item) {
     throw UnimplementedError('Use createTransaction(...) instead');
   }
 
   Future<FinancialTransaction?> getById(int id) {
-    return (_db.select(_db.financialTransactions)
-          ..where((t) => t.id.equals(id) & t.isDeleted.equals(false)))
+    final userId = _userId;
+    if (userId == null) return Future.value(null);
+
+    return (_db.select(_db.financialTransactions)..where(
+          (t) =>
+              t.id.equals(id) &
+              t.userId.equals(userId) &
+              t.isDeleted.equals(false),
+        ))
         .getSingleOrNull();
   }
 
   Future<List<FinancialTransaction>> getAll() {
+    final userId = _userId;
+    if (userId == null) return Future.value([]);
+
     return (_db.select(_db.financialTransactions)
-          ..where((t) => t.isDeleted.equals(false))
+          ..where((t) => t.userId.equals(userId) & t.isDeleted.equals(false))
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
         .get();
   }
 
   Future<void> update(FinancialTransaction item) async {
+    final userId = _requireUserId();
     await (_db.update(
       _db.financialTransactions,
-    )..where((t) => t.id.equals(item.id))).write(
+    )..where((t) => t.id.equals(item.id) & t.userId.equals(userId))).write(
       FinancialTransactionsCompanion(
         amount: Value(item.amount),
         note: Value(item.note),
@@ -51,10 +76,14 @@ class TransactionRepository {
 
   /// Get real transactions for an income source
   Future<List<FinancialTransaction>> getTransactions(int incomeSourceId) {
+    final userId = _userId;
+    if (userId == null) return Future.value([]);
+
     return (_db.select(_db.financialTransactions)
           ..where(
             (t) =>
                 t.incomeSourceId.equals(incomeSourceId) &
+                t.userId.equals(userId) &
                 t.isDeleted.equals(false),
           )
           ..orderBy([(t) => OrderingTerm.desc(t.date)]))
@@ -63,6 +92,9 @@ class TransactionRepository {
 
   /// Count real transactions for an income source without loading all rows.
   Future<int> countTransactions(int incomeSourceId) async {
+    final userId = _userId;
+    if (userId == null) return 0;
+
     final countExp = _db.financialTransactions.id.count();
     final row =
         await (_db.selectOnly(_db.financialTransactions)
@@ -71,6 +103,7 @@ class TransactionRepository {
                 _db.financialTransactions.incomeSourceId.equals(
                       incomeSourceId,
                     ) &
+                    _db.financialTransactions.userId.equals(userId) &
                     _db.financialTransactions.isDeleted.equals(false),
               ))
             .getSingle();
@@ -84,10 +117,14 @@ class TransactionRepository {
     required int limit,
     required int offset,
   }) {
+    final userId = _userId;
+    if (userId == null) return Future.value([]);
+
     return (_db.select(_db.financialTransactions)
           ..where(
             (t) =>
                 t.incomeSourceId.equals(incomeSourceId) &
+                t.userId.equals(userId) &
                 t.isDeleted.equals(false),
           )
           ..orderBy([
@@ -99,10 +136,14 @@ class TransactionRepository {
   }
 
   Stream<List<FinancialTransaction>> watchTransactions(int incomeSourceId) {
+    final userId = _userId;
+    if (userId == null) return Stream.value([]);
+
     return (_db.select(_db.financialTransactions)
           ..where(
             (t) =>
                 t.incomeSourceId.equals(incomeSourceId) &
+                t.userId.equals(userId) &
                 t.isDeleted.equals(false),
           )
           ..orderBy([(t) => OrderingTerm.desc(t.date)]))
@@ -119,10 +160,15 @@ class TransactionRepository {
     String? note,
   }) async {
     final now = DateTime.now();
+    final userId = _requireUserId();
+    await _ensureIncomeSourceBelongsToUser(incomeSourceId, userId);
+    await _ensureCategoryBelongsToUser(categoryId, userId);
+
     return await _db
         .into(_db.financialTransactions)
         .insert(
           FinancialTransactionsCompanion.insert(
+            userId: Value(userId),
             incomeSourceId: incomeSourceId,
             categoryId: categoryId,
             amount: amount,
@@ -141,45 +187,92 @@ class TransactionRepository {
     required int categoryId,
     String? note,
   }) async {
-    await (_db.update(
-      _db.financialTransactions,
-    )..where((t) => t.id.equals(id) & t.isSystem.equals(false))).write(
-      FinancialTransactionsCompanion(
-        categoryId: Value(categoryId),
-        amount: Value(amount),
-        note: Value(note),
-        date: Value(date),
-        updatedAt: Value(DateTime.now()),
-        syncStatus: const Value('pending'),
-      ),
-    );
+    final userId = _requireUserId();
+    await _ensureCategoryBelongsToUser(categoryId, userId);
+
+    await (_db.update(_db.financialTransactions)..where(
+          (t) =>
+              t.id.equals(id) &
+              t.userId.equals(userId) &
+              t.isSystem.equals(false),
+        ))
+        .write(
+          FinancialTransactionsCompanion(
+            categoryId: Value(categoryId),
+            amount: Value(amount),
+            note: Value(note),
+            date: Value(date),
+            updatedAt: Value(DateTime.now()),
+            syncStatus: const Value('pending'),
+          ),
+        );
   }
 
   Future<void> deleteById(int id) async {
-    await (_db.update(
-      _db.financialTransactions,
-    )..where((t) => t.id.equals(id) & t.isSystem.equals(false))).write(
-      FinancialTransactionsCompanion(
-        isDeleted: const Value(true),
-        updatedAt: Value(DateTime.now()),
-        syncStatus: const Value('pending'),
-      ),
-    );
+    final userId = _requireUserId();
+    await (_db.update(_db.financialTransactions)..where(
+          (t) =>
+              t.id.equals(id) &
+              t.userId.equals(userId) &
+              t.isSystem.equals(false),
+        ))
+        .write(
+          FinancialTransactionsCompanion(
+            isDeleted: const Value(true),
+            updatedAt: Value(DateTime.now()),
+            syncStatus: const Value('pending'),
+          ),
+        );
+  }
+
+  Future<void> _ensureIncomeSourceBelongsToUser(int id, String userId) async {
+    final source =
+        await (_db.select(_db.incomeSources)..where(
+              (t) =>
+                  t.id.equals(id) &
+                  t.userId.equals(userId) &
+                  t.isDeleted.equals(false),
+            ))
+            .getSingleOrNull();
+
+    if (source == null) {
+      throw StateError('Income source does not belong to the signed-in user.');
+    }
+  }
+
+  Future<void> _ensureCategoryBelongsToUser(int id, String userId) async {
+    final category =
+        await (_db.select(_db.transactionCategories)..where(
+              (t) =>
+                  t.id.equals(id) &
+                  t.userId.equals(userId) &
+                  t.isDeleted.equals(false),
+            ))
+            .getSingleOrNull();
+
+    if (category == null) {
+      throw StateError('Category does not belong to the signed-in user.');
+    }
   }
 
   /// Get total inflow for an income source
   Future<double> getInSum(int incomeSourceId) async {
+    final userId = _userId;
+    if (userId == null) return 0.0;
+
     final query = '''
 SELECT COALESCE(SUM(ft.amount), 0) AS s
 FROM financial_transactions ft
 JOIN transaction_categories tc ON tc.id = ft.category_id
-WHERE ft.income_source_id = ? AND tc.direction = ? AND ft.is_deleted = 0 AND tc.is_deleted = 0
+WHERE ft.income_source_id = ? AND ft.user_id = ? AND tc.user_id = ? AND tc.direction = ? AND ft.is_deleted = 0 AND tc.is_deleted = 0
 ''';
     final rows = await _db
         .customSelect(
           query,
           variables: [
             Variable<int>(incomeSourceId),
+            Variable<String>(userId),
+            Variable<String>(userId),
             Variable<String>(
               const TransactionDirectionConverter().toSql(
                 TransactionDirection.inFlow,
@@ -195,17 +288,22 @@ WHERE ft.income_source_id = ? AND tc.direction = ? AND ft.is_deleted = 0 AND tc.
 
   /// Get total outflow for an income source
   Future<double> getOutSum(int incomeSourceId) async {
+    final userId = _userId;
+    if (userId == null) return 0.0;
+
     final query = '''
 SELECT COALESCE(SUM(ft.amount), 0) AS s
 FROM financial_transactions ft
 JOIN transaction_categories tc ON tc.id = ft.category_id
-WHERE ft.income_source_id = ? AND tc.direction = ? AND ft.is_deleted = 0 AND tc.is_deleted = 0
+WHERE ft.income_source_id = ? AND ft.user_id = ? AND tc.user_id = ? AND tc.direction = ? AND ft.is_deleted = 0 AND tc.is_deleted = 0
 ''';
     final rows = await _db
         .customSelect(
           query,
           variables: [
             Variable<int>(incomeSourceId),
+            Variable<String>(userId),
+            Variable<String>(userId),
             Variable<String>(
               const TransactionDirectionConverter().toSql(
                 TransactionDirection.outFlow,
@@ -222,27 +320,34 @@ WHERE ft.income_source_id = ? AND tc.direction = ? AND ft.is_deleted = 0 AND tc.
   /// Get all transactions grouped by category
   Future<Map<TransactionCategory, List<FinancialTransaction>>>
   getAllGroupedByCategory() async {
-    final rows = await (_db.select(_db.financialTransactions).join([
-      innerJoin(
-        _db.transactionCategories,
-        _db.transactionCategories.id.equalsExp(
-          _db.financialTransactions.categoryId,
-        ),
-      ),
-      innerJoin(
-        _db.incomeSources,
-        _db.incomeSources.id.equalsExp(
-          _db.financialTransactions.incomeSourceId,
-        ),
-      ),
-    ])
-          ..where(
-            _db.financialTransactions.isDeleted.equals(false) &
-                _db.transactionCategories.isDeleted.equals(false) &
-                _db.incomeSources.isDeleted.equals(false),
-          )
-          ..orderBy([OrderingTerm.desc(_db.financialTransactions.date)]))
-        .get();
+    final userId = _userId;
+    if (userId == null) return {};
+
+    final rows =
+        await (_db.select(_db.financialTransactions).join([
+                innerJoin(
+                  _db.transactionCategories,
+                  _db.transactionCategories.id.equalsExp(
+                    _db.financialTransactions.categoryId,
+                  ),
+                ),
+                innerJoin(
+                  _db.incomeSources,
+                  _db.incomeSources.id.equalsExp(
+                    _db.financialTransactions.incomeSourceId,
+                  ),
+                ),
+              ])
+              ..where(
+                _db.financialTransactions.userId.equals(userId) &
+                    _db.financialTransactions.isDeleted.equals(false) &
+                    _db.transactionCategories.userId.equals(userId) &
+                    _db.transactionCategories.isDeleted.equals(false) &
+                    _db.incomeSources.userId.equals(userId) &
+                    _db.incomeSources.isDeleted.equals(false),
+              )
+              ..orderBy([OrderingTerm.desc(_db.financialTransactions.date)]))
+            .get();
 
     final Map<TransactionCategory, List<FinancialTransaction>> grouped = {};
     for (final row in rows) {

@@ -6,8 +6,22 @@ import '../db/app_db.dart';
 
 class IncomeTypeRepository {
   final AppDatabase _db;
+  final String? Function() _currentUserId;
 
-  IncomeTypeRepository(this._db);
+  IncomeTypeRepository(this._db, this._currentUserId);
+
+  String? get _userId {
+    final userId = _currentUserId();
+    return userId == null || userId.isEmpty ? null : userId;
+  }
+
+  String _requireUserId() {
+    final userId = _userId;
+    if (userId == null) {
+      throw StateError('No signed-in user for local income source data.');
+    }
+    return userId;
+  }
 
   /// Create with named parameters (business logic wrapper)
   Future<int> createIncomeType({
@@ -15,10 +29,12 @@ class IncomeTypeRepository {
     required String currency,
   }) async {
     final now = DateTime.now();
+    final userId = _requireUserId();
     return await _db
         .into(_db.incomeSources)
         .insert(
           IncomeSourcesCompanion.insert(
+            userId: Value(userId),
             name: name,
             currency: Value(currency),
             starterBalance: const Value(0),
@@ -29,21 +45,34 @@ class IncomeTypeRepository {
   }
 
   Future<IncomeSource?> getById(int id) async {
-    return (_db.select(_db.incomeSources)
-          ..where((t) => t.id.equals(id) & t.isDeleted.equals(false)))
+    final userId = _userId;
+    if (userId == null) return null;
+
+    return (_db.select(_db.incomeSources)..where(
+          (t) =>
+              t.id.equals(id) &
+              t.userId.equals(userId) &
+              t.isDeleted.equals(false),
+        ))
         .getSingleOrNull();
   }
 
   Future<List<IncomeSource>> getAll() async {
+    final userId = _userId;
+    if (userId == null) return [];
+
     return (_db.select(_db.incomeSources)
-          ..where((t) => t.isDeleted.equals(false))
+          ..where((t) => t.userId.equals(userId) & t.isDeleted.equals(false))
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
         .get();
   }
 
   Stream<List<IncomeSource>> watchAll() {
+    final userId = _userId;
+    if (userId == null) return Stream.value([]);
+
     return (_db.select(_db.incomeSources)
-          ..where((t) => t.isDeleted.equals(false))
+          ..where((t) => t.userId.equals(userId) & t.isDeleted.equals(false))
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
         .watch();
   }
@@ -54,7 +83,10 @@ class IncomeTypeRepository {
     required String name,
     required String currency,
   }) async {
-    await (_db.update(_db.incomeSources)..where((t) => t.id.equals(id))).write(
+    final userId = _requireUserId();
+    await (_db.update(
+      _db.incomeSources,
+    )..where((t) => t.id.equals(id) & t.userId.equals(userId))).write(
       IncomeSourcesCompanion(
         name: Value(name),
         currency: Value(currency),
@@ -66,8 +98,11 @@ class IncomeTypeRepository {
 
   Future<void> deleteById(int id) async {
     final now = DateTime.now();
+    final userId = _requireUserId();
 
-    await (_db.update(_db.incomeSources)..where((t) => t.id.equals(id))).write(
+    await (_db.update(
+      _db.incomeSources,
+    )..where((t) => t.id.equals(id) & t.userId.equals(userId))).write(
       IncomeSourcesCompanion(
         isDeleted: const Value(true),
         updatedAt: Value(now),
@@ -77,23 +112,33 @@ class IncomeTypeRepository {
   }
 
   Stream<List<IncomeSourceWithBalance>> watchIncomeSourcesWithBalance() {
-    final query = _db.select(_db.incomeSources).join([
-      leftOuterJoin(
-        _db.financialTransactions,
-        _db.financialTransactions.incomeSourceId
-                .equalsExp(_db.incomeSources.id) &
-            _db.financialTransactions.isDeleted.equals(false),
-      ),
-      leftOuterJoin(
-        _db.transactionCategories,
-        _db.transactionCategories.id.equalsExp(
-              _db.financialTransactions.categoryId,
-            ) &
-            _db.transactionCategories.isDeleted.equals(false),
-      ),
-    ])
-      ..where(_db.incomeSources.isDeleted.equals(false))
-      ..orderBy([OrderingTerm.desc(_db.incomeSources.createdAt)]);
+    final userId = _userId;
+    if (userId == null) return Stream.value([]);
+
+    final query =
+        _db.select(_db.incomeSources).join([
+            leftOuterJoin(
+              _db.financialTransactions,
+              _db.financialTransactions.incomeSourceId.equalsExp(
+                    _db.incomeSources.id,
+                  ) &
+                  _db.financialTransactions.userId.equals(userId) &
+                  _db.financialTransactions.isDeleted.equals(false),
+            ),
+            leftOuterJoin(
+              _db.transactionCategories,
+              _db.transactionCategories.id.equalsExp(
+                    _db.financialTransactions.categoryId,
+                  ) &
+                  _db.transactionCategories.userId.equals(userId) &
+                  _db.transactionCategories.isDeleted.equals(false),
+            ),
+          ])
+          ..where(
+            _db.incomeSources.userId.equals(userId) &
+                _db.incomeSources.isDeleted.equals(false),
+          )
+          ..orderBy([OrderingTerm.desc(_db.incomeSources.createdAt)]);
 
     return query.watch().map((rows) {
       final Map<int, _BalanceAccumulator> accumulators = {};
