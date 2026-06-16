@@ -22,13 +22,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isBackingUp = false;
   bool _isRestoring = false;
 
-  void _showSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
-  }
-
   Future<void> _backupNow() async {
     setState(() => _isBackingUp = true);
     final backupService = context.read<BackupService>();
