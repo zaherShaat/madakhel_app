@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:madakhel_app/core/theme/app_theme.dart';
+import 'package:madakhel_app/data/backup/backup_service.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
 import 'package:madakhel_app/data/repositories/income_type_repository.dart';
 import 'package:madakhel_app/data/repositories/transaction_category_repository.dart';
@@ -35,11 +36,17 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         // Provider<AuthService>(create: (ctx) => AuthService()),
+        Provider<AuthService>.value(value: authService),
         ChangeNotifierProvider<AuthViewModel>(
           create: (ctx) => AuthViewModel(authService),
         ),
         ProxyProvider<AuthViewModel, AuthUser?>(
           update: (ctx, authViewModel, authUser) => authViewModel.user,
+        ),
+        Provider<AppDatabase>.value(value: db),
+        Provider<BackupService>(
+          create: (ctx) =>
+              BackupService(ctx.read<AppDatabase>(), ctx.read<AuthService>()),
         ),
         ChangeNotifierProvider<ThemeViewModel>(
           create: (ctx) => ThemeViewModel()..loadThemeMode(),

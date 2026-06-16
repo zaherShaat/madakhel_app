@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:madakhel_app/core/utils.dart';
+import 'package:madakhel_app/data/backup/backup_service.dart';
 import 'package:madakhel_app/model/auth_user.dart';
 import 'package:madakhel_app/view/components/app_confirm_action_dialog.dart';
 import 'package:madakhel_app/view/shared/components/app_top_bar.dart';
@@ -18,6 +19,75 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   int _activeTabIndex = 0; // Settings tab is active
+  bool _isBackingUp = false;
+  bool _isRestoring = false;
+
+  void _showSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _backupNow() async {
+    setState(() => _isBackingUp = true);
+    final backupService = context.read<BackupService>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      await backupService.backupUserData();
+      messenger.showSnackBar(
+        const SnackBar(content: Text('اكتمل النسخ الاحتياطي بنجاح.')),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('فشل النسخ الاحتياطي. يرجى المحاولة مرة أخرى.'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isBackingUp = false);
+    }
+  }
+
+  Future<void> _restoreBackup() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AppConfirmActionDialog(
+        title: 'استعادة النسخة الاحتياطية',
+        message:
+            'هل تريد استعادة النسخة الاحتياطية؟ سيتم استبدال البيانات الحالية.',
+        confirmLabel: 'استعادة',
+        cancelLabel: 'إلغاء',
+        onConfirm: () async {
+          Navigator.pop(dialogContext, true);
+        },
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isRestoring = true);
+    final backupService = context.read<BackupService>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      await backupService.restoreUserData();
+      messenger.showSnackBar(
+        const SnackBar(content: Text('تمت استعادة النسخة الاحتياطية بنجاح.')),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'فشل استعادة النسخة الاحتياطية. يرجى المحاولة مرة أخرى.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isRestoring = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,8 +185,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onTap: () => context.push('/categories'),
                   ),
                   _SettingRow('تصدير إلى CSV', context),
-                  _SettingRow('النسخ الاحتياطي', context, isComingSoon: true),
+                  _SettingRow(
+                    _isBackingUp
+                        ? 'جارٍ إجراء النسخ الاحتياطي...'
+                        : 'النسخ الاحتياطي',
+                    context,
+                    onTap: _isBackingUp ? null : _backupNow,
+                  ),
+                  _SettingRow(
+                    _isRestoring
+                        ? 'جارٍ استعادة النسخة الاحتياطية...'
+                        : 'استعادة النسخة الاحتياطية',
+                    context,
+                    onTap: _isRestoring ? null : _restoreBackup,
+                  ),
                   SizedBox(height: context.scaleH(16)),
+
                   // Appearance section
                   _SectionTitle('المظهر', context),
                   SizedBox(height: context.scaleH(8)),
