@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:madakhel_app/view_model/income_source_detail_view_model.dart';
 import 'package:provider/provider.dart';
 
 import 'package:madakhel_app/core/utils.dart';
@@ -68,10 +69,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                     children: [
                                       IncomeSourceCard(
                                         source: source,
-                                        onTap: () => context.push(
-                                          '/source-detail',
-                                          extra: source,
-                                        ),
+                                        onTap: () {
+                                          context
+                                              .read<
+                                                IncomeSourceDetailViewModel
+                                              >()
+                                              .loadInitialTransactions(
+                                                source.id,
+                                              );
+                                          context.push(
+                                            '/source-detail',
+                                            extra: source,
+                                          );
+                                        },
                                       ),
                                       SizedBox(height: context.scaleH(12)),
                                     ],

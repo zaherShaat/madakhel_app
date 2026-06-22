@@ -26,7 +26,7 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _loadInitialTransactions();
+    // _loadInitialTransactions();
   }
 
   @override
@@ -51,6 +51,8 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // _loadInitialTransactions();
+
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -106,8 +108,7 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                   }
 
                   final loadMoreLabel =
-                      transactions.length <=
-                          IncomeSourceDetailViewModel.initialPageSize
+                      transactions.length <= detailViewModel.initialPageSize
                       ? 'عرض الكل'
                       : 'عرض المزيد';
 
