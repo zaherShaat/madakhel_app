@@ -51,3 +51,5 @@ copilot-instructions.md
 /.cursor
 /.idea
 /.claude
+/graphify-out
+.dart_tool
