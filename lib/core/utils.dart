@@ -142,3 +142,16 @@ extension ContextExt on BuildContext {
   double wPct(double percent) => screenWidth * percent;
   double hPct(double percent) => screenHeight * percent;
 }
+
+extension IterableExt<T> on Iterable<T> {
+  /// Returns the first element that satisfies [test], or null if no element matches.
+  ///
+  /// This is a public reusable helper that complements Dart's [Iterable.firstWhere]
+  /// without requiring an `orElse` callback for nullable results.
+  T? firstWhereOrNull(bool Function(T) test) {
+    for (final element in this) {
+      if (test(element)) return element;
+    }
+    return null;
+  }
+}

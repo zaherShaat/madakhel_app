@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:madakhel_app/core/utils.dart';
-import 'package:madakhel_app/data/backup/backup_service.dart';
 import 'package:madakhel_app/model/auth_user.dart';
 import 'package:madakhel_app/view/components/app_confirm_action_dialog.dart';
 import 'package:madakhel_app/view/shared/components/app_top_bar.dart';
 import 'package:madakhel_app/view/shared/components/bottom_nav_bar.dart';
 import 'package:madakhel_app/view_model/auth_view_model.dart';
+import 'package:madakhel_app/view_model/backup_view_model.dart';
 import 'package:madakhel_app/view_model/theme_view_model.dart';
 import 'package:provider/provider.dart';
 
@@ -19,27 +19,20 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   int _activeTabIndex = 0; // Settings tab is active
-  bool _isBackingUp = false;
-  bool _isRestoring = false;
+  // State moved to BackupViewModel
 
   Future<void> _backupNow() async {
-    setState(() => _isBackingUp = true);
-    final backupService = context.read<BackupService>();
+    final vm = context.read<BackupViewModel>();
     final messenger = ScaffoldMessenger.of(context);
-
     try {
-      await backupService.backupUserData();
+      await vm.backup();
       messenger.showSnackBar(
         const SnackBar(content: Text('اكتمل النسخ الاحتياطي بنجاح.')),
       );
     } catch (e) {
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('فشل النسخ الاحتياطي. يرجى المحاولة مرة أخرى.'),
-        ),
+        SnackBar(content: Text(e.toString() ?? 'فشل النسخ الاحتياطي.')),
       );
-    } finally {
-      if (mounted) setState(() => _isBackingUp = false);
     }
   }
 
@@ -60,25 +53,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (confirmed != true) return;
 
-    setState(() => _isRestoring = true);
-    final backupService = context.read<BackupService>();
+    final vm = context.read<BackupViewModel>();
     final messenger = ScaffoldMessenger.of(context);
-
     try {
-      await backupService.restoreUserData();
+      await vm.restore(merge: true);
       messenger.showSnackBar(
         const SnackBar(content: Text('تمت استعادة النسخة الاحتياطية بنجاح.')),
       );
     } catch (e) {
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text(
-            'فشل استعادة النسخة الاحتياطية. يرجى المحاولة مرة أخرى.',
-          ),
+        SnackBar(
+          content: Text(e.toString() ?? 'فشل استعادة النسخة الاحتياطية.'),
         ),
       );
-    } finally {
-      if (mounted) setState(() => _isRestoring = false);
     }
   }
 
@@ -178,19 +165,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onTap: () => context.push('/categories'),
                   ),
                   _SettingRow('تصدير إلى CSV', context),
-                  _SettingRow(
-                    _isBackingUp
-                        ? 'جارٍ إجراء النسخ الاحتياطي...'
-                        : 'النسخ الاحتياطي',
-                    context,
-                    onTap: _isBackingUp ? null : _backupNow,
-                  ),
-                  _SettingRow(
-                    _isRestoring
-                        ? 'جارٍ استعادة النسخة الاحتياطية...'
-                        : 'استعادة النسخة الاحتياطية',
-                    context,
-                    onTap: _isRestoring ? null : _restoreBackup,
+                  Consumer<BackupViewModel>(
+                    builder: (context, vm, child) => Column(
+                      children: [
+                        _SettingRow(
+                          vm.isBackingUp
+                              ? 'جارٍ إجراء النسخ الاحتياطي...'
+                              : 'النسخ الاحتياطي',
+                          context,
+                          onTap: vm.isBackingUp ? null : _backupNow,
+                        ),
+                        _SettingRow(
+                          vm.isRestoring
+                              ? 'جارٍ استعادة النسخة الاحتياطية...'
+                              : 'استعادة النسخة الاحتياطية',
+                          context,
+                          onTap: vm.isRestoring ? null : _restoreBackup,
+                        ),
+                      ],
+                    ),
                   ),
                   SizedBox(height: context.scaleH(16)),
 

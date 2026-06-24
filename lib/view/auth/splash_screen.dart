@@ -30,7 +30,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: scheme.background,
+      backgroundColor: scheme.surface,
       body: SafeArea(
         child: Center(
           child: Padding(
