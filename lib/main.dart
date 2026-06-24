@@ -13,7 +13,7 @@ import 'package:madakhel_app/model/auth_user.dart';
 import 'package:madakhel_app/view_model/connectivity_view_model.dart';
 import 'package:madakhel_app/view_model/theme_view_model.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
 
 import 'core/routing/app_router.dart';
 import 'data/auth/auth_service.dart';

@@ -346,15 +346,22 @@ class BackupService {
           ),
         );
 
-    final backupFileNames =
-        files
-            .map((file) => file.name)
-            .where((name) => name.endsWith('.json'))
-            .toList()
-          ..sort((a, b) => b.compareTo(a));
-    if (backupFileNames.isEmpty) return null;
+    String? latestFileName;
+    DateTime? latestTimestamp;
 
-    return '$_backupFolder/$uid/${backupFileNames.first}';
+    for (final file in files) {
+      final timestamp = _timestampFromBackupFileName(file.name);
+      if (timestamp == null) continue;
+
+      if (latestTimestamp == null || timestamp.isAfter(latestTimestamp)) {
+        latestTimestamp = timestamp;
+        latestFileName = file.name;
+      }
+    }
+
+    if (latestFileName == null) return null;
+
+    return '$_backupFolder/$uid/$latestFileName';
   }
 
   String _backupPath(String uid, DateTime timestamp) {
@@ -364,6 +371,24 @@ class BackupService {
         .replaceAll('.', '')
         .replaceAll('-', '');
     return '$_backupFolder/$uid/$fileName.json';
+  }
+
+  DateTime? _timestampFromBackupFileName(String fileName) {
+    final match = RegExp(
+      r'^(\d{8})T(\d{6})(\d{3,6})Z\.json$',
+    ).firstMatch(fileName);
+    if (match == null) return null;
+
+    final date = match.group(1)!;
+    final time = match.group(2)!;
+    final fraction = match.group(3)!.padRight(6, '0');
+
+    return DateTime.tryParse(
+      '${date.substring(0, 4)}-${date.substring(4, 6)}-${date.substring(6, 8)}'
+      'T${time.substring(0, 2)}:${time.substring(2, 4)}:${time.substring(4, 6)}'
+      '.$fraction'
+      'Z',
+    );
   }
 
   List<Map<String, dynamic>> _extractList(Object? raw) {
