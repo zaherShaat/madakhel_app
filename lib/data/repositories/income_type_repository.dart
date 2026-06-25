@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:madakhel_app/model/transaction_direction.dart';
 
 import '../../model/income_source_with_balance.dart';
@@ -30,6 +31,7 @@ class IncomeTypeRepository {
   }) async {
     final now = DateTime.now();
     final userId = _requireUserId();
+    debugPrint("$userId >> userID");
     return await _db
         .into(_db.incomeSources)
         .insert(

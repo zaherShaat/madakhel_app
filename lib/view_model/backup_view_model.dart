@@ -199,8 +199,6 @@ class BackupViewModel extends ChangeNotifier {
         }
 
         for (final r in remoteTransactions) {
-          final key = r.remoteId ?? r.id.toString();
-
           // Resolve foreign keys
           final mappedIncomeId =
               remoteIdToLocalIncome[r.incomeSourceId.toString()] ??

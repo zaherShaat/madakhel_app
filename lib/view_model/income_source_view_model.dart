@@ -60,7 +60,6 @@ class IncomeSourceViewModel extends ChangeNotifier {
         ),
       );
 
-      await Future.delayed(const Duration(seconds: 1));
       _setState(_state.copyWith(isSuccess: false, successMessage: null));
       return id;
     } catch (e) {
@@ -71,7 +70,6 @@ class IncomeSourceViewModel extends ChangeNotifier {
           errorMessage: 'خطأ: ${e.toString()}',
         ),
       );
-      await Future.delayed(const Duration(seconds: 1));
       clearError();
       return null;
     }

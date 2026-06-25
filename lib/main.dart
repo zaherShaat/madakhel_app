@@ -81,16 +81,16 @@ Future<void> main() async {
         // Repositories
         Provider<IncomeTypeRepository>(
           create: (ctx) =>
-              IncomeTypeRepository(db, () => authService.currentAuthUser?.uid),
+              IncomeTypeRepository(db, () => authService.currentAuthUser?.email),
         ),
         Provider<TransactionRepository>(
           create: (ctx) =>
-              TransactionRepository(db, () => authService.currentAuthUser?.uid),
+              TransactionRepository(db, () => authService.currentAuthUser?.email),
         ),
         Provider<TransactionCategoryRepository>(
           create: (ctx) => TransactionCategoryRepository(
             db,
-            () => authService.currentAuthUser?.uid,
+            () => authService.currentAuthUser?.email,
           ),
         ),
         // ViewModels

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:madakhel_app/data/auth/auth_service.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
 import 'package:madakhel_app/model/auth_user.dart';
@@ -23,9 +24,10 @@ class BackupService {
 
   Future<String> backupUserData() async {
     final user = _requireSignedInUser();
-    final uid = user.uid;
+    final uid = user.email!;
+    final backupOwner = _backupOwner(user);
     final backupTime = DateTime.now().toUtc();
-    final backupPath = _backupPath(uid, backupTime);
+    final backupPath = _backupPath(backupOwner, backupTime);
 
     final incomeSources = await (_db.select(
       _db.incomeSources,
@@ -36,9 +38,7 @@ class BackupService {
     final transactions = await (_db.select(
       _db.financialTransactions,
     )..where((t) => t.userId.equals(uid))).get();
-    //  final directories=await (_db.select(
-    //     _db.,
-    //   )..where((t) => t.userId.equals(uid))).get();
+
     // Convert categories with proper enum serialization
     const directionConverter = TransactionDirectionConverter();
     final categoriesJson = categories.map((cat) {
@@ -47,70 +47,57 @@ class BackupService {
       json['direction'] = directionConverter.toSql(cat.direction);
       return json;
     }).toList();
-
+    debugPrint(
+      ">> backupUserData: incomeSources: ${incomeSources.length}, categories: ${categories.length}, transactions: ${transactions.length}",
+    );
     final payload = jsonEncode({
       'version': 1,
-      'userId': uid,
+      'userEmail': user.email,
+      'backupOwner': backupOwner,
       'timestamp': backupTime.toIso8601String(),
       'incomeSources': incomeSources.map((e) => e.toJson()).toList(),
       'transactionCategories': categoriesJson,
       'financialTransactions': transactions.map((e) => e.toJson()).toList(),
     });
-
+    debugPrint(">> payload $payload");
     await _uploadJsonBackup(backupPath, utf8.encode(payload));
 
     return backupPath;
   }
 
-  Future<bool> backupExists() async {
-    try {
-      return await _latestBackupPath(_requireSignedInUser().uid) != null;
-    } catch (_) {
-      return false;
-    }
-  }
+  // Future<bool> backupExists() async {
+  //   try {
+  //     return await _latestBackupPath(_backupOwner(_requireSignedInUser())) !=
+  //         null;
+  //   } catch (_) {
+  //     return false;
+  //   }
+  // }
 
   Future<void> restoreUserData() async {
-    final uid = _requireSignedInUser().uid;
-    final bytes = await _downloadLatestBackup(uid);
+    final user = _requireSignedInUser();
+    final uid = user.email!;
+    final backupOwner = _backupOwner(user);
+    final bytes = await _downloadLatestBackup(backupOwner);
 
     final decoded = jsonDecode(utf8.decode(bytes));
     if (decoded is! Map<String, dynamic>) {
       throw StateError('Invalid backup format.');
     }
 
-    final backupUserId = decoded['userId'];
-    if (backupUserId != uid) {
-      throw StateError('Backup belongs to a different user.');
-    }
-
-    final incomeSourcesJson = _extractList(decoded['incomeSources']);
-    final categoriesJson = _extractList(decoded['transactionCategories']);
-    final transactionsJson = _extractList(decoded['financialTransactions']);
-
-    final incomeSources = incomeSourcesJson
-        .map((item) => IncomeSource.fromJson(Map<String, dynamic>.from(item)))
-        .toList();
-
-    // Handle TransactionDirection enum deserialization
-    const directionConverter = TransactionDirectionConverter();
-    final categories = categoriesJson.map((item) {
-      final catJson = Map<String, dynamic>.from(item);
-      // Convert direction string back to enum if needed
-      if (catJson['direction'] is String) {
-        catJson['direction'] = directionConverter.fromSql(
-          catJson['direction'] as String,
-        );
-      }
-      return TransactionCategory.fromJson(catJson);
-    }).toList();
-
-    final transactions = transactionsJson
-        .map(
-          (item) =>
-              FinancialTransaction.fromJson(Map<String, dynamic>.from(item)),
-        )
-        .toList();
+    _validateBackupOwner(decoded, backupOwner);
+    final incomeSources = _parseIncomeSources(
+      _extractList(decoded['incomeSources']),
+      uid,
+    );
+    final categories = _parseCategories(
+      _extractList(decoded['transactionCategories']),
+      uid,
+    );
+    final transactions = _parseTransactions(
+      _extractList(decoded['financialTransactions']),
+      uid,
+    );
 
     await _db.transaction(() async {
       await (_db.delete(
@@ -187,46 +174,31 @@ class BackupService {
   /// Fetches the parsed backup data without applying it to the local DB.
   /// Useful for merge/preview operations.
   Future<Map<String, List<dynamic>>> fetchBackupData() async {
-    final uid = _requireSignedInUser().uid;
-    final bytes = await _downloadLatestBackup(uid);
+    final user = _requireSignedInUser();
+    final uid = user.uid;
+    final backupOwner = _backupOwner(user);
+    final bytes = await _downloadLatestBackup(backupOwner);
 
     final decoded = jsonDecode(utf8.decode(bytes));
     if (decoded is! Map<String, dynamic>) {
       throw StateError('Invalid backup format.');
     }
 
-    final incomeSourcesJson = _extractList(decoded['incomeSources']);
-    final categoriesJson = _extractList(decoded['transactionCategories']);
-    final transactionsJson = _extractList(decoded['financialTransactions']);
-
-    final incomeSources = incomeSourcesJson
-        .map((item) => IncomeSource.fromJson(Map<String, dynamic>.from(item)))
-        .toList();
-
-    // Handle TransactionDirection enum deserialization
-    const directionConverter = TransactionDirectionConverter();
-    final categories = categoriesJson.map((item) {
-      final catJson = Map<String, dynamic>.from(item);
-      // Convert direction string back to enum if needed
-      if (catJson['direction'] is String) {
-        catJson['direction'] = directionConverter.fromSql(
-          catJson['direction'] as String,
-        );
-      }
-      return TransactionCategory.fromJson(catJson);
-    }).toList();
-
-    final transactions = transactionsJson
-        .map(
-          (item) =>
-              FinancialTransaction.fromJson(Map<String, dynamic>.from(item)),
-        )
-        .toList();
+    _validateBackupOwner(decoded, backupOwner);
 
     return {
-      'incomeSources': incomeSources,
-      'transactionCategories': categories,
-      'financialTransactions': transactions,
+      'incomeSources': _parseIncomeSources(
+        _extractList(decoded['incomeSources']),
+        uid,
+      ),
+      'transactionCategories': _parseCategories(
+        _extractList(decoded['transactionCategories']),
+        uid,
+      ),
+      'financialTransactions': _parseTransactions(
+        _extractList(decoded['financialTransactions']),
+        uid,
+      ),
     };
   }
 
@@ -236,6 +208,61 @@ class BackupService {
       throw StateError('No signed-in user available for backup.');
     }
     return user;
+  }
+
+  String _backupOwner(AuthUser user) {
+    final email = user.email?.trim().toLowerCase();
+    if (email == null || email.isEmpty) {
+      throw StateError('No signed-in user email available for backup.');
+    }
+    debugPrint('Backup owner: $email');
+    return email;
+  }
+
+  void _validateBackupOwner(Map<String, dynamic> decoded, String backupOwner) {
+    final rawOwner = decoded['backupOwner'] ?? decoded['userEmail'];
+    if (rawOwner is! String || rawOwner.trim().toLowerCase() != backupOwner) {
+      throw StateError('Backup belongs to a different user.');
+    }
+  }
+
+  List<IncomeSource> _parseIncomeSources(
+    List<Map<String, dynamic>> items,
+    String uid,
+  ) {
+    return items.map((item) {
+      final json = Map<String, dynamic>.from(item);
+      json['userId'] = uid;
+      return IncomeSource.fromJson(json);
+    }).toList();
+  }
+
+  List<TransactionCategory> _parseCategories(
+    List<Map<String, dynamic>> items,
+    String uid,
+  ) {
+    const directionConverter = TransactionDirectionConverter();
+    return items.map((item) {
+      final json = Map<String, dynamic>.from(item);
+      json['userId'] = uid;
+      if (json['direction'] is String) {
+        json['direction'] = directionConverter.fromSql(
+          json['direction'] as String,
+        );
+      }
+      return TransactionCategory.fromJson(json);
+    }).toList();
+  }
+
+  List<FinancialTransaction> _parseTransactions(
+    List<Map<String, dynamic>> items,
+    String uid,
+  ) {
+    return items.map((item) {
+      final json = Map<String, dynamic>.from(item);
+      json['userId'] = uid;
+      return FinancialTransaction.fromJson(json);
+    }).toList();
   }
 
   Future<void> _uploadJsonBackup(String path, List<int> payload) async {
@@ -290,14 +317,16 @@ class BackupService {
     );
   }
 
-  Future<Uint8List> _downloadLatestBackup(String uid) async {
-    final path = await _latestBackupPath(uid);
+  Future<Uint8List> _downloadLatestBackup(String backupOwner) async {
+    final path = await _latestBackupPath(backupOwner);
+    debugPrint('Latest backup path for $path');
     if (path == null) {
       throw StateError('No backup is available to restore.');
     }
 
     final storage = _supabase.storage.from(_backupBucket);
     final bytes = await storage.download(path);
+    debugPrint("${bytes.length} bytes downloaded from $path");
     if (bytes.isEmpty) {
       throw StateError('No backup is available to restore.');
     }
@@ -334,23 +363,26 @@ class BackupService {
     return bytes;
   }
 
-  Future<String?> _latestBackupPath(String uid) async {
+  Future<String?> _latestBackupPath(String backupOwner) async {
+    debugPrint(
+      'Fetching latest backup path for $backupOwner >>$_backupBucket / $_backupFolder/$backupOwner',
+    );
     final files = await _supabase.storage
         .from(_backupBucket)
         .list(
-          path: '$_backupFolder/$uid',
-          searchOptions: const SearchOptions(
-            limit: 100,
-            sortBy: SortBy(column: 'name', order: 'desc'),
-            search: '.json',
-          ),
+          path: '$_backupFolder/$backupOwner',
+          // searchOptions: const SearchOptions(limit: 100, search: '.json'),
         );
-
+    debugPrint("${files.length} >> files");
     String? latestFileName;
     DateTime? latestTimestamp;
 
     for (final file in files) {
-      final timestamp = _timestampFromBackupFileName(file.name);
+      if (!_isBackupFileName(file.name)) continue;
+
+      final timestamp =
+          _timestampFromBackupFileName(file.name) ??
+          _timestampFromStorageFile(file);
       if (timestamp == null) continue;
 
       if (latestTimestamp == null || timestamp.isAfter(latestTimestamp)) {
@@ -361,16 +393,30 @@ class BackupService {
 
     if (latestFileName == null) return null;
 
-    return '$_backupFolder/$uid/$latestFileName';
+    return '$_backupFolder/$backupOwner/$latestFileName';
   }
 
-  String _backupPath(String uid, DateTime timestamp) {
+  bool _isBackupFileName(String fileName) {
+    return fileName.endsWith('.json') && !fileName.contains('.part');
+  }
+
+  DateTime? _timestampFromStorageFile(FileObject file) {
+    return _parseStorageTimestamp(file.createdAt) ??
+        _parseStorageTimestamp(file.updatedAt);
+  }
+
+  DateTime? _parseStorageTimestamp(String? value) {
+    if (value == null || value.isEmpty) return null;
+    return DateTime.tryParse(value)?.toUtc();
+  }
+
+  String _backupPath(String backupOwner, DateTime timestamp) {
     final fileName = timestamp
         .toIso8601String()
         .replaceAll(':', '')
         .replaceAll('.', '')
         .replaceAll('-', '');
-    return '$_backupFolder/$uid/$fileName.json';
+    return '$_backupFolder/$backupOwner/$fileName.json';
   }
 
   DateTime? _timestampFromBackupFileName(String fileName) {
