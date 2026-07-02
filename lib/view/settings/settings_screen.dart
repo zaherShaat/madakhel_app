@@ -52,7 +52,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     if (confirmed != true) return;
-
     final vm = context.read<BackupViewModel>();
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -61,6 +60,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const SnackBar(content: Text('تمت استعادة النسخة الاحتياطية بنجاح.')),
       );
     } catch (e) {
+      debugPrint('Restore backup error: $e');
       messenger.showSnackBar(
         SnackBar(
           content: Text(e.toString() ?? 'فشل استعادة النسخة الاحتياطية.'),

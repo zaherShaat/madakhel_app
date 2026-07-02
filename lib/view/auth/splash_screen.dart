@@ -19,10 +19,14 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _loadAndRoute() async {
-    final signedIn = await context.read<SplashViewModel>().load();
+    bool? signedIn;
+
+    if (mounted) {
+      signedIn = await context.read<SplashViewModel>().load();
+    }
 
     if (!mounted) return;
-    context.go(signedIn ? '/home' : '/start');
+    context.go(signedIn! ? '/home' : '/start');
   }
 
   @override

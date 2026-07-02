@@ -15,6 +15,10 @@ class BackupViewModel extends ChangeNotifier {
   String? error;
 
   BackupViewModel(this._service, this._db, this._connectivityVm);
+  bool isInternetHere() {
+    // Check internet connection
+    return _connectivityVm.hasInternet;
+  }
 
   Future<String> backup() async {
     try {
@@ -23,14 +27,14 @@ class BackupViewModel extends ChangeNotifier {
       notifyListeners();
 
       // Check internet connection
-      if (!_connectivityVm.hasInternet) {
+      if (!isInternetHere()) {
         throw Exception(_connectivityVm.getNoInternetMessage());
       }
 
       final path = await _service.backupUserData();
       return path;
     } catch (e) {
-      error = e.toString();
+      error = e is StateError ? e.message : e.toString();
       debugPrint('Backup error: $error');
       rethrow;
     } finally {
@@ -46,7 +50,7 @@ class BackupViewModel extends ChangeNotifier {
       notifyListeners();
 
       // Check internet connection
-      if (!_connectivityVm.hasInternet) {
+      if (!isInternetHere()) {
         throw Exception(_connectivityVm.getNoInternetMessage());
       }
 
@@ -55,209 +59,182 @@ class BackupViewModel extends ChangeNotifier {
         return;
       }
 
-      final data = await _service.fetchBackupData();
+      final backupFileData = await _service.fetchBackupData();
 
       final List<IncomeSource> remoteIncomeSources = List<IncomeSource>.from(
-        data['incomeSources'] ?? [],
+        backupFileData['incomeSources'] ?? [],
       );
+      debugPrint("incomeSources: ${remoteIncomeSources}");
       final List<TransactionCategory> remoteCategories =
-          List<TransactionCategory>.from(data['transactionCategories'] ?? []);
+          List<TransactionCategory>.from(
+            backupFileData['transactionCategories'] ?? [],
+          );
       final List<FinancialTransaction> remoteTransactions =
-          List<FinancialTransaction>.from(data['financialTransactions'] ?? []);
-
-      await _db.transaction(() async {
-        // Maps to resolve remote id -> local id
-        final Map<String, int> remoteIdToLocalIncome = {};
-        final Map<String, int> remoteIdToLocalCategory = {};
-        final uid = remoteIncomeSources.isNotEmpty
-            ? remoteIncomeSources.first.userId
-            : (remoteCategories.isNotEmpty
-                  ? remoteCategories.first.userId
-                  : (remoteTransactions.isNotEmpty
-                        ? remoteTransactions.first.userId
-                        : null));
-
-        // Income sources
-        final localIncome = await (_db.select(
-          _db.incomeSources,
-        )..where((t) => t.userId.equals(uid ?? ''))).get();
-
-        final localByRemote = <String, IncomeSource>{};
-        for (final l in localIncome) {
-          if (l.remoteId != null && l.remoteId!.isNotEmpty) {
-            localByRemote[l.remoteId!] = l;
-          }
-        }
-
-        for (final r in remoteIncomeSources) {
-          final key = r.remoteId ?? r.id.toString();
-          final existing = r.remoteId != null
-              ? localByRemote[r.remoteId!]
-              : localIncome.firstWhereOrNull((l) => l.id == r.id);
-
-          if (existing != null) {
-            // update if remote newer
-            if (r.updatedAt.isAfter(existing.updatedAt)) {
-              await (_db.update(
-                _db.incomeSources,
-              )..where((t) => t.id.equals(existing.id))).write(
-                IncomeSourcesCompanion(
-                  name: Value(r.name),
-                  currency: Value(r.currency),
-                  starterBalance: Value(r.starterBalance),
-                  updatedAt: Value(r.updatedAt),
-                  syncStatus: Value(r.syncStatus),
-                  remoteId: Value(r.remoteId),
-                  isDeleted: Value(r.isDeleted),
-                ),
-              );
-            }
-            remoteIdToLocalIncome[key] = existing.id;
-          } else {
-            final newId = await _db
-                .into(_db.incomeSources)
-                .insert(
-                  IncomeSourcesCompanion.insert(
-                    userId: Value(r.userId),
-                    name: r.name,
-                    currency: Value(r.currency),
-                    starterBalance: Value(r.starterBalance),
-                    createdAt: r.createdAt,
-                    updatedAt: r.updatedAt,
-                    syncStatus: Value(r.syncStatus),
-                    remoteId: Value(r.remoteId),
-                    isDeleted: Value(r.isDeleted),
-                  ),
-                );
-            remoteIdToLocalIncome[key] = newId;
-          }
-        }
-
-        // Categories
-        final localCategories = await (_db.select(
-          _db.transactionCategories,
-        )..where((t) => t.userId.equals(uid ?? ''))).get();
-
-        final localCatByRemote = <String, TransactionCategory>{};
-        for (final l in localCategories) {
-          if (l.remoteId != null && l.remoteId!.isNotEmpty) {
-            localCatByRemote[l.remoteId!] = l;
-          }
-        }
-
-        for (final r in remoteCategories) {
-          final key = r.remoteId ?? r.id.toString();
-          final existing = r.remoteId != null
-              ? localCatByRemote[r.remoteId!]
-              : localCategories.firstWhereOrNull((l) => l.id == r.id);
-
-          if (existing != null) {
-            if (r.updatedAt.isAfter(existing.updatedAt)) {
-              await (_db.update(
-                _db.transactionCategories,
-              )..where((t) => t.id.equals(existing.id))).write(
-                TransactionCategoriesCompanion(
-                  name: Value(r.name),
-                  direction: Value(r.direction),
-                  updatedAt: Value(r.updatedAt),
-                  syncStatus: Value(r.syncStatus),
-                  remoteId: Value(r.remoteId),
-                  isDeleted: Value(r.isDeleted),
-                ),
-              );
-            }
-            remoteIdToLocalCategory[key] = existing.id;
-          } else {
-            final newId = await _db
-                .into(_db.transactionCategories)
-                .insert(
-                  TransactionCategoriesCompanion.insert(
-                    userId: Value(r.userId),
-                    name: r.name,
-                    direction: r.direction,
-                    createdAt: r.createdAt,
-                    updatedAt: r.updatedAt,
-                    syncStatus: Value(r.syncStatus),
-                    remoteId: Value(r.remoteId),
-                    isDeleted: Value(r.isDeleted),
-                  ),
-                );
-            remoteIdToLocalCategory[key] = newId;
-          }
-        }
-
-        // Transactions
-        final localTransactions = await (_db.select(
-          _db.financialTransactions,
-        )..where((t) => t.userId.equals(uid ?? ''))).get();
-
-        final localTxByRemote = <String, FinancialTransaction>{};
-        for (final l in localTransactions) {
-          if (l.remoteId != null && l.remoteId!.isNotEmpty) {
-            localTxByRemote[l.remoteId!] = l;
-          }
-        }
-
-        for (final r in remoteTransactions) {
-          // Resolve foreign keys
-          final mappedIncomeId =
-              remoteIdToLocalIncome[r.incomeSourceId.toString()] ??
-              localIncome.firstWhereOrNull((l) => l.id == r.incomeSourceId)?.id;
-          final mappedCategoryId =
-              remoteIdToLocalCategory[r.categoryId.toString()] ??
-              localCategories.firstWhereOrNull((l) => l.id == r.categoryId)?.id;
-
-          final existing = r.remoteId != null
-              ? localTxByRemote[r.remoteId!]
-              : localTransactions.firstWhereOrNull((l) => l.id == r.id);
-
-          if (existing != null) {
-            if (r.updatedAt.isAfter(existing.updatedAt)) {
-              await (_db.update(
-                _db.financialTransactions,
-              )..where((t) => t.id.equals(existing.id))).write(
-                FinancialTransactionsCompanion(
-                  incomeSourceId: Value(mappedIncomeId ?? r.incomeSourceId),
-                  categoryId: Value(mappedCategoryId ?? r.categoryId),
-                  isSystem: Value(r.isSystem),
-                  amount: Value(r.amount),
-                  note: Value(r.note),
-                  date: Value(r.date),
-                  updatedAt: Value(r.updatedAt),
-                  syncStatus: Value(r.syncStatus),
-                  remoteId: Value(r.remoteId),
-                  isDeleted: Value(r.isDeleted),
-                ),
-              );
-            }
-          } else {
-            await _db
-                .into(_db.financialTransactions)
-                .insert(
-                  FinancialTransactionsCompanion.insert(
-                    userId: Value(r.userId),
-                    incomeSourceId: mappedIncomeId ?? r.incomeSourceId,
-                    categoryId: mappedCategoryId ?? r.categoryId,
-                    isSystem: Value(r.isSystem),
-                    amount: r.amount,
-                    note: Value(r.note),
-                    date: r.date,
-                    createdAt: r.createdAt,
-                    updatedAt: r.updatedAt,
-                    syncStatus: Value(r.syncStatus),
-                    remoteId: Value(r.remoteId),
-                    isDeleted: Value(r.isDeleted),
-                  ),
-                );
-          }
-        }
-      });
+          List<FinancialTransaction>.from(
+            backupFileData['financialTransactions'] ?? [],
+          );
+      await _mergeRemoteDataIntoLocal(
+        remoteIncomeSources,
+        remoteCategories,
+        remoteTransactions,
+      );
     } catch (e) {
-      error = e.toString();
+      error = e is StateError ? e.message : e.toString();
       rethrow;
     } finally {
       isRestoring = false;
       notifyListeners();
     }
+  }
+
+  //TODO: MAKE IT SIMPLE AND CLEANER
+  Future<void> _mergeRemoteDataIntoLocal(
+    List<IncomeSource> remoteIncomeSources,
+    List<TransactionCategory> remoteCategories,
+    List<FinancialTransaction> remoteTransactions,
+  ) async {
+    await _db.transaction(() async {
+      // Maps to resolve remote id -> local id
+      final Map<String, int> remoteIdToLocalIncome = {};
+      final Map<String, int> remoteIdToLocalCategory = {};
+      final localTxByRemote = <String, FinancialTransaction>{};
+
+      final uid = remoteIncomeSources.isNotEmpty
+          ? remoteIncomeSources.first.userId
+          : (remoteCategories.isNotEmpty
+                ? remoteCategories.first.userId
+                : (remoteTransactions.isNotEmpty
+                      ? remoteTransactions.first.userId
+                      : null));
+
+      // Income sources
+      final localIncome = await (_db.select(
+        _db.incomeSources,
+      )..where((t) => t.userId.equals(uid ?? ''))).get();
+
+      final localByRemote = <String, IncomeSource>{};
+      for (final l in localIncome) {
+        if (l.remoteId != null && l.remoteId!.isNotEmpty) {
+          localByRemote[l.remoteId!] = l;
+        }
+      }
+
+      for (final r in remoteIncomeSources) {
+        final key = r.remoteId ?? r.id.toString();
+        final existing = r.remoteId != null
+            ? localByRemote[r.remoteId!]
+            : localIncome.firstWhereOrNull((l) => l.id == r.id);
+
+        if (existing != null) {
+          remoteIdToLocalIncome[key] = existing.id;
+          continue;
+        } else {
+          final newId = await _db
+              .into(_db.incomeSources)
+              .insert(
+                IncomeSourcesCompanion.insert(
+                  userId: Value(r.userId),
+                  name: r.name,
+                  currency: Value(r.currency),
+                  starterBalance: Value(r.starterBalance),
+                  createdAt: r.createdAt,
+                  updatedAt: r.updatedAt,
+                  syncStatus: Value(r.syncStatus),
+                  remoteId: Value(r.remoteId),
+                  isDeleted: Value(r.isDeleted),
+                ),
+              );
+          remoteIdToLocalIncome[key] = newId;
+        }
+      }
+
+      // Categories
+      final localCategories = await (_db.select(
+        _db.transactionCategories,
+      )..where((t) => t.userId.equals(uid ?? ''))).get();
+
+      final localCatByRemote = <String, TransactionCategory>{};
+      for (final l in localCategories) {
+        if (l.remoteId != null && l.remoteId!.isNotEmpty) {
+          localCatByRemote[l.remoteId!] = l;
+        }
+      }
+
+      for (final r in remoteCategories) {
+        final key = r.remoteId ?? r.id.toString();
+        final existing = r.remoteId != null
+            ? localCatByRemote[r.remoteId!]
+            : localCategories.firstWhereOrNull((l) => l.id == r.id);
+
+        if (existing != null) {
+          remoteIdToLocalCategory[key] = existing.id;
+          continue;
+        } else {
+          final newId = await _db
+              .into(_db.transactionCategories)
+              .insert(
+                TransactionCategoriesCompanion.insert(
+                  userId: Value(r.userId),
+                  name: r.name,
+                  direction: r.direction,
+                  createdAt: r.createdAt,
+                  updatedAt: r.updatedAt,
+                  syncStatus: Value(r.syncStatus),
+                  remoteId: Value(r.remoteId),
+                  isDeleted: Value(r.isDeleted),
+                ),
+              );
+          remoteIdToLocalCategory[key] = newId;
+        }
+      }
+
+      // Transactions
+      final localTransactions = await (_db.select(
+        _db.financialTransactions,
+      )..where((t) => t.userId.equals(uid ?? ''))).get();
+
+      for (final l in localTransactions) {
+        if (l.remoteId != null && l.remoteId!.isNotEmpty) {
+          localTxByRemote[l.remoteId!] = l;
+        }
+      }
+
+      for (final r in remoteTransactions) {
+        // Resolve foreign keys
+        final mappedIncomeId =
+            remoteIdToLocalIncome[r.incomeSourceId.toString()] ??
+            localIncome.firstWhereOrNull((l) => l.id == r.incomeSourceId)?.id;
+        final mappedCategoryId =
+            remoteIdToLocalCategory[r.categoryId.toString()] ??
+            localCategories.firstWhereOrNull((l) => l.id == r.categoryId)?.id;
+
+        final existing = r.remoteId != null
+            ? localTxByRemote[r.remoteId!]
+            : localTransactions.firstWhereOrNull((l) => l.id == r.id);
+
+        if (existing != null) {
+          continue;
+        } else {
+          await _db
+              .into(_db.financialTransactions)
+              .insert(
+                FinancialTransactionsCompanion.insert(
+                  userId: Value(r.userId),
+                  incomeSourceId: mappedIncomeId ?? r.incomeSourceId,
+                  categoryId: mappedCategoryId ?? r.categoryId,
+                  isSystem: Value(r.isSystem),
+                  amount: r.amount,
+                  note: Value(r.note),
+                  date: r.date,
+                  createdAt: r.createdAt,
+                  updatedAt: r.updatedAt,
+                  syncStatus: Value(r.syncStatus),
+                  remoteId: Value(r.remoteId),
+                  isDeleted: Value(r.isDeleted),
+                ),
+              );
+        }
+      }
+    });
   }
 }

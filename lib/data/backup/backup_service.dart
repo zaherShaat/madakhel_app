@@ -24,20 +24,25 @@ class BackupService {
 
   Future<String> backupUserData() async {
     final user = _requireSignedInUser();
-    final uid = user.email!;
     final backupOwner = _backupOwner(user);
     final backupTime = DateTime.now().toUtc();
     final backupPath = _backupPath(backupOwner, backupTime);
 
     final incomeSources = await (_db.select(
       _db.incomeSources,
-    )..where((incomeTable) => incomeTable.userId.equals(uid))).get();
+    )..where((incomeTable) => incomeTable.userId.equals(backupOwner))).get();
     final categories = await (_db.select(
       _db.transactionCategories,
-    )..where((t) => t.userId.equals(uid))).get();
+    )..where((t) => t.userId.equals(backupOwner))).get();
     final transactions = await (_db.select(
       _db.financialTransactions,
-    )..where((t) => t.userId.equals(uid))).get();
+    )..where((t) => t.userId.equals(backupOwner))).get();
+
+    if (incomeSources.isEmpty && categories.isEmpty && transactions.isEmpty) {
+      throw StateError(
+        'Cannot create a backup because there is no data to save yet.',
+      );
+    }
 
     // Convert categories with proper enum serialization
     const directionConverter = TransactionDirectionConverter();
@@ -76,7 +81,6 @@ class BackupService {
 
   Future<void> restoreUserData() async {
     final user = _requireSignedInUser();
-    final uid = user.email!;
     final backupOwner = _backupOwner(user);
     final bytes = await _downloadLatestBackup(backupOwner);
 
@@ -88,27 +92,33 @@ class BackupService {
     _validateBackupOwner(decoded, backupOwner);
     final incomeSources = _parseIncomeSources(
       _extractList(decoded['incomeSources']),
-      uid,
+      backupOwner,
     );
     final categories = _parseCategories(
       _extractList(decoded['transactionCategories']),
-      uid,
+      backupOwner,
     );
     final transactions = _parseTransactions(
       _extractList(decoded['financialTransactions']),
-      uid,
+      backupOwner,
     );
+
+    if (incomeSources.isEmpty && categories.isEmpty && transactions.isEmpty) {
+      throw StateError(
+        'Cannot restore backup because the backup file is empty.',
+      );
+    }
 
     await _db.transaction(() async {
       await (_db.delete(
         _db.financialTransactions,
-      )..where((t) => t.userId.equals(uid))).go();
+      )..where((t) => t.userId.equals(backupOwner))).go();
       await (_db.delete(
         _db.transactionCategories,
-      )..where((t) => t.userId.equals(uid))).go();
+      )..where((t) => t.userId.equals(backupOwner))).go();
       await (_db.delete(
         _db.incomeSources,
-      )..where((t) => t.userId.equals(uid))).go();
+      )..where((t) => t.userId.equals(backupOwner))).go();
 
       for (final source in incomeSources) {
         await _db
@@ -175,10 +185,8 @@ class BackupService {
   /// Useful for merge/preview operations.
   Future<Map<String, List<dynamic>>> fetchBackupData() async {
     final user = _requireSignedInUser();
-    final uid = user.uid;
     final backupOwner = _backupOwner(user);
     final bytes = await _downloadLatestBackup(backupOwner);
-
     final decoded = jsonDecode(utf8.decode(bytes));
     if (decoded is! Map<String, dynamic>) {
       throw StateError('Invalid backup format.');
@@ -189,15 +197,15 @@ class BackupService {
     return {
       'incomeSources': _parseIncomeSources(
         _extractList(decoded['incomeSources']),
-        uid,
+        backupOwner,
       ),
       'transactionCategories': _parseCategories(
         _extractList(decoded['transactionCategories']),
-        uid,
+        backupOwner,
       ),
       'financialTransactions': _parseTransactions(
         _extractList(decoded['financialTransactions']),
-        uid,
+        backupOwner,
       ),
     };
   }
@@ -317,9 +325,9 @@ class BackupService {
     );
   }
 
-  Future<Uint8List> _downloadLatestBackup(String backupOwner) async {
-    final path = await _latestBackupPath(backupOwner);
-    debugPrint('Latest backup path for $path');
+  Future<Uint8List> _downloadLatestBackup(String uid) async {
+    final path = await _latestBackupPath(uid);
+    // debugPrint('Latest backup path for $path');
     if (path == null) {
       throw StateError('No backup is available to restore.');
     }
@@ -333,7 +341,7 @@ class BackupService {
 
     final decoded = jsonDecode(utf8.decode(bytes));
     if (decoded is Map<String, dynamic> && decoded['chunked'] == true) {
-      return _downloadChunkedBackup(decoded);
+      return await _downloadChunkedBackup(decoded);
     }
 
     return bytes;
@@ -363,78 +371,57 @@ class BackupService {
     return bytes;
   }
 
-  Future<String?> _latestBackupPath(String backupOwner) async {
-    debugPrint(
-      'Fetching latest backup path for $backupOwner >>$_backupBucket / $_backupFolder/$backupOwner',
-    );
-    final files = await _supabase.storage
-        .from(_backupBucket)
-        .list(
-          path: '$_backupFolder/$backupOwner',
-          // searchOptions: const SearchOptions(limit: 100, search: '.json'),
-        );
-    debugPrint("${files.length} >> files");
-    String? latestFileName;
-    DateTime? latestTimestamp;
+  Future<String?> _latestBackupPath(String uid) async {
+    try {
+      final filesObjects = await _supabase.storage
+          .from(_backupBucket)
+          .list(path: '$_backupFolder/$uid');
 
-    for (final file in files) {
-      if (!_isBackupFileName(file.name)) continue;
-
-      final timestamp =
-          _timestampFromBackupFileName(file.name) ??
-          _timestampFromStorageFile(file);
-      if (timestamp == null) continue;
-
-      if (latestTimestamp == null || timestamp.isAfter(latestTimestamp)) {
-        latestTimestamp = timestamp;
-        latestFileName = file.name;
+      if (filesObjects.isEmpty) {
+        debugPrint('No backup files found for user: $uid');
+        return null;
       }
+
+      String? latestFileName;
+      for (final fileObject in filesObjects) {
+        final name = fileObject.name;
+        if (!name.endsWith('.json')) {
+          continue;
+        }
+
+        final stem = name.substring(0, name.length - 5);
+        if (int.tryParse(stem) == null) {
+          continue;
+        }
+
+        if (latestFileName == null) {
+          latestFileName = name;
+          continue;
+        }
+
+        final currentStem = latestFileName!.substring(
+          0,
+          latestFileName!.length - 5,
+        );
+        if (int.parse(stem) > int.parse(currentStem)) {
+          latestFileName = name;
+        }
+      }
+
+      if (latestFileName == null) {
+        return null;
+      }
+
+      return '$_backupFolder/$uid/$latestFileName';
+    } catch (e) {
+      debugPrint('No backup folder found for user $uid: $e');
+      return null;
     }
-
-    if (latestFileName == null) return null;
-
-    return '$_backupFolder/$backupOwner/$latestFileName';
   }
 
-  bool _isBackupFileName(String fileName) {
-    return fileName.endsWith('.json') && !fileName.contains('.part');
-  }
-
-  DateTime? _timestampFromStorageFile(FileObject file) {
-    return _parseStorageTimestamp(file.createdAt) ??
-        _parseStorageTimestamp(file.updatedAt);
-  }
-
-  DateTime? _parseStorageTimestamp(String? value) {
-    if (value == null || value.isEmpty) return null;
-    return DateTime.tryParse(value)?.toUtc();
-  }
-
-  String _backupPath(String backupOwner, DateTime timestamp) {
-    final fileName = timestamp
-        .toIso8601String()
-        .replaceAll(':', '')
-        .replaceAll('.', '')
-        .replaceAll('-', '');
-    return '$_backupFolder/$backupOwner/$fileName.json';
-  }
-
-  DateTime? _timestampFromBackupFileName(String fileName) {
-    final match = RegExp(
-      r'^(\d{8})T(\d{6})(\d{3,6})Z\.json$',
-    ).firstMatch(fileName);
-    if (match == null) return null;
-
-    final date = match.group(1)!;
-    final time = match.group(2)!;
-    final fraction = match.group(3)!.padRight(6, '0');
-
-    return DateTime.tryParse(
-      '${date.substring(0, 4)}-${date.substring(4, 6)}-${date.substring(6, 8)}'
-      'T${time.substring(0, 2)}:${time.substring(2, 4)}:${time.substring(4, 6)}'
-      '.$fraction'
-      'Z',
-    );
+  String _backupPath(String uid, DateTime timestamp) {
+    final fileName = timestamp.millisecondsSinceEpoch.toString();
+    return '$_backupFolder/$uid/$fileName.json';
   }
 
   List<Map<String, dynamic>> _extractList(Object? raw) {
@@ -447,4 +434,12 @@ class BackupService {
     }
     throw StateError('Expected a JSON array but got ${raw.runtimeType}.');
   }
+
+  String newestDateEpoch(int a, int b) =>
+      DateTime.fromMillisecondsSinceEpoch(
+        a,
+        isUtc: true,
+      ).isAfter(DateTime.fromMillisecondsSinceEpoch(b, isUtc: true))
+      ? a.toString()
+      : b.toString();
 }

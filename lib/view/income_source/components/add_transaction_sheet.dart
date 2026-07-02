@@ -124,12 +124,12 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                   controller: _amountController,
                   enabled: !isLoading,
                 ),
-                SizedBox(height: context.scaleH(12)),
-                _DateField(
-                  selectedDate: _selectedDate,
-                  enabled: !isLoading,
-                  onChanged: (date) => setState(() => _selectedDate = date),
-                ),
+                // SizedBox(height: context.scaleH(12)),
+                // _DateField(
+                //   selectedDate: _selectedDate,
+                //   enabled: !isLoading,
+                //   onChanged: (date) => setState(() => _selectedDate = date),
+                // ),
                 SizedBox(height: context.scaleH(12)),
                 _NoteField(controller: _noteController, enabled: !isLoading),
                 SizedBox(height: context.scaleH(16)),
