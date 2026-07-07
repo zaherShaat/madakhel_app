@@ -34,7 +34,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: scheme.surface,
+      backgroundColor: scheme.background,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -43,34 +43,44 @@ class _SplashScreenState extends State<SplashScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: context.scaleW(72),
-                  height: context.scaleW(72),
+                  width: context.scaleW(80),
+                  height: context.scaleW(80),
                   decoration: BoxDecoration(
-                    color: scheme.onBackground,
-                    borderRadius: BorderRadius.circular(context.scaleW(20)),
+                    color: scheme.primary,
+                    borderRadius: BorderRadius.circular(context.scaleW(24)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: scheme.primary.withOpacity(0.25),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
                   ),
                   alignment: Alignment.center,
                   child: Icon(
                     Icons.account_balance_wallet_outlined,
-                    color: scheme.background,
-                    size: context.scaleW(36),
+                    color: scheme.onPrimary,
+                    size: context.scaleW(38),
                   ),
                 ),
-                SizedBox(height: context.scaleH(24)),
+                SizedBox(height: context.scaleH(26)),
                 Text(
                   'مداخيل',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                     color: scheme.onBackground,
                   ),
                 ),
-                SizedBox(height: context.scaleH(8)),
+                SizedBox(height: context.scaleH(10)),
                 Text(
-                  'تحميل بياناتك...',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: scheme.onSurface),
+                  'تحميل بياناتك وتأمين حسابك...',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
+                SizedBox(height: context.scaleH(24)),
+                CircularProgressIndicator(color: scheme.primary),
               ],
             ),
           ),

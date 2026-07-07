@@ -46,6 +46,7 @@ class AppConfirmActionDialog extends StatelessWidget {
                 color: scheme.onSurface.withValues(alpha: 0.8),
                 height: 1.6,
               ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             AppPrimaryButton(

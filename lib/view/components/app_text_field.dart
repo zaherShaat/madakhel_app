@@ -39,16 +39,32 @@ class AppTextField extends StatelessWidget {
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
-
+      style: Theme.of(
+        context,
+      ).textTheme.bodyMedium?.copyWith(color: scheme.onSurface),
       decoration: InputDecoration(
         hintText: hintText,
-
         hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: scheme.onSurface.withOpacity(0.55),
         ),
         suffixIcon: suffixIcon == null
             ? null
             : IconButton(icon: suffixIcon!, onPressed: onSuffixPressed),
+        filled: true,
+        fillColor: scheme.surfaceVariant,
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: scheme.outline.withOpacity(0.65)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: scheme.outline.withOpacity(0.35)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: scheme.primary, width: 1.7),
+        ),
       ),
     );
 

@@ -29,7 +29,7 @@ class CircleIconButton extends StatelessWidget {
     final buttonSize = size ?? context.scaleW(32);
     final iSize = iconSize ?? context.scaleW(14);
     final bgColor = backgroundColor ?? scheme.surfaceContainerHighest;
-    final bColor = borderColor ?? scheme.outline;
+    final bColor = borderColor ?? scheme.outline.withOpacity(0.55);
     final iColor = iconColor ?? scheme.onSurface;
 
     return InkWell(
@@ -41,7 +41,14 @@ class CircleIconButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: bgColor,
           shape: BoxShape.circle,
-          border: showBorder ? Border.all(color: bColor, width: 0.5) : null,
+          border: showBorder ? Border.all(color: bColor, width: 0.65) : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         alignment: Alignment.center,
         child: Icon(icon, size: iSize, color: iColor),

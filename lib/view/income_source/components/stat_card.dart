@@ -39,8 +39,9 @@ class StatCard extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: context.scaleSp(10),
-              color: scheme.onSurfaceVariant,
+              fontSize: context.scaleSp(12),
+              fontWeight: FontWeight.w400,
+              color: scheme.primaryFixed,
             ),
           ),
         ],

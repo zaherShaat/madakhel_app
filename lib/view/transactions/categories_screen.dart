@@ -20,7 +20,7 @@ class CategoriesScreen extends StatelessWidget {
     final viewModel = context.watch<CategoryViewModel>();
 
     return Scaffold(
-      backgroundColor: scheme.surface,
+      backgroundColor: scheme.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -33,6 +33,10 @@ class CategoriesScreen extends StatelessWidget {
               trailing: CircleIconButton(
                 icon: Icons.add,
                 onTap: () => _showCategorySheet(context),
+                backgroundColor: scheme.primaryContainer,
+                iconColor: scheme.primary,
+                borderColor: scheme.primary.withOpacity(0.2),
+                showBorder: false,
               ),
             ),
             Expanded(
@@ -67,31 +71,28 @@ class CategoriesScreen extends StatelessWidget {
                     padding: EdgeInsets.all(context.scaleW(16)),
                     children: [
                       const _InfoBox(),
-                      SizedBox(height: context.scaleH(16)),
+                      SizedBox(height: context.scaleH(18)),
                       if (income.isNotEmpty) ...[
                         const SectionTitle('فئات الدخل'),
                         ...income.map(
                           (category) => _CategoryRow(
                             category,
-                            onEdit: () => _showCategorySheet(
-                              context,
-                              initial: category,
-                            ),
+                            onEdit: () =>
+                                _showCategorySheet(context, initial: category),
                           ),
                         ),
-                        SizedBox(height: context.scaleH(16)),
+                        SizedBox(height: context.scaleH(24)),
                       ],
                       if (expense.isNotEmpty) ...[
                         const SectionTitle('فئات المصروف'),
                         ...expense.map(
                           (category) => _CategoryRow(
                             category,
-                            onEdit: () => _showCategorySheet(
-                              context,
-                              initial: category,
-                            ),
+                            onEdit: () =>
+                                _showCategorySheet(context, initial: category),
                           ),
                         ),
+                        SizedBox(height: context.scaleH(18)),
                       ],
                     ],
                   );
@@ -200,24 +201,21 @@ class _CategoryEmptyState extends StatelessWidget {
             SizedBox(height: context.scaleH(12)),
             Text(
               'لا توجد فئات بعد',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             SizedBox(height: context.scaleH(6)),
             Text(
               'أضف فئة دخل أو مصروف لاستخدامها عند تسجيل المعاملات.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    height: 1.6,
-                  ),
+                color: scheme.onSurfaceVariant,
+                height: 1.6,
+              ),
             ),
             SizedBox(height: context.scaleH(16)),
-            ElevatedButton(
-              onPressed: onAdd,
-              child: const Text('إضافة فئة'),
-            ),
+            ElevatedButton(onPressed: onAdd, child: const Text('إضافة فئة')),
           ],
         ),
       ),
@@ -242,18 +240,28 @@ class _CategoryRow extends StatelessWidget {
     final label = isIncome ? 'دخل' : 'مصروف';
 
     return Container(
-      padding: EdgeInsets.symmetric(vertical: context.scaleH(11)),
+      margin: EdgeInsets.only(bottom: context.scaleH(8)),
+      padding: EdgeInsets.symmetric(
+        horizontal: context.scaleW(14),
+        vertical: context.scaleH(14),
+      ),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: scheme.outline.withAlpha(40), width: 0.5),
-        ),
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(context.scaleW(18)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
             padding: EdgeInsets.symmetric(
-              horizontal: context.scaleW(8),
-              vertical: context.scaleH(2),
+              horizontal: context.scaleW(10),
+              vertical: context.scaleH(6),
             ),
             decoration: BoxDecoration(
               color: bgColor,
@@ -301,8 +309,7 @@ class _CategoryRow extends StatelessWidget {
       context: context,
       builder: (dialogContext) => AppConfirmActionDialog(
         title: 'حذف الفئة',
-        message:
-            'سيتم إخفاء هذه الفئة من القوائم الجديدة. هل تريد المتابعة؟',
+        message: 'سيتم إخفاء هذه الفئة من القوائم الجديدة. هل تريد المتابعة؟',
         confirmLabel: 'حذف',
         cancelLabel: 'إلغاء',
         isDanger: true,

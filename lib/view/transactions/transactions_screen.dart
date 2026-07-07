@@ -38,7 +38,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: scheme.surface,
+      backgroundColor: scheme.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -52,8 +52,33 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   }
                   if (state is ErrorState) {
                     return Center(
-                      child: Text(
-                        'فشل تحميل المعاملات: ${(state as ErrorState).message}',
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: context.scaleW(20),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.wifi_off,
+                              size: context.scaleW(48),
+                              color: scheme.error,
+                            ),
+                            SizedBox(height: context.scaleH(16)),
+                            Text(
+                              'فشل تحميل المعاملات',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            SizedBox(height: context.scaleH(8)),
+                            Text(
+                              (state as ErrorState).message,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: scheme.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   }
@@ -71,12 +96,55 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       onRefresh: _refresh,
                       child: ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: context.scaleW(16),
+                          vertical: context.scaleH(24),
+                        ),
                         children: [
-                          SizedBox(height: context.scaleH(180)),
-                          Center(
-                            child: Text(
-                              'لا توجد معاملات بعد',
-                              style: Theme.of(context).textTheme.bodyMedium,
+                          SizedBox(height: context.scaleH(80)),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: scheme.surface,
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.04),
+                                  blurRadius: 18,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.all(context.scaleW(20)),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.receipt_long_outlined,
+                                    size: context.scaleW(48),
+                                    color: scheme.primary,
+                                  ),
+                                  SizedBox(height: context.scaleH(16)),
+                                  Text(
+                                    'لا توجد معاملات حتى الآن',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.w700),
+                                  ),
+                                  SizedBox(height: context.scaleH(10)),
+                                  Text(
+                                    'أضف فئة أو سجل أول معاملة لتبدأ تتبع بياناتك المالية.',
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: scheme.onSurfaceVariant,
+                                          height: 1.6,
+                                        ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
@@ -89,10 +157,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     onRefresh: _refresh,
                     child: ListView.separated(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: EdgeInsets.all(context.scaleW(16)),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: context.scaleW(16),
+                        vertical: context.scaleH(16),
+                      ),
                       itemCount: entries.length,
                       separatorBuilder: (_, __) =>
-                          SizedBox(height: context.scaleH(8)),
+                          SizedBox(height: context.scaleH(12)),
                       itemBuilder: (context, index) {
                         final entry = entries[index];
                         return _CategorySection(
@@ -106,19 +177,19 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 },
               ),
             ),
-            BottomNavBar(
-              activeIndex: _activeTabIndex,
-              onTap: (index) {
-                setState(() => _activeTabIndex = index);
-                if (index == 0) {
-                  context.go('/settings');
-                } else if (index == 2) {
-                  context.go('/home');
-                }
-              },
-            ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavBar(
+        activeIndex: _activeTabIndex,
+        onTap: (index) {
+          setState(() => _activeTabIndex = index);
+          if (index == 0) {
+            context.go('/settings');
+          } else if (index == 2) {
+            context.go('/home');
+          }
+        },
       ),
     );
   }
@@ -146,24 +217,43 @@ class _CategorySection extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: scheme.outline.withAlpha(45), width: 0.5),
-        borderRadius: BorderRadius.circular(context.scaleW(8)),
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(context.scaleW(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: ExpansionTile(
         initiallyExpanded: false,
-        tilePadding: EdgeInsets.symmetric(horizontal: context.scaleW(12)),
-        childrenPadding: EdgeInsets.symmetric(horizontal: context.scaleW(12)),
+        tilePadding: EdgeInsets.symmetric(
+          horizontal: context.scaleW(16),
+          vertical: context.scaleH(10),
+        ),
+        childrenPadding: EdgeInsets.symmetric(
+          horizontal: context.scaleW(14),
+          vertical: context.scaleH(8),
+        ),
+        collapsedShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(context.scaleW(20)),
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(context.scaleW(20)),
+        ),
         title: Row(
           children: [
             _DirectionBadge(isIncome: isIncome),
-            SizedBox(width: context.scaleW(8)),
+            SizedBox(width: context.scaleW(10)),
             Expanded(
               child: Text(
                 category.name,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: context.scaleSp(13),
-                  fontWeight: FontWeight.w600,
+                  fontSize: context.scaleSp(14),
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
@@ -174,6 +264,7 @@ class _CategorySection extends StatelessWidget {
           style: TextStyle(
             color: isIncome ? scheme.primary : scheme.error,
             fontSize: context.scaleSp(12),
+            fontWeight: FontWeight.w600,
           ),
         ),
         children: [
@@ -183,7 +274,7 @@ class _CategorySection extends StatelessWidget {
               onLongPress: () => _confirmDelete(context, entry.value),
               child: TransactionRow(
                 transaction: entry.value,
-                showBorder: entry.key < transactions.length - 1,
+                showBorder: false,
               ),
             ),
           ),

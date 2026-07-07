@@ -22,89 +22,122 @@ class SourceDetailTopBar extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: context.scaleW(16),
-        vertical: context.scaleH(12),
+      padding: EdgeInsets.fromLTRB(
+        context.scaleW(18),
+        context.scaleH(18),
+        context.scaleW(18),
+        context.scaleH(20),
       ),
       decoration: BoxDecoration(
         color: scheme.surface,
-        border: Border(
-          bottom: BorderSide(
-            color: scheme.outlineVariant.withAlpha(50),
-            width: 0.5,
-          ),
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(context.scaleW(24)),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           GestureDetector(
             onTap: onBackTap,
             child: Container(
-              width: context.scaleW(34),
-              height: context.scaleH(34),
+              width: context.scaleW(38),
+              height: context.scaleH(38),
               decoration: BoxDecoration(
                 color: scheme.secondaryContainer,
-                borderRadius: BorderRadius.circular(context.scaleW(8)),
-                border: Border.all(
-                  color: scheme.outlineVariant.withAlpha(30),
-                  width: 0.5,
-                ),
+                borderRadius: BorderRadius.circular(context.scaleW(12)),
               ),
               child: Icon(
                 Icons.arrow_back,
-                size: context.scaleSp(22),
+                size: context.scaleSp(20),
                 color: scheme.onSecondaryContainer,
               ),
             ),
           ),
-          SizedBox(width: context.scaleW(8)),
+          SizedBox(width: context.scaleW(12)),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   sourceName,
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: context.scaleSp(15),
+                  style: textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: context.scaleSp(18),
                   ),
-                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(height: context.scaleH(2)),
-                Text(
-                  currency,
-                  style: TextStyle(
-                    fontSize: context.scaleSp(11),
-                    color: scheme.onSurfaceVariant,
-                  ),
+                SizedBox(height: context.scaleH(6)),
+                Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: context.scaleW(12),
+                        vertical: context.scaleH(6),
+                      ),
+                      decoration: BoxDecoration(
+                        color: scheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(context.scaleW(16)),
+                      ),
+                      child: Text(
+                        currency,
+                        style: TextStyle(
+                          fontSize: context.scaleSp(12),
+                          fontWeight: FontWeight.w600,
+                          color: scheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                    if (isDeleted) ...[
+                      SizedBox(width: context.scaleW(8)),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: context.scaleW(10),
+                          vertical: context.scaleH(6),
+                        ),
+                        decoration: BoxDecoration(
+                          color: scheme.errorContainer,
+                          borderRadius: BorderRadius.circular(
+                            context.scaleW(16),
+                          ),
+                        ),
+                        child: Text(
+                          'محذوف',
+                          style: TextStyle(
+                            fontSize: context.scaleSp(12),
+                            fontWeight: FontWeight.w600,
+                            color: scheme.onErrorContainer,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
           ),
-          SizedBox(width: context.scaleW(8)),
+          SizedBox(width: context.scaleW(12)),
           Visibility(
             visible: !isDeleted,
             child: GestureDetector(
               onTap: onMenuTap,
               child: Container(
-                width: context.scaleW(34),
-                height: context.scaleH(34),
+                width: context.scaleW(42),
+                height: context.scaleH(42),
                 decoration: BoxDecoration(
                   color: scheme.secondaryContainer,
-                  borderRadius: BorderRadius.circular(context.scaleW(8)),
-                  border: Border.all(
-                    color: scheme.outlineVariant.withValues(alpha: 0.3),
-                    width: 0.5,
-                  ),
+                  borderRadius: BorderRadius.circular(context.scaleW(14)),
                 ),
-                child: Center(
-                  child: Text(
-                    '⋯',
-                    style: TextStyle(
-                      fontSize: context.scaleSp(16),
-                      color: scheme.onSecondaryContainer,
-                    ),
-                  ),
+                child: Icon(
+                  Icons.more_horiz,
+                  size: context.scaleSp(20),
+                  color: scheme.onSecondaryContainer,
                 ),
               ),
             ),

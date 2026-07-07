@@ -27,12 +27,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: scheme.surface,
+      backgroundColor: scheme.background,
       body: SafeArea(
         child: Column(
           children: [
             AppScreenHeader(
-              title: 'ط¥ط¹ط§ط¯ط© طھط¹ظٹظٹظ† ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±',
+              title: 'استعادة كلمة المرور',
               onBack: () => context.go('/start'),
             ),
             Expanded(
@@ -40,42 +40,75 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 builder: (context, constraints) {
                   return SingleChildScrollView(
                     padding: EdgeInsets.symmetric(
-                      horizontal: context.scaleW(16),
-                      vertical: context.scaleH(14),
+                      horizontal: context.scaleW(18),
+                      vertical: context.scaleH(18),
                     ),
                     child: Center(
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
-                          maxWidth: constraints.maxWidth > 480
-                              ? 420
+                          maxWidth: constraints.maxWidth > 520
+                              ? 520
                               : constraints.maxWidth,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text(
-                              'ط£ط¯ط®ظ„ ط¨ط±ظٹط¯ظƒ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ ظˆط³ظ†ط±ط³ظ„ ظ„ظƒ ط±ط§ط¨ط· ط¥ط¹ط§ط¯ط© ط§ظ„طھط¹ظٹظٹظ†.',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    height: 1.7,
-                                    color: scheme.onSurface.withValues(alpha: 0.8),
+                            Container(
+                              padding: EdgeInsets.all(context.scaleW(20)),
+                              decoration: BoxDecoration(
+                                color: scheme.surface,
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.04),
+                                    blurRadius: 22,
+                                    offset: const Offset(0, 10),
                                   ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Text(
+                                    'أدخل بريدك الإلكتروني',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineSmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          color: scheme.onBackground,
+                                        ),
+                                  ),
+                                  SizedBox(height: context.scaleH(10)),
+                                  Text(
+                                    'سنرسل لك رابطًا لإعادة تعيين كلمة المرور إلى البريد الإلكتروني المسجل.',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: scheme.onSurfaceVariant,
+                                          height: 1.6,
+                                        ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            SizedBox(height: context.scaleH(12)),
+                            SizedBox(height: context.scaleH(22)),
                             AppTextField(
-                              label: 'ط§ظ„ط¨ط±ظٹط¯ ط§ظ„ط¥ظ„ظƒطھط±ظˆظ†ظٹ',
+                              label: 'البريد الإلكتروني',
                               hintText: 'you@email.com',
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                             ),
-                            SizedBox(height: context.scaleH(16)),
+                            SizedBox(height: context.scaleH(18)),
                             AppPrimaryButton(
-                              label: 'ط¥ط±ط³ط§ظ„ ط§ظ„ط±ط§ط¨ط·',
+                              label: 'إرسال رابط إعادة التعيين',
                               onPressed: () => context.go('/start'),
                             ),
-                            SizedBox(height: context.scaleH(10)),
+                            SizedBox(height: context.scaleH(12)),
                             AppGhostButton(
-                              label: 'ط§ظ„ط¹ظˆط¯ط© ظ„طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„',
-                              onPressed: () => context.go('/start'),
+                              label: 'العودة لتسجيل الدخول',
+                              onPressed: () => context.go('/sign-in'),
                             ),
                           ],
                         ),
@@ -91,4 +124,3 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 }
-

@@ -16,17 +16,21 @@ class BottomNavBar extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     final tabs = [
-      (label: 'الإعدادات', icon: Icons.circle_outlined),
-      (label: 'المعاملات', icon: Icons.unfold_more),
-      (label: 'الرئيسية', icon: Icons.square_outlined),
+      (label: 'الإعدادات', icon: Icons.settings_outlined),
+      (label: 'المعاملات', icon: Icons.receipt_long_outlined),
+      (label: 'الرئيسية', icon: Icons.home_outlined),
     ];
 
     return Container(
+      padding: EdgeInsets.symmetric(vertical: context.scaleH(10)),
       decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: scheme.outline.withAlpha(40), width: 0.5),
-        ),
         color: scheme.surface,
+        border: Border(
+          top: BorderSide(
+            color: scheme.outline.withValues(alpha: 0.4),
+            width: 0.5,
+          ),
+        ),
       ),
       child: Row(
         children: List.generate(tabs.length, (index) {
@@ -34,37 +38,46 @@ class BottomNavBar extends StatelessWidget {
           return Expanded(
             child: InkWell(
               onTap: () => onTap(index),
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  vertical: context.scaleH(10),
-                  horizontal: context.scaleW(4),
+              borderRadius: BorderRadius.circular(context.scaleW(18)),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOutCubic,
+                margin: EdgeInsets.symmetric(horizontal: context.scaleW(6)),
+                padding: EdgeInsets.symmetric(vertical: context.scaleH(10)),
+                decoration: BoxDecoration(
+                  color: isActive
+                      ? scheme.primary.withOpacity(0.16)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(context.scaleW(18)),
                 ),
-                decoration: isActive
-                    ? BoxDecoration(color: scheme.onSurface)
-                    : null,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      tabs[index].icon,
-                      size: context.scaleW(16),
-                      color: isActive
-                          ? scheme.surface
-                          : scheme.onSurfaceVariant,
-                    ),
-                    SizedBox(height: context.scaleH(3)),
-                    Text(
-                      tabs[index].label,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    AnimatedScale(
+                      scale: isActive ? 1.15 : 1.0,
+                      duration: const Duration(milliseconds: 260),
+                      curve: Curves.easeOutCubic,
+                      child: Icon(
+                        tabs[index].icon,
+                        size: context.scaleW(20),
                         color: isActive
-                            ? scheme.surface
+                            ? scheme.primary
                             : scheme.onSurfaceVariant,
-                        fontSize: 10,
-                        fontWeight: isActive
-                            ? FontWeight.w600
-                            : FontWeight.w400,
                       ),
+                    ),
+                    SizedBox(height: context.scaleH(4)),
+                    AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 260),
+                      style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                        color: isActive
+                            ? scheme.primary
+                            : scheme.onSurfaceVariant,
+                        fontWeight: isActive
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                      ),
+                      child: Text(tabs[index].label),
                     ),
                   ],
                 ),

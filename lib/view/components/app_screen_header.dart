@@ -23,43 +23,53 @@ class AppScreenHeader extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: scheme.surface,
-        border: Border(bottom: BorderSide(color: scheme.outline, width: 0.5)),
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(context.scaleW(20)),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          InkWell(
-            onTap: onBack,
-            customBorder: const CircleBorder(),
-            child: Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: scheme.surfaceVariant,
-                shape: BoxShape.circle,
-                border: Border.all(color: scheme.outline, width: 0.5),
+          if (onBack != null)
+            InkWell(
+              onTap: onBack,
+              customBorder: const CircleBorder(),
+              child: Container(
+                width: context.scaleW(38),
+                height: context.scaleW(38),
+                decoration: BoxDecoration(
+                  color: scheme.surfaceVariant,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: scheme.outline, width: 0.5),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.arrow_back,
+                  size: context.scaleW(18),
+                  color: scheme.onBackground,
+                ),
               ),
-              alignment: Alignment.center,
-              child: Icon(
-                Icons.arrow_forward,
-                size: 18,
+            )
+          else
+            SizedBox(width: context.scaleW(38), height: context.scaleW(38)),
+          Expanded(
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
                 color: scheme.onBackground,
               ),
             ),
           ),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: scheme.onBackground,
-            ),
-          ),
-
-          if (trailing != null)
-            trailing!
-          else
-            const SizedBox(width: 34, height: 34),
+          trailing ??
+              SizedBox(width: context.scaleW(38), height: context.scaleW(38)),
         ],
       ),
     );

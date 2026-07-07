@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
+import 'package:madakhel_app/core/local_logger.dart';
 import 'package:madakhel_app/core/utils.dart';
 import 'package:madakhel_app/data/backup/backup_service.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
@@ -26,16 +29,23 @@ class BackupViewModel extends ChangeNotifier {
       error = null;
       notifyListeners();
 
+      // Log start
+      unawaited(LocalLogger.instance.logBackup('START', 'backup initiated'));
       // Check internet connection
       if (!isInternetHere()) {
         throw Exception(_connectivityVm.getNoInternetMessage());
       }
 
       final path = await _service.backupUserData();
+      // Log success
+      unawaited(
+        LocalLogger.instance.logBackup('SUCCESS', 'backup saved:$path'),
+      );
       return path;
     } catch (e) {
       error = e is StateError ? e.message : e.toString();
       debugPrint('Backup error: $error');
+      unawaited(LocalLogger.instance.logBackup('ERROR', error ?? e.toString()));
       rethrow;
     } finally {
       isBackingUp = false;
@@ -49,6 +59,12 @@ class BackupViewModel extends ChangeNotifier {
       error = null;
       notifyListeners();
 
+      unawaited(
+        LocalLogger.instance.logBackup(
+          'RESTORE_START',
+          'restore initiated merge=$merge',
+        ),
+      );
       // Check internet connection
       if (!isInternetHere()) {
         throw Exception(_connectivityVm.getNoInternetMessage());
@@ -56,6 +72,12 @@ class BackupViewModel extends ChangeNotifier {
 
       if (!merge) {
         await _service.restoreUserData();
+        unawaited(
+          LocalLogger.instance.logBackup(
+            'RESTORE_SUCCESS',
+            'restore (full replace) completed',
+          ),
+        );
         return;
       }
 
@@ -73,13 +95,17 @@ class BackupViewModel extends ChangeNotifier {
           List<FinancialTransaction>.from(
             backupFileData['financialTransactions'] ?? [],
           );
-      await _mergeRemoteDataIntoLocal(
+      final mergeResult = await _mergeRemoteDataIntoLocal(
         remoteIncomeSources,
         remoteCategories,
         remoteTransactions,
       );
+      unawaited(
+        LocalLogger.instance.logBackup('RESTORE_MERGE', 'merged: $mergeResult'),
+      );
     } catch (e) {
       error = e is StateError ? e.message : e.toString();
+      unawaited(LocalLogger.instance.logBackup('ERROR', error ?? e.toString()));
       rethrow;
     } finally {
       isRestoring = false;
@@ -88,11 +114,15 @@ class BackupViewModel extends ChangeNotifier {
   }
 
   //TODO: MAKE IT SIMPLE AND CLEANER
-  Future<void> _mergeRemoteDataIntoLocal(
+  Future<Map<String, int>> _mergeRemoteDataIntoLocal(
     List<IncomeSource> remoteIncomeSources,
     List<TransactionCategory> remoteCategories,
     List<FinancialTransaction> remoteTransactions,
   ) async {
+    var incomeInserted = 0;
+    var categoryInserted = 0;
+    var txInserted = 0;
+
     await _db.transaction(() async {
       // Maps to resolve remote id -> local id
       final Map<String, int> remoteIdToLocalIncome = {};
@@ -145,6 +175,7 @@ class BackupViewModel extends ChangeNotifier {
                 ),
               );
           remoteIdToLocalIncome[key] = newId;
+          incomeInserted++;
         }
       }
 
@@ -185,6 +216,7 @@ class BackupViewModel extends ChangeNotifier {
                 ),
               );
           remoteIdToLocalCategory[key] = newId;
+          categoryInserted++;
         }
       }
 
@@ -233,8 +265,15 @@ class BackupViewModel extends ChangeNotifier {
                   isDeleted: Value(r.isDeleted),
                 ),
               );
+          txInserted++;
         }
       }
     });
+
+    return {
+      'incomeInserted': incomeInserted,
+      'categoryInserted': categoryInserted,
+      'txInserted': txInserted,
+    };
   }
 }

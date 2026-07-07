@@ -37,71 +37,71 @@ class TransactionRow extends StatelessWidget {
             : scheme.onErrorContainer;
 
         return Container(
+          padding: EdgeInsets.all(context.scaleW(16)),
+          margin: EdgeInsets.only(bottom: showBorder ? context.scaleH(10) : 0),
           decoration: BoxDecoration(
-            border: showBorder
-                ? Border(
-                    bottom: BorderSide(
-                      color: scheme.outlineVariant.withValues(alpha: 0.3),
-                      width: 0.5,
-                    ),
-                  )
-                : null,
+            color: scheme.surface,
+            borderRadius: BorderRadius.circular(context.scaleW(18)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
-          padding: EdgeInsets.symmetric(vertical: context.scaleH(10)),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: context.scaleW(10),
+                  vertical: context.scaleH(5),
+                ),
+                decoration: BoxDecoration(
+                  color: badgeBgColor,
+                  borderRadius: BorderRadius.circular(context.scaleW(12)),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  isIncome ? 'دخل' : 'مصروف',
+                  style: TextStyle(
+                    fontSize: context.scaleSp(11),
+                    fontWeight: FontWeight.w700,
+                    color: badgeTextColor,
+                  ),
+                ),
+              ),
+              SizedBox(width: context.scaleW(12)),
               Expanded(
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: context.scaleW(8),
-                        vertical: context.scaleH(2),
+                    Text(
+                      cat?.name ?? (transaction.note ?? 'معاملة'),
+                      style: textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: scheme.onSurface,
                       ),
-                      decoration: BoxDecoration(
-                        color: badgeBgColor,
-                        borderRadius: BorderRadius.circular(context.scaleW(99)),
-                      ),
-                      child: Text(
-                        isIncome ? 'دخل' : 'مصروف',
-                        style: TextStyle(
-                          fontSize: context.scaleSp(10),
-                          fontWeight: FontWeight.w600,
-                          color: badgeTextColor,
-                        ),
-                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(width: context.scaleW(8)),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            cat?.name ?? (transaction.note ?? 'معاملة'),
-                            style: textTheme.bodyMedium?.copyWith(
-                              fontSize: context.scaleSp(13),
-                              color: scheme.onSurface,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          SizedBox(height: context.scaleH(3)),
-                          Text(
-                            transaction.date.toIso8601String(),
-                            style: TextStyle(fontSize: context.scaleSp(10)),
-                          ),
-                        ],
+                    SizedBox(height: context.scaleH(6)),
+                    Text(
+                      '${transaction.date.year}-${transaction.date.month.toString().padLeft(2, '0')}-${transaction.date.day.toString().padLeft(2, '0')}',
+                      style: TextStyle(
+                        fontSize: context.scaleSp(11),
+                        color: scheme.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
               ),
-              SizedBox(width: context.scaleW(8)),
+              SizedBox(width: context.scaleW(12)),
               Text(
-                transaction.amount.toString(),
+                transaction.amount.toStringAsFixed(2),
                 style: textTheme.titleMedium?.copyWith(
-                  fontSize: context.scaleSp(13),
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
+                  fontSize: context.scaleSp(15),
                   color: amountColor,
                 ),
               ),

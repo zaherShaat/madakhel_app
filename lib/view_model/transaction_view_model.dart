@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:madakhel_app/core/local_logger.dart';
 import 'package:madakhel_app/data/repositories/transaction_repository.dart';
 
 class TransactionState {
@@ -64,7 +67,13 @@ class TransactionViewModel extends ChangeNotifier {
         ),
       );
 
-      await Future.delayed(const Duration(seconds: 2));
+      unawaited(
+        LocalLogger.instance.logDb(
+          'CREATE_TRANSACTION',
+          'incomeType:$incomeTypeId amount:$amount category:$categoryId note:${note ?? ''}',
+        ),
+      );
+
       _setState(_state.copyWith(isSuccess: false, successMessage: null));
     } catch (e) {
       _setState(
@@ -74,6 +83,7 @@ class TransactionViewModel extends ChangeNotifier {
           errorMessage: 'خطأ: ${e.toString()}',
         ),
       );
+      unawaited(LocalLogger.instance.logDb('ERROR_CREATE', e.toString()));
     }
   }
 
@@ -106,6 +116,12 @@ class TransactionViewModel extends ChangeNotifier {
 
       await Future.delayed(const Duration(seconds: 1));
       _setState(_state.copyWith(isSuccess: false, successMessage: null));
+      unawaited(
+        LocalLogger.instance.logDb(
+          'UPDATE_TRANSACTION',
+          'id:$id amount:$amount category:$categoryId',
+        ),
+      );
     } catch (e) {
       _setState(
         _state.copyWith(
@@ -114,6 +130,7 @@ class TransactionViewModel extends ChangeNotifier {
           errorMessage: 'خطأ: ${e.toString()}',
         ),
       );
+      unawaited(LocalLogger.instance.logDb('ERROR_UPDATE', e.toString()));
     }
   }
 
@@ -128,6 +145,10 @@ class TransactionViewModel extends ChangeNotifier {
           isSuccess: true,
           successMessage: 'تم حذف المعاملة بنجاح',
         ),
+      );
+
+      unawaited(
+        LocalLogger.instance.logDb('DELETE_TRANSACTION', 'id:$transactionId'),
       );
 
       await Future.delayed(const Duration(seconds: 1));

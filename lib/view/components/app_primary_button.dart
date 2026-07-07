@@ -21,11 +21,14 @@ class AppPrimaryButton extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (leading != null) ...[
-          leading!,
-          const SizedBox(width: 10),
-        ],
-        Text(label),
+        if (leading != null) ...[leading!, SizedBox(width: 10)],
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            // color: scheme.onPrimary,
+          ),
+        ),
       ],
     );
 
@@ -33,10 +36,14 @@ class AppPrimaryButton extends StatelessWidget {
       return OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size.fromHeight(50),
-          side: BorderSide(color: scheme.outline, width: 0.8),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          foregroundColor: scheme.onSurface,
+          minimumSize: const Size.fromHeight(52),
+          side: BorderSide(color: scheme.primary.withOpacity(0.9), width: 1.1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          foregroundColor: scheme.primary,
+          backgroundColor: scheme.surfaceVariant,
+          padding: const EdgeInsets.symmetric(vertical: 16),
         ),
         child: child,
       );
@@ -45,9 +52,11 @@ class AppPrimaryButton extends StatelessWidget {
     return FilledButton(
       onPressed: onPressed,
       style: FilledButton.styleFrom(
-        minimumSize: const Size.fromHeight(50),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        foregroundColor: scheme.onSurface,
+        minimumSize: const Size.fromHeight(52),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        foregroundColor: scheme.onPrimary,
+        backgroundColor: scheme.primary,
+        padding: const EdgeInsets.symmetric(vertical: 16),
       ),
       child: child,
     );

@@ -21,7 +21,7 @@ class SourceColor {
   /// Returns a color for a given income type ID.
   /// IDs beyond palette length wrap around with slight variation.
   static Color fromId(int id) {
-    final index = (id - 1) % _palette.length;
+    final index = (id + 2) % _palette.length;
     return _palette[index];
   }
 
@@ -155,3 +155,5 @@ extension IterableExt<T> on Iterable<T> {
     return null;
   }
 }
+
+enum TransactionClassifier { inFlows, outFlows,allFlows }

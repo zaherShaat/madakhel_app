@@ -23,17 +23,24 @@ class AppTopBar extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: context.scaleW(16),
-        vertical: context.scaleH(12),
+        vertical: context.scaleH(14),
       ),
       decoration: BoxDecoration(
         color: scheme.surface,
-        border: showBorder
-            ? Border(bottom: BorderSide(color: scheme.outline, width: 0.5))
-            : null,
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(context.scaleW(20)),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 18,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          leading ?? SizedBox(width: context.scaleW(34)),
+          leading ?? SizedBox(width: context.scaleW(38)),
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -43,7 +50,7 @@ class AppTopBar extends StatelessWidget {
                   title,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 if (subtitle != null) ...[
@@ -59,7 +66,7 @@ class AppTopBar extends StatelessWidget {
               ],
             ),
           ),
-          trailing ?? SizedBox(width: context.scaleW(34)),
+          trailing ?? SizedBox(width: context.scaleW(38)),
         ],
       ),
     );

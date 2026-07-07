@@ -13,45 +13,78 @@ class StartPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: scheme.surface,
+      backgroundColor: scheme.background,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
               padding: EdgeInsets.symmetric(
-                horizontal: context.scaleW(24),
-                vertical: context.scaleH(32),
+                horizontal: context.scaleW(20),
+                vertical: context.scaleH(24),
               ),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - context.scaleH(64),
-                  maxWidth: constraints.maxWidth > 480
-                      ? 420
+                  minHeight: constraints.maxHeight - context.scaleH(48),
+                  maxWidth: constraints.maxWidth > 560
+                      ? 520
                       : constraints.maxWidth,
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const _AppLogoCard(),
-                    SizedBox(height: context.scaleH(24)),
-                    Text(
-                      'مداخيل',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: scheme.onBackground,
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(context.scaleW(22)),
+                      decoration: BoxDecoration(
+                        color: scheme.surface,
+                        borderRadius: BorderRadius.circular(28),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 24,
+                            offset: const Offset(0, 10),
                           ),
-                    ),
-                    SizedBox(height: context.scaleH(8)),
-                    Text(
-                      'تتبع كل مصدر دخل بدقة،\nواعرف رصيدك في أي وقت.',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        height: 1.7,
-                        color: scheme.onSurface.withValues(alpha: 0.85),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: context.scaleW(76),
+                            height: context.scaleW(76),
+                            decoration: BoxDecoration(
+                              color: scheme.primary,
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              Icons.account_balance_wallet_outlined,
+                              size: context.scaleW(36),
+                              color: scheme.onPrimary,
+                            ),
+                          ),
+                          SizedBox(height: context.scaleH(18)),
+                          Text(
+                            'مرحبا بك في مداخيل',
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: scheme.onBackground,
+                                ),
+                          ),
+                          SizedBox(height: context.scaleH(8)),
+                          Text(
+                            'تنظيم مصادر الدخل، إدارة المعاملات، ومتابعة الرصيد بسهولة من شاشة واحدة.',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                  height: 1.7,
+                                ),
+                          ),
+                        ],
                       ),
                     ),
-                    SizedBox(height: context.scaleH(24)),
+                    SizedBox(height: context.scaleH(30)),
                     Selector<AuthViewModel, bool>(
                       selector: (_, viewModel) => viewModel.busy,
                       builder: (context, busy, _) => AppPrimaryButton(
@@ -59,13 +92,13 @@ class StartPage extends StatelessWidget {
                             ? 'جاري تسجيل الدخول...'
                             : 'المتابعة مع Google',
                         leading: Container(
-                          width: 22,
-                          height: 22,
+                          width: 24,
+                          height: 24,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: scheme.outline,
-                              width: 0.6,
+                              width: 0.7,
                             ),
                           ),
                           alignment: Alignment.center,

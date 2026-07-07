@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+
 import 'app_colors.dart';
 
 class AppTheme {
   static ThemeData light() {
     final scheme = ColorScheme(
       brightness: Brightness.light,
-      primary: AppColors.green,
+      primary: AppColors.teal,
       onPrimary: Colors.white,
-      secondary: AppColors.greenLight,
-      onSecondary: AppColors.greenText,
+      secondary: AppColors.tealLight,
+      onSecondary: AppColors.tealDark,
       error: AppColors.red,
       onError: Colors.white,
       background: AppColors.lightBackground,
@@ -25,10 +26,10 @@ class AppTheme {
   static ThemeData dark() {
     final scheme = ColorScheme(
       brightness: Brightness.dark,
-      primary: AppColors.green,
+      primary: AppColors.teal,
       onPrimary: Colors.white,
-      secondary: AppColors.greenLight,
-      onSecondary: AppColors.greenText,
+      secondary: AppColors.tealLight,
+      onSecondary: AppColors.tealDark,
       error: AppColors.red,
       onError: Colors.white,
       background: AppColors.darkBackground,
@@ -51,25 +52,28 @@ class AppTheme {
       scaffoldBackgroundColor: scheme.background,
 
       appBarTheme: AppBarTheme(
-        backgroundColor: scheme.background,
-        foregroundColor: scheme.onBackground,
+        backgroundColor: scheme.surface,
+        foregroundColor: scheme.onSurface,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
+        surfaceTintColor: scheme.surface,
         titleTextStyle: TextStyle(
           fontFamily: 'Cairo',
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: scheme.onBackground,
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: scheme.onSurface,
         ),
+        iconTheme: IconThemeData(color: scheme.onSurface),
       ),
 
       cardTheme: CardThemeData(
         color: scheme.surface,
-        elevation: 0,
+        elevation: 6,
+        shadowColor: scheme.primary.withOpacity(0.12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: scheme.outline),
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: scheme.outline.withOpacity(0.55)),
         ),
       ),
 
@@ -77,53 +81,57 @@ class AppTheme {
         filled: true,
         fillColor: scheme.surface,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: scheme.outline),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: scheme.outline.withOpacity(0.7)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: scheme.outline),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: scheme.outline.withOpacity(0.7)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: scheme.primary, width: 1.5),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: scheme.primary, width: 1.8),
         ),
         labelStyle: TextStyle(
           fontFamily: 'Cairo',
-          color: scheme.onSurface,
+          color: scheme.onSurface.withOpacity(0.8),
           fontSize: 13,
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12, vertical: 10),
+          horizontal: 14,
+          vertical: 14,
+        ),
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: scheme.onBackground,
-          foregroundColor: scheme.background,
+          backgroundColor: scheme.primary,
+          foregroundColor: scheme.onPrimary,
           elevation: 0,
-          minimumSize: const Size(double.infinity, 44),
+          minimumSize: const Size(double.infinity, 50),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8)),
+            borderRadius: BorderRadius.circular(16),
+          ),
           textStyle: const TextStyle(
             fontFamily: 'Cairo',
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
 
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: scheme.onSurface,
-          side: BorderSide(color: scheme.outline),
-          minimumSize: const Size(double.infinity, 44),
+          foregroundColor: scheme.primary,
+          side: BorderSide(color: scheme.primary.withOpacity(0.8)),
+          minimumSize: const Size(double.infinity, 50),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8)),
+            borderRadius: BorderRadius.circular(16),
+          ),
           textStyle: const TextStyle(
             fontFamily: 'Cairo',
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
@@ -134,10 +142,20 @@ class AppTheme {
         space: 0,
       ),
 
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: scheme.surface,
+        selectedItemColor: scheme.primary,
+        unselectedItemColor: scheme.onSurfaceVariant,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        elevation: 0,
+        type: BottomNavigationBarType.fixed,
+      ),
+
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: scheme.surface,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
       ),
 
@@ -145,6 +163,7 @@ class AppTheme {
         tileColor: Colors.transparent,
         textColor: scheme.onBackground,
         iconColor: scheme.onSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }

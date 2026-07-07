@@ -10,19 +10,24 @@ class AddSourceRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(18),
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: context.scaleH(11)),
+        padding: EdgeInsets.symmetric(
+          vertical: context.scaleH(14),
+          horizontal: context.scaleW(18),
+        ),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: scheme.outline, width: 0.8),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: scheme.primary.withOpacity(0.3), width: 1),
+          color: scheme.primary.withOpacity(0.06),
         ),
         alignment: Alignment.center,
         child: Text(
           '+ إضافة مصدر دخل',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: scheme.onSurface.withValues(alpha: 0.85),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: scheme.primary,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),

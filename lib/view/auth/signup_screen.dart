@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:madakhel_app/core/utils.dart';
 
 import '../components/app_action_link.dart';
 import '../components/app_primary_button.dart';
@@ -39,41 +40,79 @@ class _SignUpScreenState extends State<SignUpScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            AppScreenHeader(
-              title: 'إنشاء حساب',
-              onBack: () => context.pop(),
-            ),
+            AppScreenHeader(title: 'إنشاء حساب', onBack: () => context.pop()),
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: context.scaleW(18),
+                      vertical: context.scaleH(18),
                     ),
                     child: Center(
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
-                          maxWidth: constraints.maxWidth > 480
-                              ? 420
+                          maxWidth: constraints.maxWidth > 520
+                              ? 520
                               : constraints.maxWidth,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            Container(
+                              padding: EdgeInsets.all(context.scaleW(22)),
+                              decoration: BoxDecoration(
+                                color: scheme.surface,
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.04),
+                                    blurRadius: 22,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Text(
+                                    'ابدأ الآن',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineSmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          color: scheme.onBackground,
+                                        ),
+                                  ),
+                                  SizedBox(height: context.scaleH(8)),
+                                  Text(
+                                    'أنشئ حسابك لتبدأ في إدارة مصادر الدخل وتتبع معاملاتك المالية بسهولة.',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: scheme.onSurfaceVariant,
+                                          height: 1.6,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: context.scaleH(22)),
                             AppTextField(
                               label: 'الاسم الكامل',
                               hintText: 'اسمك هنا',
                               controller: _nameController,
                             ),
-                            const SizedBox(height: 12),
+                            SizedBox(height: context.scaleH(12)),
                             AppTextField(
                               label: 'البريد الإلكتروني',
                               hintText: 'you@email.com',
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                             ),
-                            const SizedBox(height: 12),
+                            SizedBox(height: context.scaleH(12)),
                             AppTextField(
                               maxLines: 1,
                               label: 'كلمة المرور',
@@ -91,7 +130,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 });
                               },
                             ),
-                            const SizedBox(height: 12),
+                            SizedBox(height: context.scaleH(12)),
                             AppTextField(
                               maxLines: 1,
                               label: 'تأكيد كلمة المرور',
@@ -110,27 +149,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 });
                               },
                             ),
-                            const SizedBox(height: 16),
+                            SizedBox(height: context.scaleH(20)),
                             AppPrimaryButton(
                               label: 'إنشاء الحساب',
                               onPressed: () => context.go('/start'),
                             ),
-                            const SizedBox(height: 16),
-                            const Divider(thickness: 0.5),
-                            const SizedBox(height: 16),
+                            SizedBox(height: context.scaleH(18)),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
                                   'لديك حساب؟',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
+                                  style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(
-                                        color: scheme.onSurface.withOpacity(0.8),
+                                        color: scheme.onSurfaceVariant,
                                       ),
                                 ),
-                                const SizedBox(width: 8),
+                                SizedBox(width: context.scaleW(8)),
                                 AppActionLink(
                                   label: 'تسجيل الدخول',
                                   onPressed: () => context.push('/sign-in'),
@@ -151,4 +186,3 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 }
-

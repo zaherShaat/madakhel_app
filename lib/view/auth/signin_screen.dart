@@ -5,9 +5,9 @@ import 'package:madakhel_app/view_model/auth_view_model.dart';
 import 'package:provider/provider.dart';
 
 import '../components/app_action_link.dart';
+import '../components/app_primary_button.dart';
 import '../components/app_screen_header.dart';
 import '../components/app_text_field.dart';
-import '../components/app_primary_button.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -32,7 +32,7 @@ class _SignInScreenState extends State<SignInScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: scheme.surface,
+      backgroundColor: scheme.background,
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -47,19 +47,60 @@ class _SignInScreenState extends State<SignInScreen> {
                   builder: (context, constraints) {
                     return SingleChildScrollView(
                       padding: EdgeInsets.symmetric(
-                        horizontal: context.scaleW(16),
-                        vertical: context.scaleH(14),
+                        horizontal: context.scaleW(18),
+                        vertical: context.scaleH(18),
                       ),
                       child: Center(
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
-                            maxWidth: constraints.maxWidth > 480
-                                ? 420
+                            maxWidth: constraints.maxWidth > 520
+                                ? 520
                                 : constraints.maxWidth,
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
+                              Container(
+                                padding: EdgeInsets.all(context.scaleW(20)),
+                                decoration: BoxDecoration(
+                                  color: scheme.surface,
+                                  borderRadius: BorderRadius.circular(24),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.04),
+                                      blurRadius: 22,
+                                      offset: const Offset(0, 10),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    Text(
+                                      'مرحباً بعودتك',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                            color: scheme.onBackground,
+                                          ),
+                                    ),
+                                    SizedBox(height: context.scaleH(6)),
+                                    Text(
+                                      'سجل الدخول لمتابعة مصادر الدخل وتتبع معاملاتك بسهولة.',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: scheme.onSurfaceVariant,
+                                            height: 1.6,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: context.scaleH(22)),
                               AppTextField(
                                 validator: FieldsValidator.validateEmail,
                                 label: 'البريد الإلكتروني',
@@ -67,7 +108,7 @@ class _SignInScreenState extends State<SignInScreen> {
                                 controller: _emailController,
                                 keyboardType: TextInputType.emailAddress,
                               ),
-                              SizedBox(height: context.scaleH(12)),
+                              SizedBox(height: context.scaleH(14)),
                               AppTextField(
                                 validator: FieldsValidator.validatePassword,
                                 label: 'كلمة المرور',
@@ -88,14 +129,14 @@ class _SignInScreenState extends State<SignInScreen> {
                               ),
                               SizedBox(height: context.scaleH(10)),
                               Align(
-                                alignment: Alignment.centerLeft,
+                                alignment: Alignment.centerRight,
                                 child: AppActionLink(
                                   label: 'نسيت كلمة المرور؟',
                                   onPressed: () =>
                                       context.go('/forgot-password'),
                                 ),
                               ),
-                              SizedBox(height: context.scaleH(16)),
+                              SizedBox(height: context.scaleH(20)),
                               Selector<AuthViewModel, bool>(
                                 selector: (_, controller) => controller.busy,
                                 builder: (bCntxt, busy, _) {
@@ -125,7 +166,7 @@ class _SignInScreenState extends State<SignInScreen> {
                                       ),
                                     ),
                                     onPressed: busy
-                                        ? () {}
+                                        ? null
                                         : () async {
                                             if (_formKey.currentState!
                                                 .validate()) {
@@ -150,9 +191,7 @@ class _SignInScreenState extends State<SignInScreen> {
                                   );
                                 },
                               ),
-                              SizedBox(height: context.scaleH(16)),
-                              const Divider(thickness: 0.5),
-                              SizedBox(height: context.scaleH(16)),
+                              SizedBox(height: context.scaleH(18)),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -160,9 +199,7 @@ class _SignInScreenState extends State<SignInScreen> {
                                     'ليس لديك حساب؟',
                                     style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
-                                          color: scheme.onSurface.withValues(
-                                            alpha: 0.8,
-                                          ),
+                                          color: scheme.onSurfaceVariant,
                                         ),
                                   ),
                                   SizedBox(width: context.scaleW(8)),

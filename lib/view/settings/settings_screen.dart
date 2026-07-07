@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:madakhel_app/core/utils.dart';
 import 'package:madakhel_app/model/auth_user.dart';
 import 'package:madakhel_app/view/components/app_confirm_action_dialog.dart';
+import 'package:madakhel_app/view/components/app_primary_button.dart';
 import 'package:madakhel_app/view/shared/components/app_top_bar.dart';
 import 'package:madakhel_app/view/shared/components/bottom_nav_bar.dart';
 import 'package:madakhel_app/view_model/auth_view_model.dart';
@@ -95,56 +96,133 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: ListView(
                 padding: EdgeInsets.all(context.scaleW(16)),
                 children: [
-                  // Profile section
                   Container(
-                    padding: EdgeInsets.symmetric(vertical: context.scaleH(12)),
                     decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: scheme.outline.withAlpha(40),
-                          width: 0.5,
+                      color: scheme.surface,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
                         ),
-                      ),
+                      ],
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: context.scaleW(44),
-                          height: context.scaleW(44),
-                          decoration: BoxDecoration(
-                            color: scheme.surfaceContainerHighest,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              userInitials,
-                              style: TextStyle(
-                                fontSize: context.scaleSp(14),
-                                fontWeight: FontWeight.w600,
-                                color: scheme.onSurfaceVariant,
+                    child: Padding(
+                      padding: EdgeInsets.all(context.scaleW(18)),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: context.scaleW(56),
+                            height: context.scaleW(56),
+                            decoration: BoxDecoration(
+                              color: scheme.primaryContainer,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                userInitials,
+                                style: TextStyle(
+                                  fontSize: context.scaleSp(18),
+                                  fontWeight: FontWeight.w700,
+                                  color: scheme.onPrimaryContainer,
+                                ),
                               ),
                             ),
                           ),
+                          SizedBox(width: context.scaleW(16)),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  userName,
+                                  style: TextStyle(
+                                    fontSize: context.scaleSp(16),
+                                    fontWeight: FontWeight.w700,
+                                    color: scheme.onSurface,
+                                  ),
+                                ),
+                                SizedBox(height: context.scaleH(6)),
+                                Text(
+                                  userEmail,
+                                  style: TextStyle(
+                                    fontSize: context.scaleSp(12),
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: context.scaleH(20)),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: scheme.surface,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
                         ),
-                        SizedBox(width: context.scaleW(12)),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.all(context.scaleW(18)),
+                          child: _SectionTitle('الحساب', context),
+                        ),
+                        const Divider(height: 0),
+                        _SettingRow('تعديل الملف الشخصي', context),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: context.scaleH(20)),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: scheme.surface,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.all(context.scaleW(18)),
+                          child: _SectionTitle('إدارة البيانات', context),
+                        ),
+                        const Divider(height: 0),
+                        _SettingRow(
+                          'إدارة فئات المعاملات',
+                          context,
+                          onTap: () => context.push('/categories'),
+                        ),
+                        Consumer<BackupViewModel>(
+                          builder: (context, vm, child) => Column(
                             children: [
-                              Text(
-                                userName,
-                                style: TextStyle(
-                                  fontSize: context.scaleSp(14),
-                                  fontWeight: FontWeight.w600,
-                                  color: scheme.onSurface,
-                                ),
+                              _SettingRow(
+                                vm.isBackingUp
+                                    ? 'جارٍ إجراء النسخ الاحتياطي...'
+                                    : 'النسخ الاحتياطي',
+                                context,
+                                onTap: vm.isBackingUp ? null : _backupNow,
                               ),
-                              Text(
-                                userEmail,
-                                style: TextStyle(
-                                  fontSize: context.scaleSp(12),
-                                  color: scheme.onSurfaceVariant,
-                                ),
+                              _SettingRow(
+                                vm.isRestoring
+                                    ? 'جارٍ استعادة النسخة الاحتياطية...'
+                                    : 'استعادة النسخة الاحتياطية',
+                                context,
+                                onTap: vm.isRestoring ? null : _restoreBackup,
                               ),
                             ],
                           ),
@@ -152,73 +230,77 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
                     ),
                   ),
-                  SizedBox(height: context.scaleH(16)),
-                  // Account section
-                  _SectionTitle('الحساب', context),
-                  _SettingRow('تعديل الملف الشخصي', context),
-                  SizedBox(height: context.scaleH(16)),
-                  // Data section
-                  _SectionTitle('إدارة البيانات', context),
-                  _SettingRow(
-                    'إدارة فئات المعاملات',
-                    context,
-                    onTap: () => context.push('/categories'),
-                  ),
-                  _SettingRow('تصدير إلى CSV', context),
-                  Consumer<BackupViewModel>(
-                    builder: (context, vm, child) => Column(
-                      children: [
-                        _SettingRow(
-                          vm.isBackingUp
-                              ? 'جارٍ إجراء النسخ الاحتياطي...'
-                              : 'النسخ الاحتياطي',
-                          context,
-                          onTap: vm.isBackingUp ? null : _backupNow,
-                        ),
-                        _SettingRow(
-                          vm.isRestoring
-                              ? 'جارٍ استعادة النسخة الاحتياطية...'
-                              : 'استعادة النسخة الاحتياطية',
-                          context,
-                          onTap: vm.isRestoring ? null : _restoreBackup,
+                  SizedBox(height: context.scaleH(20)),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: scheme.surface,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
                         ),
                       ],
                     ),
-                  ),
-                  SizedBox(height: context.scaleH(16)),
-
-                  // Appearance section
-                  _SectionTitle('المظهر', context),
-                  SizedBox(height: context.scaleH(8)),
-                  Consumer<ThemeViewModel>(
-                    builder: (context, themeViewModel, child) => Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: context.scaleW(6),
-                      children: AppThemeMode.values.asMap().entries.map((e) {
-                        return InkWell(
-                          onTap: () async {
-                            themeViewModel.setThemeMode(
-                              AppThemeMode.values[e.key],
-                            );
-                          },
-                          child: Chip(
-                            // isActive: themeViewModel.themeMode.index == e.key,
-                            label: Text(e.value.name),
+                    child: Padding(
+                      padding: EdgeInsets.all(context.scaleW(18)),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _SectionTitle('المظهر', context),
+                          SizedBox(height: context.scaleH(8)),
+                          Consumer<ThemeViewModel>(
+                            builder: (context, themeViewModel, child) => Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: context.scaleW(8),
+                              runSpacing: context.scaleH(8),
+                              children: AppThemeMode.values.asMap().entries.map(
+                                (e) {
+                                  final isSelected =
+                                      themeViewModel.mode.index == e.key;
+                                  return ChoiceChip(
+                                    selected: isSelected,
+                                    label: Text(
+                                      e.value.name == "system"
+                                          ? "إعدادات النظام"
+                                          : e.value.name == "light"
+                                          ? "فاتح"
+                                          : "داكن",
+                                    ),
+                                    selectedColor: scheme.primary,
+                                    backgroundColor:
+                                        scheme.surfaceContainerHighest,
+                                    labelStyle: TextStyle(
+                                      color: isSelected
+                                          ? scheme.onPrimary
+                                          : scheme.onSurface,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    onSelected: (_) {
+                                      themeViewModel.setThemeMode(
+                                        AppThemeMode.values[e.key],
+                                      );
+                                    },
+                                  );
+                                },
+                              ).toList(),
+                            ),
                           ),
-                        );
-                      }).toList(),
+                        ],
+                      ),
                     ),
                   ),
                   SizedBox(height: context.scaleH(24)),
-                  // Logout button
                   Consumer<AuthViewModel>(
-                    builder: (context, authProvider, child) => ElevatedButton(
+                    builder: (context, authProvider, child) => AppPrimaryButton(
+                      label: 'تسجيل الخروج',
                       onPressed: () async {
                         showDialog(
                           context: context,
                           builder: (dialogContext) => AppConfirmActionDialog(
                             title: "أنت على وشك تسجيل الخروج",
-                            message: "هل تريد فعلاً تسجيل الخروج",
+                            message: "هل تريد فعلاً تسجيل الخروج؟",
                             confirmLabel: "تأكيد",
                             cancelLabel: "إلغاء",
                             onConfirm: () async {
@@ -231,36 +313,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         );
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFCEBEB),
-                        minimumSize: Size(double.infinity, context.scaleH(44)),
-                      ),
-                      child: Text(
-                        'تسجيل الخروج',
-                        style: TextStyle(
-                          color: const Color(0xFFA32D2D),
-                          fontSize: context.scaleSp(13),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            BottomNavBar(
-              activeIndex: _activeTabIndex,
-              onTap: (index) {
-                setState(() => _activeTabIndex = index);
-                if (index == 1) {
-                  context.go('/transactions');
-                } else if (index == 2) {
-                  context.go('/home');
-                }
-              },
-            ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavBar(
+        activeIndex: _activeTabIndex,
+        onTap: (index) {
+          setState(() => _activeTabIndex = index);
+          if (index == 1) {
+            context.go('/transactions');
+          } else if (index == 2) {
+            context.go('/home');
+          }
+        },
       ),
     );
   }
@@ -288,7 +358,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     bool isComingSoon = false,
   }) {
     final scheme = Theme.of(context).colorScheme;
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(vertical: context.scaleH(12)),
@@ -298,8 +368,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
+            SizedBox(width: context.scaleW(8)),
             Text(
               label,
               style: TextStyle(
@@ -307,6 +378,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 color: scheme.onSurface,
               ),
             ),
+            Spacer(),
             if (isComingSoon)
               Container(
                 padding: EdgeInsets.symmetric(
@@ -331,6 +403,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 size: context.scaleSp(12),
                 color: scheme.onSurfaceVariant,
               ),
+            SizedBox(width: context.scaleW(8)),
           ],
         ),
       ),

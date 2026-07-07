@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:madakhel_app/core/utils.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
 import 'package:madakhel_app/model/income_source_with_balance.dart';
+import 'package:madakhel_app/model/transaction_direction.dart';
 import 'package:madakhel_app/view/components/app_confirm_action_dialog.dart';
 import 'package:madakhel_app/view/income_source/components/add_transaction_sheet.dart';
 import 'package:madakhel_app/view/income_source/components/source_detail_top_bar.dart';
@@ -23,6 +24,8 @@ class SourceDetailScreen extends StatefulWidget {
 }
 
 class _SourceDetailScreenState extends State<SourceDetailScreen> {
+  int selectedClassifierIndex = 2;
+
   @override
   void initState() {
     super.initState();
@@ -56,7 +59,7 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: scheme.surface,
+      backgroundColor: scheme.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -84,22 +87,47 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                       onRefresh: _refreshTransactions,
                       child: ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: EdgeInsets.all(context.scaleW(14)),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: context.scaleW(16),
+                          vertical: context.scaleH(18),
+                        ),
                         children: [
-                          SizedBox(height: context.scaleH(160)),
-                          Center(
-                            child: Text(
-                              'تعذر تحميل المعاملات',
-                              style: TextStyle(
-                                fontSize: context.scaleSp(14),
-                                color: scheme.error,
-                              ),
+                          SizedBox(height: context.scaleH(120)),
+                          Card(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
                             ),
-                          ),
-                          Center(
-                            child: TextButton(
-                              onPressed: _loadInitialTransactions,
-                              child: const Text('إعادة المحاولة'),
+                            elevation: 0,
+                            color: scheme.surface,
+                            child: Padding(
+                              padding: EdgeInsets.all(context.scaleW(18)),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    'تعذر تحميل المعاملات',
+                                    style: TextStyle(
+                                      fontSize: context.scaleSp(14),
+                                      fontWeight: FontWeight.w600,
+                                      color: scheme.onSurface,
+                                    ),
+                                  ),
+                                  SizedBox(height: context.scaleH(12)),
+                                  Text(
+                                    'حاول مرة أخرى فيما بعد أو اسحب للتحديث.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: context.scaleSp(12),
+                                      color: scheme.onSurfaceVariant,
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                  SizedBox(height: context.scaleH(16)),
+                                  OutlinedButton(
+                                    onPressed: _loadInitialTransactions,
+                                    child: const Text('إعادة المحاولة'),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
@@ -116,9 +144,11 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                     onRefresh: _refreshTransactions,
                     child: ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: EdgeInsets.all(context.scaleW(14)),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: context.scaleW(16),
+                        vertical: context.scaleH(18),
+                      ),
                       children: [
-                        // Stats Grid — fetch sums asynchronously
                         FutureBuilder<List<double>>(
                           future: Future.wait([
                             detailViewModel.getInSum(widget.source.id),
@@ -140,11 +170,12 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                               crossAxisCount: 2,
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              mainAxisSpacing: context.scaleH(8),
-                              crossAxisSpacing: context.scaleW(8),
+                              mainAxisSpacing: context.scaleH(12),
+                              crossAxisSpacing: context.scaleW(12),
+                              childAspectRatio: 1.25,
                               children: [
                                 StatCard(
-                                  value: "${inSum - outSum}",
+                                  value: (inSum - outSum).toStringAsFixed(2),
                                   label: 'الرصيد',
                                 ),
                                 StatCard(
@@ -165,32 +196,68 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                             );
                           },
                         ),
-                        SizedBox(height: context.scaleH(12)),
-                        // Divider
-                        Container(
-                          height: 0.5,
-                          color: scheme.outlineVariant.withAlpha(30),
-                        ),
-                        SizedBox(height: context.scaleH(12)),
-                        // Recent Transactions Section
+                        SizedBox(height: context.scaleH(20)),
                         Text(
                           'آخر المعاملات',
                           style: TextStyle(
                             fontSize: context.scaleSp(14),
-                            color: scheme.onSurfaceVariant,
                             fontWeight: FontWeight.bold,
-                            letterSpacing: 0.04,
+                            color: scheme.onSurface,
                           ),
                         ),
-                        SizedBox(height: context.scaleH(10)),
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: context.scaleW(8),
+                          children: TransactionClassifier.values
+                              .asMap()
+                              .entries
+                              .map((entry) {
+                                final cc = ["inFlows", "outFlows", "allFlows"];
+                                final isSelected =
+                                    selectedClassifierIndex ==
+                                    cc.indexOf(entry.value.name);
+                                return ChoiceChip(
+                                  selected: isSelected,
+                                  label: Text(
+                                    entry.value.name.contains(
+                                          TransactionDirection.inFlow.name,
+                                        )
+                                        ? "الدخل"
+                                        : entry.value.name.contains(
+                                            TransactionDirection.outFlow.name,
+                                          )
+                                        ? "المصروفات"
+                                        : "عرض الكل",
+                                  ),
+                                  selectedColor: scheme.primary,
+                                  backgroundColor:
+                                      scheme.surfaceContainerHighest,
+                                  labelStyle: TextStyle(
+                                    color: isSelected
+                                        ? scheme.onPrimary
+                                        : scheme.onSurface,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  onSelected: (selected) {
+                                    setState(() {
+                                      selectedClassifierIndex = cc.indexOf(
+                                        entry.value.name,
+                                      );
+                                    });
+                                  },
+                                );
+                              })
+                              .toList(),
+                        ),
+                        SizedBox(height: context.scaleH(12)),
                         if (transactions.isEmpty)
                           Center(
                             child: Padding(
                               padding: EdgeInsets.symmetric(
-                                vertical: context.scaleH(20),
+                                vertical: context.scaleH(24),
                               ),
                               child: Text(
-                                'لا توجد معاملات',
+                                'لا توجد معاملات حتى الآن',
                                 style: TextStyle(
                                   fontSize: context.scaleSp(14),
                                   color: scheme.onSurfaceVariant,
@@ -199,25 +266,32 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                             ),
                           )
                         else
-                          ...transactions.asMap().entries.map(
-                            (entry) => GestureDetector(
-                              onTap: () => _showEditTransactionSheet(
-                                context,
-                                entry.value,
+                          ...transactions.asMap().entries.map((entry) {
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                bottom: entry.key < transactions.length - 1
+                                    ? context.scaleH(12)
+                                    : 0,
                               ),
-                              onLongPress: () =>
-                                  _showDeleteConfirmation(context, entry.value),
-                              child: TransactionRow(
-                                transaction: entry.value,
-                                showBorder: entry.key < transactions.length - 1,
+                              child: GestureDetector(
+                                onTap: () => _showEditTransactionSheet(
+                                  context,
+                                  entry.value,
+                                ),
+                                onLongPress: () => _showDeleteConfirmation(
+                                  context,
+                                  entry.value,
+                                ),
+                                child: TransactionRow(
+                                  transaction: entry.value,
+                                  showBorder: false,
+                                ),
                               ),
-                            ),
-                          ),
-                        if (transactions.isNotEmpty)
-                          SizedBox(height: context.scaleH(8)),
+                            );
+                          }),
                         if (state.errorMessage != null)
                           Padding(
-                            padding: EdgeInsets.only(bottom: context.scaleH(8)),
+                            padding: EdgeInsets.only(top: context.scaleH(10)),
                             child: Text(
                               'تعذر تحميل المزيد من المعاملات',
                               textAlign: TextAlign.center,
@@ -228,42 +302,39 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                             ),
                           ),
                         if (state.hasMore)
-                          Center(
-                            // Pagination action: stay on this screen and fetch
-                            // the next DB page instead of opening /transactions.
-                            child: TextButton(
-                              onPressed: state.isLoadingMore
-                                  ? null
-                                  : () {
-                                      detailViewModel.loadMoreTransactions();
-                                    },
-                              child: state.isLoadingMore
-                                  ? SizedBox(
-                                      height: context.scaleH(18),
-                                      width: context.scaleW(18),
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: scheme.primary,
+                          Padding(
+                            padding: EdgeInsets.only(top: context.scaleH(12)),
+                            child: Center(
+                              child: TextButton(
+                                onPressed: state.isLoadingMore
+                                    ? null
+                                    : detailViewModel.loadMoreTransactions,
+                                child: state.isLoadingMore
+                                    ? SizedBox(
+                                        height: context.scaleH(18),
+                                        width: context.scaleW(18),
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: scheme.primary,
+                                        ),
+                                      )
+                                    : Text(
+                                        loadMoreLabel,
+                                        style: TextStyle(
+                                          fontSize: context.scaleSp(12),
+                                          color: scheme.primary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
-                                    )
-                                  : Text(
-                                      loadMoreLabel,
-                                      style: TextStyle(
-                                        fontSize: context.scaleSp(12),
-                                        color: scheme.primary,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
+                              ),
                             ),
                           ),
                         if (transactions.isNotEmpty && !state.hasMore)
-                          Center(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                vertical: context.scaleH(12),
-                              ),
+                          Padding(
+                            padding: EdgeInsets.only(top: context.scaleH(16)),
+                            child: Center(
                               child: Text(
-                                'لا مزيد من المعاملات لعرضها',
+                                'أنت في نهاية القائمة',
                                 style: TextStyle(
                                   fontSize: context.scaleSp(12),
                                   color: scheme.onSurfaceVariant,
@@ -271,7 +342,6 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                               ),
                             ),
                           ),
-                        SizedBox(height: context.scaleH(16)),
                       ],
                     ),
                   );
@@ -281,7 +351,6 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
           ],
         ),
       ),
-      // FAB - Triggers Add Transaction Sheet
       floatingActionButton: widget.source.isDeleted
           ? null
           : FloatingActionButton(
@@ -291,7 +360,7 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                   isScrollControlled: true,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(context.scaleW(20)),
+                      top: Radius.circular(context.scaleW(22)),
                     ),
                   ),
                   builder: (context) =>
@@ -300,14 +369,12 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
               },
               backgroundColor: scheme.primary,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(context.scaleW(50)),
+                borderRadius: BorderRadius.circular(context.scaleW(56)),
               ),
-              child: Text(
-                '+',
-                style: TextStyle(
-                  fontSize: context.scaleSp(22),
-                  color: Colors.white,
-                ),
+              child: Icon(
+                Icons.add,
+                size: context.scaleSp(24),
+                color: scheme.onPrimary,
               ),
             ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,

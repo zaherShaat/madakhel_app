@@ -77,94 +77,132 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
             right: context.scaleW(16),
           ),
           child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(height: context.scaleH(10)),
-                Center(
-                  child: Container(
-                    width: context.scaleW(36),
-                    height: context.scaleH(4),
-                    decoration: BoxDecoration(
-                      color: scheme.outline.withAlpha(100),
-                      borderRadius: BorderRadius.circular(2),
+            child: Container(
+              decoration: BoxDecoration(
+                color: scheme.surface,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(context.scaleW(24)),
+                ),
+              ),
+              padding: EdgeInsets.symmetric(
+                horizontal: context.scaleW(18),
+                vertical: context.scaleH(18),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: context.scaleW(40),
+                      height: context.scaleH(4),
+                      decoration: BoxDecoration(
+                        color: scheme.outline.withAlpha(100),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: context.scaleH(14)),
-                Text(
-                  widget.isEdit ? 'تعديل معاملة' : 'إضافة معاملة',
-                  style: TextStyle(
-                    fontSize: context.scaleSp(18),
-                    fontWeight: FontWeight.bold,
-                    color: scheme.onSurface,
-                  ),
-                ),
-                SizedBox(height: context.scaleH(16)),
-                if (state.errorMessage != null) ...[
-                  _MessageBox(
-                    message: state.errorMessage!,
-                    color: scheme.error,
-                    icon: Icons.error_outline,
-                    onClose: controller.clearError,
+                  SizedBox(height: context.scaleH(18)),
+                  Text(
+                    widget.isEdit ? 'تعديل معاملة' : 'إضافة معاملة',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: scheme.onSurface,
+                    ),
                   ),
                   SizedBox(height: context.scaleH(12)),
-                ],
-                _CategoryField(
-                  selected: _selectedCategory,
-                  initialCategoryId: widget.initial?.categoryId,
-                  enabled: !isLoading,
-                  onChanged: (value) {
-                    setState(() => _selectedCategory = value);
-                  },
-                ),
-                SizedBox(height: context.scaleH(12)),
-                _AmountField(
-                  controller: _amountController,
-                  enabled: !isLoading,
-                ),
-                // SizedBox(height: context.scaleH(12)),
-                // _DateField(
-                //   selectedDate: _selectedDate,
-                //   enabled: !isLoading,
-                //   onChanged: (date) => setState(() => _selectedDate = date),
-                // ),
-                SizedBox(height: context.scaleH(12)),
-                _NoteField(controller: _noteController, enabled: !isLoading),
-                SizedBox(height: context.scaleH(16)),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: isLoading
-                            ? null
-                            : () => Navigator.pop(context),
-                        child: const Text('إلغاء'),
-                      ),
+                  Text(
+                    'أضف تفاصيل المعاملة حتى تتمكن من تتبع الدخل والمصروفات بدقة.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      height: 1.6,
                     ),
-                    SizedBox(width: context.scaleW(8)),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: isLoading ? null : _handleSave,
-                        child: isLoading
-                            ? SizedBox(
-                                height: context.scaleH(20),
-                                width: context.scaleW(20),
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation(
-                                    scheme.onPrimary,
-                                  ),
-                                ),
-                              )
-                            : Text(widget.isEdit ? 'حفظ' : 'إضافة'),
-                      ),
+                  ),
+                  SizedBox(height: context.scaleH(16)),
+                  if (state.errorMessage != null) ...[
+                    _MessageBox(
+                      message: state.errorMessage!,
+                      color: scheme.error,
+                      icon: Icons.error_outline,
+                      onClose: controller.clearError,
                     ),
+                    SizedBox(height: context.scaleH(14)),
                   ],
-                ),
-                SizedBox(height: context.scaleH(16)),
-              ],
+                  _CategoryField(
+                    selected: _selectedCategory,
+                    initialCategoryId: widget.initial?.categoryId,
+                    enabled: widget.isEdit ? false : !isLoading,
+                    onChanged: (value) {
+                      setState(() => _selectedCategory = value);
+                    },
+                  ),
+                  SizedBox(height: context.scaleH(14)),
+                  _AmountField(
+                    controller: _amountController,
+                    enabled: !isLoading,
+                  ),
+                  SizedBox(height: context.scaleH(14)),
+                  _DateField(
+                    selectedDate: _selectedDate,
+                    enabled: !isLoading,
+                    onChanged: (date) => setState(() => _selectedDate = date),
+                  ),
+                  SizedBox(height: context.scaleH(14)),
+                  _NoteField(controller: _noteController, enabled: !isLoading),
+                  SizedBox(height: context.scaleH(22)),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: isLoading
+                              ? null
+                              : () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: scheme.onSurface,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                context.scaleW(16),
+                              ),
+                            ),
+                          ),
+                          child: const Text('إلغاء'),
+                        ),
+                      ),
+                      SizedBox(width: context.scaleW(10)),
+                      Expanded(
+                        child: Visibility(
+                          replacement: SizedBox(
+                            height: context.scaleH(20),
+                            width: context.scaleW(20),
+                            child: LinearProgressIndicator(
+                              // strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation(
+                                scheme.onPrimary,
+                              ),
+                              color: scheme.primary,
+                            ),
+                          ),
+                          visible: !isLoading,
+                          child: ElevatedButton(
+                            onPressed: isLoading ? null : _handleSave,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: scheme.primary,
+                              foregroundColor: scheme.onPrimary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  context.scaleW(16),
+                                ),
+                              ),
+                            ),
+                            child: Text(widget.isEdit ? 'حفظ' : 'إضافة'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: context.scaleH(18)),
+                ],
+              ),
             ),
           ),
         );

@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:madakhel_app/core/local_logger.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
 import 'package:madakhel_app/data/repositories/income_type_repository.dart';
 
@@ -61,6 +64,12 @@ class IncomeSourceViewModel extends ChangeNotifier {
       );
 
       _setState(_state.copyWith(isSuccess: false, successMessage: null));
+      unawaited(
+        LocalLogger.instance.logDb(
+          'CREATE_INCOME_SOURCE',
+          'id:${id ?? 'unknown'} name:$name currency:$currency',
+        ),
+      );
       return id;
     } catch (e) {
       _setState(
@@ -100,6 +109,12 @@ class IncomeSourceViewModel extends ChangeNotifier {
 
       await Future.delayed(const Duration(seconds: 1));
       _setState(_state.copyWith(isSuccess: false, successMessage: null));
+      unawaited(
+        LocalLogger.instance.logDb(
+          'UPDATE_INCOME_SOURCE',
+          'id:$id name:$name currency:$currency',
+        ),
+      );
     } catch (e) {
       _setState(
         _state.copyWith(
@@ -127,6 +142,7 @@ class IncomeSourceViewModel extends ChangeNotifier {
       );
       await Future.delayed(const Duration(seconds: 1));
       _setState(_state.copyWith(isSuccess: false, successMessage: null));
+      unawaited(LocalLogger.instance.logDb('DELETE_INCOME_SOURCE', 'id:$id'));
     } catch (e) {
       _setState(
         _state.copyWith(

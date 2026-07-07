@@ -3,13 +3,11 @@ import 'package:madakhel_app/core/utils.dart';
 import 'package:madakhel_app/view/shared/components/circle_icon_button.dart';
 
 class HomeTopBar extends StatelessWidget {
-  final int sourceCount;
   final VoidCallback onAddTap;
   final VoidCallback onSettingsTap;
 
   const HomeTopBar({
     super.key,
-    required this.sourceCount,
     required this.onAddTap,
     required this.onSettingsTap,
   });
@@ -20,35 +18,47 @@ class HomeTopBar extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: context.scaleW(16),
-        vertical: context.scaleH(12),
+        vertical: context.scaleH(14),
       ),
       decoration: BoxDecoration(
         color: scheme.surface,
-        border: Border(bottom: BorderSide(color: scheme.outline, width: 0.5)),
-      ),
-      child: Row(
-        children: [
-          CircleIconButton(icon: Icons.add, onTap: onAddTap),
-          Expanded(
-            child: Column(
-              children: [
-                Text(
-                  'مداخيلي',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: context.scaleH(12)),
-                Text(
-                  '$sourceCount مصادر',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurface.withValues(alpha: 0.75),
-                  ),
-                ),
-              ],
-            ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+        boxShadow: [
+          BoxShadow(
+            color: scheme.primary.withValues(alpha: 0.12),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
           ),
-          CircleIconButton(icon: Icons.settings_outlined, onTap: onSettingsTap),
+        ],
+      ),
+      child: Column(
+        children: [
+          SizedBox(height: context.scaleH(12)),
+          Row(
+            children: [
+              CircleIconButton(
+                icon: Icons.add,
+                onTap: onAddTap,
+                backgroundColor: scheme.primaryContainer,
+                iconColor: scheme.surfaceContainer,
+                borderColor: scheme.primary.withValues(alpha: 0.18),
+                showBorder: false,
+              ),
+              Spacer(),
+              Align(
+                alignment: Alignment.center,
+                child: Text(
+                  'مداخيلي',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: scheme.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: context.scaleH(4)),
+          
         ],
       ),
     );

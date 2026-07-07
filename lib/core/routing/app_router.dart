@@ -31,7 +31,7 @@ GoRouter createAppRouter(AuthViewModel auth) {
     routes: [
       GoRoute(
         path: '/splash',
-        pageBuilder: (context, state) => AppTransitions.fadeScale(
+        pageBuilder: (context, state) => AppTransitions.slideVertical(
           context: context,
           state: state,
           child: const SplashScreen(),
@@ -39,7 +39,7 @@ GoRouter createAppRouter(AuthViewModel auth) {
       ),
       GoRoute(
         path: '/start',
-        pageBuilder: (context, state) => AppTransitions.fadeScale(
+        pageBuilder: (context, state) => AppTransitions.slideVertical(
           context: context,
           state: state,
           child: const StartPage(),
@@ -47,7 +47,7 @@ GoRouter createAppRouter(AuthViewModel auth) {
       ),
       GoRoute(
         path: '/home',
-        pageBuilder: (context, state) => AppTransitions.fadeScale(
+        pageBuilder: (context, state) => AppTransitions.slideVertical(
           context: context,
           state: state,
           child: const HomeScreen(),
@@ -57,7 +57,7 @@ GoRouter createAppRouter(AuthViewModel auth) {
         path: '/source-detail',
         pageBuilder: (context, state) {
           final extra = state.extra as IncomeSourceWithBalance;
-          return AppTransitions.fadeScale(
+          return AppTransitions.slideVertical(
             context: context,
             state: state,
             child: SourceDetailScreen(source: extra),
@@ -85,7 +85,7 @@ GoRouter createAppRouter(AuthViewModel auth) {
       ),
       GoRoute(
         path: '/transactions',
-        pageBuilder: (context, state) => AppTransitions.fadeScale(
+        pageBuilder: (context, state) => AppTransitions.slideVertical(
           context: context,
           state: state,
           child: const TransactionsScreen(),
@@ -93,7 +93,7 @@ GoRouter createAppRouter(AuthViewModel auth) {
       ),
       GoRoute(
         path: '/settings',
-        pageBuilder: (context, state) => AppTransitions.fadeScale(
+        pageBuilder: (context, state) => AppTransitions.slideHorizontal(
           context: context,
           state: state,
           child: const SettingsScreen(),
@@ -109,7 +109,7 @@ GoRouter createAppRouter(AuthViewModel auth) {
       ),
       GoRoute(
         path: '/add-category',
-        pageBuilder: (context, state) => AppTransitions.fadeScale(
+        pageBuilder: (context, state) => AppTransitions.slideVertical(
           context: context,
           state: state,
           child: AddCategoryScreen(
