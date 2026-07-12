@@ -17,27 +17,12 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
-    },
-    onUpgrade: (m, from, to) async {
-      if (from < 4) {
-        await m.deleteTable('financial_transactions');
-        await m.deleteTable('transaction_categories');
-        await m.deleteTable('income_sources');
-        await m.createAll();
-        return;
-      }
-
-      if (from < 5) {
-        await m.addColumn(incomeSources, incomeSources.userId);
-        await m.addColumn(transactionCategories, transactionCategories.userId);
-        await m.addColumn(financialTransactions, financialTransactions.userId);
-      }
     },
   );
 }

@@ -113,6 +113,7 @@ FinancialTransactions
   id
   incomeSourceId
   categoryId
+  direction  <-- DENORMALIZED: stores `TransactionDirection` at creation time
   isSystem
   amount
   note
@@ -132,7 +133,11 @@ TransactionCategories 1 -> many FinancialTransactions
 FinancialTransactions belongs to one IncomeSource and one TransactionCategory
 ```
 
-Important rule: transaction direction is not stored on `FinancialTransactions`; it is resolved through `TransactionCategories.direction`.
+Important rule (updated): transaction direction is now denormalized on `FinancialTransactions.direction`.
+  - The app continues to maintain `TransactionCategories.direction` as the canonical category direction.
+  - On create/update/restore the transaction's `direction` is populated from the category, and kept in sync when the transaction's category is changed.
+  - This denormalization simplifies queries (no joins required) for sums and filters and improves read performance.
+  - Tradeoff: if a category's direction is changed after transactions exist, those historical transactions retain their original `direction` (intentional for preserving historical context).
 
 ---
 

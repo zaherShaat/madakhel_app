@@ -55,6 +55,13 @@ class BackupService {
     debugPrint(
       ">> backupUserData: incomeSources: ${incomeSources.length}, categories: ${categories.length}, transactions: ${transactions.length}",
     );
+    // Ensure transactions serialize `direction` as a string ('in'/'out')
+    final transactionsJson = transactions.map((t) {
+      final json = t.toJson();
+      json['direction'] = directionConverter.toSql(t.direction);
+      return json;
+    }).toList();
+
     final payload = jsonEncode({
       'version': 1,
       'userEmail': user.email,
@@ -62,7 +69,7 @@ class BackupService {
       'timestamp': backupTime.toIso8601String(),
       'incomeSources': incomeSources.map((e) => e.toJson()).toList(),
       'transactionCategories': categoriesJson,
-      'financialTransactions': transactions.map((e) => e.toJson()).toList(),
+      'financialTransactions': transactionsJson,
     });
     debugPrint(">> payload $payload");
     await _uploadJsonBackup(backupPath, utf8.encode(payload));
@@ -158,6 +165,9 @@ class BackupService {
       }
 
       for (final transaction in transactions) {
+        // Backup format is assumed to include denormalized `direction`.
+        final dir = transaction.direction;
+
         await _db
             .into(_db.financialTransactions)
             .insert(
@@ -167,6 +177,7 @@ class BackupService {
                 incomeSourceId: Value(transaction.incomeSourceId),
                 categoryId: Value(transaction.categoryId),
                 isSystem: Value(transaction.isSystem),
+                direction: Value(dir),
                 amount: Value(transaction.amount),
                 note: Value(transaction.note),
                 date: Value(transaction.date),
@@ -269,6 +280,10 @@ class BackupService {
     return items.map((item) {
       final json = Map<String, dynamic>.from(item);
       json['userId'] = uid;
+      // Expect the JSON to contain a string direction value ("in"/"out").
+      json['direction'] = const TransactionDirectionConverter().fromSql(
+        json['direction'] as String,
+      );
       return FinancialTransaction.fromJson(json);
     }).toList();
   }

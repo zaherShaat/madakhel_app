@@ -164,20 +164,26 @@ class TransactionRepository {
     await _ensureIncomeSourceBelongsToUser(incomeSourceId, userId);
     await _ensureCategoryBelongsToUser(categoryId, userId);
 
-    return await _db
-        .into(_db.financialTransactions)
-        .insert(
-          FinancialTransactionsCompanion.insert(
-            userId: Value(userId),
-            incomeSourceId: incomeSourceId,
-            categoryId: categoryId,
-            amount: amount,
-            note: Value(note),
-            date: date,
-            createdAt: now,
-            updatedAt: now,
-          ),
-        );
+    // Resolve the transaction direction from the category and store it
+    // denormalized on the transaction row for faster queries later.
+    final category = await (_db.select(_db.transactionCategories)..where(
+      (c) => c.id.equals(categoryId) & c.userId.equals(userId) & c.isDeleted.equals(false),
+    )).getSingle();
+
+    return await _db.into(_db.financialTransactions).insert(
+      FinancialTransactionsCompanion.insert(
+        userId: Value(userId),
+        incomeSourceId: incomeSourceId,
+        categoryId: categoryId,
+        // denormalized direction
+        direction: category.direction,
+        amount: amount,
+        note: Value(note),
+        date: date,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
   }
 
   Future<void> updateTransaction({
@@ -190,15 +196,19 @@ class TransactionRepository {
     final userId = _requireUserId();
     await _ensureCategoryBelongsToUser(categoryId, userId);
 
+    // Fetch category direction to keep denormalized `direction` in sync
+    final category = await (_db.select(_db.transactionCategories)..where(
+      (c) => c.id.equals(categoryId) & c.userId.equals(userId) & c.isDeleted.equals(false),
+    )).getSingle();
+
     await (_db.update(_db.financialTransactions)..where(
-          (t) =>
-              t.id.equals(id) &
-              t.userId.equals(userId) &
-              t.isSystem.equals(false),
+          (t) => t.id.equals(id) & t.userId.equals(userId) & t.isSystem.equals(false),
         ))
         .write(
           FinancialTransactionsCompanion(
             categoryId: Value(categoryId),
+            // keep denormalized direction consistent with the selected category
+            direction: Value(category.direction),
             amount: Value(amount),
             note: Value(note),
             date: Value(date),
@@ -259,29 +269,25 @@ class TransactionRepository {
   Future<double> getInSum(int incomeSourceId) async {
     final userId = _userId;
     if (userId == null) return 0.0;
-
+    // Use denormalized `direction` column on financial_transactions for a
+    // simpler and faster query (no join required).
     final query = '''
-SELECT COALESCE(SUM(ft.amount), 0) AS s
-FROM financial_transactions ft
-JOIN transaction_categories tc ON tc.id = ft.category_id
-WHERE ft.income_source_id = ? AND ft.user_id = ? AND tc.user_id = ? AND tc.direction = ? AND ft.is_deleted = 0 AND tc.is_deleted = 0
+SELECT COALESCE(SUM(amount), 0) AS s
+FROM financial_transactions
+WHERE income_source_id = ? AND user_id = ? AND direction = ? AND is_deleted = 0
 ''';
-    final rows = await _db
-        .customSelect(
-          query,
-          variables: [
-            Variable<int>(incomeSourceId),
-            Variable<String>(userId),
-            Variable<String>(userId),
-            Variable<String>(
-              const TransactionDirectionConverter().toSql(
-                TransactionDirection.inFlow,
-              ),
-            ),
-          ],
-          readsFrom: {_db.financialTransactions, _db.transactionCategories},
-        )
-        .get();
+    final rows = await _db.customSelect(
+      query,
+      variables: [
+        Variable<int>(incomeSourceId),
+        Variable<String>(userId),
+        Variable<String>(
+          const TransactionDirectionConverter().toSql(           TransactionDirection.inFlow,
+          ),
+        ),
+      ],
+      readsFrom: {_db.financialTransactions},
+    ).get();
 
     return rows.isNotEmpty ? rows.first.read<double>('s') : 0.0;
   }
@@ -290,29 +296,24 @@ WHERE ft.income_source_id = ? AND ft.user_id = ? AND tc.user_id = ? AND tc.direc
   Future<double> getOutSum(int incomeSourceId) async {
     final userId = _userId;
     if (userId == null) return 0.0;
-
     final query = '''
-SELECT COALESCE(SUM(ft.amount), 0) AS s
-FROM financial_transactions ft
-JOIN transaction_categories tc ON tc.id = ft.category_id
-WHERE ft.income_source_id = ? AND ft.user_id = ? AND tc.user_id = ? AND tc.direction = ? AND ft.is_deleted = 0 AND tc.is_deleted = 0
+SELECT COALESCE(SUM(amount), 0) AS s
+FROM financial_transactions
+WHERE income_source_id = ? AND user_id = ? AND direction = ? AND is_deleted = 0
 ''';
-    final rows = await _db
-        .customSelect(
-          query,
-          variables: [
-            Variable<int>(incomeSourceId),
-            Variable<String>(userId),
-            Variable<String>(userId),
-            Variable<String>(
-              const TransactionDirectionConverter().toSql(
-                TransactionDirection.outFlow,
-              ),
-            ),
-          ],
-          readsFrom: {_db.financialTransactions, _db.transactionCategories},
-        )
-        .get();
+    final rows = await _db.customSelect(
+      query,
+      variables: [
+        Variable<int>(incomeSourceId),
+        Variable<String>(userId),
+        Variable<String>(
+          const TransactionDirectionConverter().toSql(
+            TransactionDirection.outFlow,
+          ),
+        ),
+      ],
+      readsFrom: {_db.financialTransactions},
+    ).get();
 
     return rows.isNotEmpty ? rows.first.read<double>('s') : 0.0;
   }

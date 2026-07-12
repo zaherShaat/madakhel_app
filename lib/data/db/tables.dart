@@ -43,6 +43,11 @@ class FinancialTransactions extends Table {
   IntColumn get categoryId =>
       integer().references(TransactionCategories, #id)();
 
+  /// Denormalized direction for faster queries and simpler filtering.
+  /// This stores the `TransactionDirection` value at the time of creation.
+  TextColumn get direction =>
+      text().map(const TransactionDirectionConverter())();
+
   /// True for system-generated rows (e.g. opening balance).
   /// System rows are included in sums but must NOT be editable by the user.
   BoolColumn get isSystem => boolean().withDefault(const Constant(false))();

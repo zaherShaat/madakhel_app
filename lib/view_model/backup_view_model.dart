@@ -247,6 +247,17 @@ class BackupViewModel extends ChangeNotifier {
         if (existing != null) {
           continue;
         } else {
+          // Determine denormalized direction for the transaction. Prefer
+          // the direction provided by the transaction JSON; otherwise fall
+          // back to the category direction mapping.
+          var dir = r.direction;
+          // if (dir == null) {
+          //   final localCat = localCategories.firstWhereOrNull(
+          //     (c) => c.id == r.categoryId,
+          //   );
+          //   dir = localCat?.direction ?? TransactionDirection.inFlow;
+          // }
+
           await _db
               .into(_db.financialTransactions)
               .insert(
@@ -255,6 +266,7 @@ class BackupViewModel extends ChangeNotifier {
                   incomeSourceId: mappedIncomeId ?? r.incomeSourceId,
                   categoryId: mappedCategoryId ?? r.categoryId,
                   isSystem: Value(r.isSystem),
+                  direction: dir,
                   amount: r.amount,
                   note: Value(r.note),
                   date: r.date,

@@ -9,10 +9,17 @@ class CategoryViewModel extends ChangeNotifier {
   ActionState _actionState = const ActionIdle();
 
   CategoryViewModel(this._repository);
-
+  final categories = <TransactionCategory>[];
   ActionState get actionState => _actionState;
   Stream<List<TransactionCategory>> watchCategories() => _repository.watchAll();
-  Future<List<TransactionCategory>> getCategories() => _repository.getAll();
+  Future<List<TransactionCategory>> getCategories() async {
+    final cats = await _repository.getAll();
+
+    categories.addAll(cats);
+    notifyListeners();
+    return cats;
+  }
+
   Future<TransactionCategory?> getCategoryById(int id) =>
       _repository.getById(id);
 

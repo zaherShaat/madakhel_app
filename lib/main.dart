@@ -104,7 +104,7 @@ Future<void> main() async {
         ),
         ChangeNotifierProvider<CategoryViewModel>(
           create: (ctx) =>
-              CategoryViewModel(ctx.read<TransactionCategoryRepository>()),
+              CategoryViewModel(ctx.read<TransactionCategoryRepository>()..getAll()),
         ),
         ChangeNotifierProvider<IncomeSourceViewModel>(
           create: (ctx) =>

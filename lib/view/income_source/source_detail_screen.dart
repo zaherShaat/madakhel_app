@@ -9,6 +9,7 @@ import 'package:madakhel_app/view/income_source/components/add_transaction_sheet
 import 'package:madakhel_app/view/income_source/components/source_detail_top_bar.dart';
 import 'package:madakhel_app/view/income_source/components/stat_card.dart';
 import 'package:madakhel_app/view/income_source/components/transaction_row.dart';
+import 'package:madakhel_app/view_model/category_view_model.dart';
 import 'package:madakhel_app/view_model/income_source_detail_view_model.dart';
 import 'package:madakhel_app/view_model/income_source_view_model.dart';
 import 'package:madakhel_app/view_model/transaction_view_model.dart';
@@ -24,7 +25,7 @@ class SourceDetailScreen extends StatefulWidget {
 }
 
 class _SourceDetailScreenState extends State<SourceDetailScreen> {
-  int selectedClassifierIndex = 2;
+  TransactionClassifier selectedClassifier = TransactionClassifier.allFlows;
 
   @override
   void initState() {
@@ -142,93 +143,140 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
 
                   return RefreshIndicator(
                     onRefresh: _refreshTransactions,
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: context.scaleW(16),
-                        vertical: context.scaleH(18),
-                      ),
-                      children: [
-                        FutureBuilder<List<double>>(
-                          future: Future.wait([
-                            detailViewModel.getInSum(widget.source.id),
-                            detailViewModel.getOutSum(widget.source.id),
-                          ]),
-                          builder: (context, sumsSnap) {
-                            final inSum =
-                                (sumsSnap.data != null &&
-                                    sumsSnap.data!.isNotEmpty)
-                                ? sumsSnap.data![0]
-                                : 0.0;
-                            final outSum =
-                                (sumsSnap.data != null &&
-                                    sumsSnap.data!.length > 1)
-                                ? sumsSnap.data![1]
-                                : 0.0;
+                    child: Consumer<CategoryViewModel>(
+                      builder: (context, catV, child) {
+                        final cats = catV.categories;
 
-                            return GridView.count(
-                              crossAxisCount: 2,
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              mainAxisSpacing: context.scaleH(12),
-                              crossAxisSpacing: context.scaleW(12),
-                              childAspectRatio: 1.25,
-                              children: [
-                                StatCard(
-                                  value: (inSum - outSum).toStringAsFixed(2),
-                                  label: 'الرصيد',
-                                ),
-                                StatCard(
-                                  value: inSum.toStringAsFixed(2),
-                                  label: 'إجمالي الدخل',
-                                  isIncome: true,
-                                ),
-                                StatCard(
-                                  value: outSum.toStringAsFixed(2),
-                                  label: 'إجمالي المصروف',
-                                  isIncome: false,
-                                ),
-                                StatCard(
-                                  value: state.totalCount.toString(),
-                                  label: 'عدد المعاملات',
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                        SizedBox(height: context.scaleH(20)),
-                        Text(
-                          'آخر المعاملات',
-                          style: TextStyle(
-                            fontSize: context.scaleSp(14),
-                            fontWeight: FontWeight.bold,
-                            color: scheme.onSurface,
+                        // Build id sets once to avoid repeated lookups and
+                        // to prevent `StateError: No element` from `firstWhere`.
+                        final inFlowIds = cats
+                            .where(
+                              (c) => c.direction == TransactionDirection.inFlow,
+                            )
+                            .map((c) => c.id)
+                            .toSet();
+                        final outFlowIds = cats
+                            .where(
+                              (c) =>
+                                  c.direction == TransactionDirection.outFlow,
+                            )
+                            .map((c) => c.id)
+                            .toSet();
+
+                        late final List<FinancialTransaction>
+                        currentTransactions;
+                        switch (selectedClassifier) {
+                          case TransactionClassifier.inFlows:
+                            // If there are no in-flow categories, return empty list.
+                            currentTransactions = inFlowIds.isEmpty
+                                ? <FinancialTransaction>[]
+                                : transactions
+                                      .where(
+                                        (t) => inFlowIds.contains(t.categoryId),
+                                      )
+                                      .toList();
+                            break;
+                          case TransactionClassifier.outFlows:
+                            currentTransactions = outFlowIds.isEmpty
+                                ? <FinancialTransaction>[]
+                                : transactions
+                                      .where(
+                                        (t) =>
+                                            outFlowIds.contains(t.categoryId),
+                                      )
+                                      .toList();
+                            break;
+                          case TransactionClassifier.allFlows:
+                            currentTransactions = transactions;
+                            break;
+                        }
+                        return ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: context.scaleW(16),
+                            vertical: context.scaleH(18),
                           ),
-                        ),
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: context.scaleW(8),
-                          children: TransactionClassifier.values
-                              .asMap()
-                              .entries
-                              .map((entry) {
-                                final cc = ["inFlows", "outFlows", "allFlows"];
+                          children: [
+                            FutureBuilder<List<double>>(
+                              future: Future.wait([
+                                detailViewModel.getInSum(widget.source.id),
+                                detailViewModel.getOutSum(widget.source.id),
+                              ]),
+                              builder: (context, sumsSnap) {
+                                final inSum =
+                                    (sumsSnap.data != null &&
+                                        sumsSnap.data!.isNotEmpty)
+                                    ? sumsSnap.data![0]
+                                    : 0.0;
+                                final outSum =
+                                    (sumsSnap.data != null &&
+                                        sumsSnap.data!.length > 1)
+                                    ? sumsSnap.data![1]
+                                    : 0.0;
+
+                                return GridView.count(
+                                  crossAxisCount: 2,
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  mainAxisSpacing: context.scaleH(12),
+                                  crossAxisSpacing: context.scaleW(12),
+                                  childAspectRatio: 1.4,
+                                  children: [
+                                    StatCard(
+                                      value: (inSum - outSum).toStringAsFixed(
+                                        2,
+                                      ),
+                                      label: 'الرصيد',
+                                    ),
+                                    StatCard(
+                                      value: inSum.toStringAsFixed(2),
+                                      label: 'إجمالي الدخل',
+                                      isIncome: true,
+                                    ),
+                                    StatCard(
+                                      value: outSum.toStringAsFixed(2),
+                                      label: 'إجمالي المصروف',
+                                      isIncome: false,
+                                    ),
+                                    StatCard(
+                                      value: state.totalCount.toString(),
+                                      label: 'عدد المعاملات',
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                            SizedBox(height: context.scaleH(20)),
+                            Text(
+                              'آخر المعاملات',
+                              style: TextStyle(
+                                fontSize: context.scaleSp(14),
+                                fontWeight: FontWeight.bold,
+                                color: scheme.onSurface,
+                              ),
+                            ),
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: context.scaleW(8),
+                              children: TransactionClassifier.values.map((
+                                classifier,
+                              ) {
                                 final isSelected =
-                                    selectedClassifierIndex ==
-                                    cc.indexOf(entry.value.name);
+                                    selectedClassifier == classifier;
+                                final label = () {
+                                  switch (classifier) {
+                                    case TransactionClassifier.inFlows:
+                                      return 'الدخل';
+                                    case TransactionClassifier.outFlows:
+                                      return 'المصروفات';
+                                    case TransactionClassifier.allFlows:
+                                      return 'عرض الكل';
+                                  }
+                                }();
+
                                 return ChoiceChip(
                                   selected: isSelected,
-                                  label: Text(
-                                    entry.value.name.contains(
-                                          TransactionDirection.inFlow.name,
-                                        )
-                                        ? "الدخل"
-                                        : entry.value.name.contains(
-                                            TransactionDirection.outFlow.name,
-                                          )
-                                        ? "المصروفات"
-                                        : "عرض الكل",
-                                  ),
+                                  label: Text(label),
                                   selectedColor: scheme.primary,
                                   backgroundColor:
                                       scheme.surfaceContainerHighest,
@@ -239,110 +287,118 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                                     fontWeight: FontWeight.w700,
                                   ),
                                   onSelected: (selected) {
+                                    if (!selected) return;
                                     setState(() {
-                                      selectedClassifierIndex = cc.indexOf(
-                                        entry.value.name,
-                                      );
+                                      selectedClassifier = classifier;
                                     });
                                   },
                                 );
-                              })
-                              .toList(),
-                        ),
-                        SizedBox(height: context.scaleH(12)),
-                        if (transactions.isEmpty)
-                          Center(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                vertical: context.scaleH(24),
-                              ),
-                              child: Text(
-                                'لا توجد معاملات حتى الآن',
-                                style: TextStyle(
-                                  fontSize: context.scaleSp(14),
-                                  color: scheme.onSurfaceVariant,
-                                ),
-                              ),
+                              }).toList(),
                             ),
-                          )
-                        else
-                          ...transactions.asMap().entries.map((entry) {
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                bottom: entry.key < transactions.length - 1
-                                    ? context.scaleH(12)
-                                    : 0,
-                              ),
-                              child: GestureDetector(
-                                onTap: () => _showEditTransactionSheet(
-                                  context,
-                                  entry.value,
+                            SizedBox(height: context.scaleH(12)),
+                            if (transactions.isEmpty)
+                              Center(
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: context.scaleH(24),
+                                  ),
+                                  child: Text(
+                                    'لا توجد معاملات حتى الآن',
+                                    style: TextStyle(
+                                      fontSize: context.scaleSp(14),
+                                      color: scheme.onSurfaceVariant,
+                                    ),
+                                  ),
                                 ),
-                                onLongPress: () => _showDeleteConfirmation(
-                                  context,
-                                  entry.value,
+                              )
+                            else
+                              ...currentTransactions.asMap().entries.map((
+                                entry,
+                              ) {
+                                return Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom: entry.key < transactions.length - 1
+                                        ? context.scaleH(12)
+                                        : 0,
+                                  ),
+                                  child: GestureDetector(
+                                    onTap: () => _showEditTransactionSheet(
+                                      context,
+                                      entry.value,
+                                    ),
+                                    onLongPress: () => _showDeleteConfirmation(
+                                      context,
+                                      entry.value,
+                                    ),
+                                    child: TransactionRow(
+                                      transaction: entry.value,
+                                      showBorder: false,
+                                    ),
+                                  ),
+                                );
+                              }),
+                            if (state.errorMessage != null)
+                              Padding(
+                                padding: EdgeInsets.only(
+                                  top: context.scaleH(10),
                                 ),
-                                child: TransactionRow(
-                                  transaction: entry.value,
-                                  showBorder: false,
-                                ),
-                              ),
-                            );
-                          }),
-                        if (state.errorMessage != null)
-                          Padding(
-                            padding: EdgeInsets.only(top: context.scaleH(10)),
-                            child: Text(
-                              'تعذر تحميل المزيد من المعاملات',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: context.scaleSp(12),
-                                color: scheme.error,
-                              ),
-                            ),
-                          ),
-                        if (state.hasMore)
-                          Padding(
-                            padding: EdgeInsets.only(top: context.scaleH(12)),
-                            child: Center(
-                              child: TextButton(
-                                onPressed: state.isLoadingMore
-                                    ? null
-                                    : detailViewModel.loadMoreTransactions,
-                                child: state.isLoadingMore
-                                    ? SizedBox(
-                                        height: context.scaleH(18),
-                                        width: context.scaleW(18),
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: scheme.primary,
-                                        ),
-                                      )
-                                    : Text(
-                                        loadMoreLabel,
-                                        style: TextStyle(
-                                          fontSize: context.scaleSp(12),
-                                          color: scheme.primary,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                          ),
-                        if (transactions.isNotEmpty && !state.hasMore)
-                          Padding(
-                            padding: EdgeInsets.only(top: context.scaleH(16)),
-                            child: Center(
-                              child: Text(
-                                'أنت في نهاية القائمة',
-                                style: TextStyle(
-                                  fontSize: context.scaleSp(12),
-                                  color: scheme.onSurfaceVariant,
+                                child: Text(
+                                  'تعذر تحميل المزيد من المعاملات',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: context.scaleSp(12),
+                                    color: scheme.error,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
-                      ],
+                            if (state.hasMore)
+                              Padding(
+                                padding: EdgeInsets.only(
+                                  top: context.scaleH(12),
+                                ),
+                                child: Center(
+                                  child: TextButton(
+                                    onPressed: state.isLoadingMore
+                                        ? null
+                                        : detailViewModel.loadMoreTransactions,
+                                    child: state.isLoadingMore
+                                        ? SizedBox(
+                                            height: context.scaleH(18),
+                                            width: context.scaleW(18),
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: scheme.primary,
+                                            ),
+                                          )
+                                        : Text(
+                                            loadMoreLabel,
+                                            style: TextStyle(
+                                              fontSize: context.scaleSp(12),
+                                              color: scheme.primary,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            if (transactions.isNotEmpty && !state.hasMore)
+                              Padding(
+                                padding: EdgeInsets.only(
+                                  top: context.scaleH(16),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'أنت في نهاية القائمة',
+                                    style: TextStyle(
+                                      fontSize: context.scaleSp(12),
+                                      color: scheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                   );
                 },

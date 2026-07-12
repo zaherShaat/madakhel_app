@@ -34,8 +34,8 @@ class CategoriesScreen extends StatelessWidget {
                 icon: Icons.add,
                 onTap: () => _showCategorySheet(context),
                 backgroundColor: scheme.primaryContainer,
-                iconColor: scheme.primary,
-                borderColor: scheme.primary.withOpacity(0.2),
+                iconColor: scheme.onSurfaceVariant,
+                borderColor: scheme.primary.withValues(alpha: 0.2),
                 showBorder: false,
               ),
             ),
@@ -133,7 +133,7 @@ class _InfoBox extends StatelessWidget {
       padding: EdgeInsets.all(context.scaleW(12)),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest,
-        border: Border.all(color: scheme.outline.withAlpha(40), width: 0.5),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.4), width: 0.5),
         borderRadius: BorderRadius.circular(context.scaleW(8)),
       ),
       child: Text(
@@ -250,7 +250,7 @@ class _CategoryRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(context.scaleW(18)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),

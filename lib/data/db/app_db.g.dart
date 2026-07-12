@@ -1207,6 +1207,18 @@ class $FinancialTransactionsTable extends FinancialTransactions
       'REFERENCES transaction_categories (id)',
     ),
   );
+  @override
+  late final GeneratedColumnWithTypeConverter<TransactionDirection, String>
+  direction =
+      GeneratedColumn<String>(
+        'direction',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<TransactionDirection>(
+        $FinancialTransactionsTable.$converterdirection,
+      );
   static const VerificationMeta _isSystemMeta = const VerificationMeta(
     'isSystem',
   );
@@ -1315,6 +1327,7 @@ class $FinancialTransactionsTable extends FinancialTransactions
     userId,
     incomeSourceId,
     categoryId,
+    direction,
     isSystem,
     amount,
     note,
@@ -1452,6 +1465,12 @@ class $FinancialTransactionsTable extends FinancialTransactions
         DriftSqlType.int,
         data['${effectivePrefix}category_id'],
       )!,
+      direction: $FinancialTransactionsTable.$converterdirection.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}direction'],
+        )!,
+      ),
       isSystem: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_system'],
@@ -1495,6 +1514,9 @@ class $FinancialTransactionsTable extends FinancialTransactions
   $FinancialTransactionsTable createAlias(String alias) {
     return $FinancialTransactionsTable(attachedDatabase, alias);
   }
+
+  static TypeConverter<TransactionDirection, String> $converterdirection =
+      const TransactionDirectionConverter();
 }
 
 class FinancialTransaction extends DataClass
@@ -1503,6 +1525,10 @@ class FinancialTransaction extends DataClass
   final String userId;
   final int incomeSourceId;
   final int categoryId;
+
+  /// Denormalized direction for faster queries and simpler filtering.
+  /// This stores the `TransactionDirection` value at the time of creation.
+  final TransactionDirection direction;
 
   /// True for system-generated rows (e.g. opening balance).
   /// System rows are included in sums but must NOT be editable by the user.
@@ -1520,6 +1546,7 @@ class FinancialTransaction extends DataClass
     required this.userId,
     required this.incomeSourceId,
     required this.categoryId,
+    required this.direction,
     required this.isSystem,
     required this.amount,
     this.note,
@@ -1537,6 +1564,11 @@ class FinancialTransaction extends DataClass
     map['user_id'] = Variable<String>(userId);
     map['income_source_id'] = Variable<int>(incomeSourceId);
     map['category_id'] = Variable<int>(categoryId);
+    {
+      map['direction'] = Variable<String>(
+        $FinancialTransactionsTable.$converterdirection.toSql(direction),
+      );
+    }
     map['is_system'] = Variable<bool>(isSystem);
     map['amount'] = Variable<double>(amount);
     if (!nullToAbsent || note != null) {
@@ -1559,6 +1591,7 @@ class FinancialTransaction extends DataClass
       userId: Value(userId),
       incomeSourceId: Value(incomeSourceId),
       categoryId: Value(categoryId),
+      direction: Value(direction),
       isSystem: Value(isSystem),
       amount: Value(amount),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
@@ -1583,6 +1616,7 @@ class FinancialTransaction extends DataClass
       userId: serializer.fromJson<String>(json['userId']),
       incomeSourceId: serializer.fromJson<int>(json['incomeSourceId']),
       categoryId: serializer.fromJson<int>(json['categoryId']),
+      direction: serializer.fromJson<TransactionDirection>(json['direction']),
       isSystem: serializer.fromJson<bool>(json['isSystem']),
       amount: serializer.fromJson<double>(json['amount']),
       note: serializer.fromJson<String?>(json['note']),
@@ -1602,6 +1636,7 @@ class FinancialTransaction extends DataClass
       'userId': serializer.toJson<String>(userId),
       'incomeSourceId': serializer.toJson<int>(incomeSourceId),
       'categoryId': serializer.toJson<int>(categoryId),
+      'direction': serializer.toJson<TransactionDirection>(direction),
       'isSystem': serializer.toJson<bool>(isSystem),
       'amount': serializer.toJson<double>(amount),
       'note': serializer.toJson<String?>(note),
@@ -1619,6 +1654,7 @@ class FinancialTransaction extends DataClass
     String? userId,
     int? incomeSourceId,
     int? categoryId,
+    TransactionDirection? direction,
     bool? isSystem,
     double? amount,
     Value<String?> note = const Value.absent(),
@@ -1633,6 +1669,7 @@ class FinancialTransaction extends DataClass
     userId: userId ?? this.userId,
     incomeSourceId: incomeSourceId ?? this.incomeSourceId,
     categoryId: categoryId ?? this.categoryId,
+    direction: direction ?? this.direction,
     isSystem: isSystem ?? this.isSystem,
     amount: amount ?? this.amount,
     note: note.present ? note.value : this.note,
@@ -1653,6 +1690,7 @@ class FinancialTransaction extends DataClass
       categoryId: data.categoryId.present
           ? data.categoryId.value
           : this.categoryId,
+      direction: data.direction.present ? data.direction.value : this.direction,
       isSystem: data.isSystem.present ? data.isSystem.value : this.isSystem,
       amount: data.amount.present ? data.amount.value : this.amount,
       note: data.note.present ? data.note.value : this.note,
@@ -1674,6 +1712,7 @@ class FinancialTransaction extends DataClass
           ..write('userId: $userId, ')
           ..write('incomeSourceId: $incomeSourceId, ')
           ..write('categoryId: $categoryId, ')
+          ..write('direction: $direction, ')
           ..write('isSystem: $isSystem, ')
           ..write('amount: $amount, ')
           ..write('note: $note, ')
@@ -1693,6 +1732,7 @@ class FinancialTransaction extends DataClass
     userId,
     incomeSourceId,
     categoryId,
+    direction,
     isSystem,
     amount,
     note,
@@ -1711,6 +1751,7 @@ class FinancialTransaction extends DataClass
           other.userId == this.userId &&
           other.incomeSourceId == this.incomeSourceId &&
           other.categoryId == this.categoryId &&
+          other.direction == this.direction &&
           other.isSystem == this.isSystem &&
           other.amount == this.amount &&
           other.note == this.note &&
@@ -1728,6 +1769,7 @@ class FinancialTransactionsCompanion
   final Value<String> userId;
   final Value<int> incomeSourceId;
   final Value<int> categoryId;
+  final Value<TransactionDirection> direction;
   final Value<bool> isSystem;
   final Value<double> amount;
   final Value<String?> note;
@@ -1742,6 +1784,7 @@ class FinancialTransactionsCompanion
     this.userId = const Value.absent(),
     this.incomeSourceId = const Value.absent(),
     this.categoryId = const Value.absent(),
+    this.direction = const Value.absent(),
     this.isSystem = const Value.absent(),
     this.amount = const Value.absent(),
     this.note = const Value.absent(),
@@ -1757,6 +1800,7 @@ class FinancialTransactionsCompanion
     this.userId = const Value.absent(),
     required int incomeSourceId,
     required int categoryId,
+    required TransactionDirection direction,
     this.isSystem = const Value.absent(),
     required double amount,
     this.note = const Value.absent(),
@@ -1768,6 +1812,7 @@ class FinancialTransactionsCompanion
     this.isDeleted = const Value.absent(),
   }) : incomeSourceId = Value(incomeSourceId),
        categoryId = Value(categoryId),
+       direction = Value(direction),
        amount = Value(amount),
        date = Value(date),
        createdAt = Value(createdAt),
@@ -1777,6 +1822,7 @@ class FinancialTransactionsCompanion
     Expression<String>? userId,
     Expression<int>? incomeSourceId,
     Expression<int>? categoryId,
+    Expression<String>? direction,
     Expression<bool>? isSystem,
     Expression<double>? amount,
     Expression<String>? note,
@@ -1792,6 +1838,7 @@ class FinancialTransactionsCompanion
       if (userId != null) 'user_id': userId,
       if (incomeSourceId != null) 'income_source_id': incomeSourceId,
       if (categoryId != null) 'category_id': categoryId,
+      if (direction != null) 'direction': direction,
       if (isSystem != null) 'is_system': isSystem,
       if (amount != null) 'amount': amount,
       if (note != null) 'note': note,
@@ -1809,6 +1856,7 @@ class FinancialTransactionsCompanion
     Value<String>? userId,
     Value<int>? incomeSourceId,
     Value<int>? categoryId,
+    Value<TransactionDirection>? direction,
     Value<bool>? isSystem,
     Value<double>? amount,
     Value<String?>? note,
@@ -1824,6 +1872,7 @@ class FinancialTransactionsCompanion
       userId: userId ?? this.userId,
       incomeSourceId: incomeSourceId ?? this.incomeSourceId,
       categoryId: categoryId ?? this.categoryId,
+      direction: direction ?? this.direction,
       isSystem: isSystem ?? this.isSystem,
       amount: amount ?? this.amount,
       note: note ?? this.note,
@@ -1850,6 +1899,11 @@ class FinancialTransactionsCompanion
     }
     if (categoryId.present) {
       map['category_id'] = Variable<int>(categoryId.value);
+    }
+    if (direction.present) {
+      map['direction'] = Variable<String>(
+        $FinancialTransactionsTable.$converterdirection.toSql(direction.value),
+      );
     }
     if (isSystem.present) {
       map['is_system'] = Variable<bool>(isSystem.value);
@@ -1888,6 +1942,7 @@ class FinancialTransactionsCompanion
           ..write('userId: $userId, ')
           ..write('incomeSourceId: $incomeSourceId, ')
           ..write('categoryId: $categoryId, ')
+          ..write('direction: $direction, ')
           ..write('isSystem: $isSystem, ')
           ..write('amount: $amount, ')
           ..write('note: $note, ')
@@ -2754,6 +2809,7 @@ typedef $$FinancialTransactionsTableCreateCompanionBuilder =
       Value<String> userId,
       required int incomeSourceId,
       required int categoryId,
+      required TransactionDirection direction,
       Value<bool> isSystem,
       required double amount,
       Value<String?> note,
@@ -2770,6 +2826,7 @@ typedef $$FinancialTransactionsTableUpdateCompanionBuilder =
       Value<String> userId,
       Value<int> incomeSourceId,
       Value<int> categoryId,
+      Value<TransactionDirection> direction,
       Value<bool> isSystem,
       Value<double> amount,
       Value<String?> note,
@@ -2856,6 +2913,16 @@ class $$FinancialTransactionsTableFilterComposer
   ColumnFilters<String> get userId => $composableBuilder(
     column: $table.userId,
     builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<
+    TransactionDirection,
+    TransactionDirection,
+    String
+  >
+  get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   ColumnFilters<bool> get isSystem => $composableBuilder(
@@ -2970,6 +3037,11 @@ class $$FinancialTransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isSystem => $composableBuilder(
     column: $table.isSystem,
     builder: (column) => ColumnOrderings(column),
@@ -3077,6 +3149,10 @@ class $$FinancialTransactionsTableAnnotationComposer
 
   GeneratedColumn<String> get userId =>
       $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<TransactionDirection, String>
+  get direction =>
+      $composableBuilder(column: $table.direction, builder: (column) => column);
 
   GeneratedColumn<bool> get isSystem =>
       $composableBuilder(column: $table.isSystem, builder: (column) => column);
@@ -3198,6 +3274,7 @@ class $$FinancialTransactionsTableTableManager
                 Value<String> userId = const Value.absent(),
                 Value<int> incomeSourceId = const Value.absent(),
                 Value<int> categoryId = const Value.absent(),
+                Value<TransactionDirection> direction = const Value.absent(),
                 Value<bool> isSystem = const Value.absent(),
                 Value<double> amount = const Value.absent(),
                 Value<String?> note = const Value.absent(),
@@ -3212,6 +3289,7 @@ class $$FinancialTransactionsTableTableManager
                 userId: userId,
                 incomeSourceId: incomeSourceId,
                 categoryId: categoryId,
+                direction: direction,
                 isSystem: isSystem,
                 amount: amount,
                 note: note,
@@ -3228,6 +3306,7 @@ class $$FinancialTransactionsTableTableManager
                 Value<String> userId = const Value.absent(),
                 required int incomeSourceId,
                 required int categoryId,
+                required TransactionDirection direction,
                 Value<bool> isSystem = const Value.absent(),
                 required double amount,
                 Value<String?> note = const Value.absent(),
@@ -3242,6 +3321,7 @@ class $$FinancialTransactionsTableTableManager
                 userId: userId,
                 incomeSourceId: incomeSourceId,
                 categoryId: categoryId,
+                direction: direction,
                 isSystem: isSystem,
                 amount: amount,
                 note: note,

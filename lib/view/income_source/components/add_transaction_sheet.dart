@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:madakhel_app/core/utils.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
+import 'package:madakhel_app/view/shared/components/circle_icon_button.dart';
+import 'package:madakhel_app/view/transactions/add_category_screen.dart';
 import 'package:madakhel_app/view_model/category_view_model.dart';
 import 'package:madakhel_app/view_model/transaction_view_model.dart';
 import 'package:provider/provider.dart';
@@ -135,6 +137,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                     onChanged: (value) {
                       setState(() => _selectedCategory = value);
                     },
+                    isEdit: widget.isEdit,
                   ),
                   SizedBox(height: context.scaleH(14)),
                   _AmountField(
@@ -269,12 +272,13 @@ class _CategoryField extends StatelessWidget {
   final int? initialCategoryId;
   final bool enabled;
   final ValueChanged<TransactionCategory?> onChanged;
-
+  final bool isEdit;
   const _CategoryField({
     required this.selected,
     required this.initialCategoryId,
     required this.enabled,
     required this.onChanged,
+    this.isEdit = false,
   });
 
   @override
@@ -311,20 +315,49 @@ class _CategoryField extends StatelessWidget {
               ),
             ),
             SizedBox(height: context.scaleH(8)),
-            DropdownButtonFormField<TransactionCategory>(
-              value: value,
-              isExpanded: true,
-              decoration: const InputDecoration(),
-              hint: const Text('اختر نوع المعاملة'),
-              items: categories
-                  .map(
-                    (category) => DropdownMenuItem(
-                      value: category,
-                      child: Text(category.name),
-                    ),
-                  )
-                  .toList(),
-              onChanged: enabled ? onChanged : null,
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: DropdownButtonFormField<TransactionCategory>(
+                    initialValue: value,
+                    isExpanded: true,
+                    decoration: const InputDecoration(),
+                    hint: const Text('اختر نوع المعاملة'),
+                    items: categories
+                        .map(
+                          (category) => DropdownMenuItem(
+                            value: category,
+                            child: Text(category.name),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: enabled ? onChanged : null,
+                  ),
+                ),
+                isEdit ? Container() : SizedBox(width: context.scaleW(8)),
+                isEdit
+                    ? Container()
+                    : SizedBox(
+                        width: context.scaleW(40),
+                        height: context.scaleH(40),
+                        child: CircleIconButton(
+                          onTap: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(context.scaleW(16)),
+                                ),
+                              ),
+                              builder: (_) => AddCategoryScreen(),
+                            );
+                          },
+                          icon: Icons.add,
+                        ),
+                      ),
+              ],
             ),
           ],
         );
