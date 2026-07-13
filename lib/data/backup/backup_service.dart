@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_non_null_assertion
+
 import 'dart:convert';
 import 'dart:typed_data';
 

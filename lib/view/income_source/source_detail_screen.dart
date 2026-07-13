@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:madakhel_app/core/utils.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
+import 'package:madakhel_app/data/pdf/permissions_manager.dart';
 import 'package:madakhel_app/model/income_source_with_balance.dart';
 import 'package:madakhel_app/model/transaction_direction.dart';
 import 'package:madakhel_app/view/components/app_confirm_action_dialog.dart';
 import 'package:madakhel_app/view/income_source/components/add_transaction_sheet.dart';
+import 'package:madakhel_app/view/income_source/components/pdf_export_btn.dart';
 import 'package:madakhel_app/view/income_source/components/source_detail_top_bar.dart';
 import 'package:madakhel_app/view/income_source/components/stat_card.dart';
 import 'package:madakhel_app/view/income_source/components/transaction_row.dart';
@@ -56,7 +58,7 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
   @override
   Widget build(BuildContext context) {
     // _loadInitialTransactions();
-
+    const permissionsServices = PermissionsServices();
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -243,6 +245,53 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                                       label: 'عدد المعاملات',
                                     ),
                                   ],
+                                );
+                              },
+                            ),
+                            SizedBox(height: context.scaleH(20)),
+                            Consumer<IncomeSourceDetailViewModel>(
+                              builder: (context, pdfVc, _) {
+                                return PdfExportButton(
+                                  isLoading: state.isExportingPdf,
+                                  onPressed: () async {
+                                    try {
+                                      final hasPermission =
+                                          await permissionsServices
+                                              .checkAndRequestPermission(
+                                                context,
+                                              );
+                                      if (!hasPermission) {
+                                        return;
+                                      } else {
+                                        final path = await pdfVc.exportPdf(
+                                          widget.source,
+                                        );
+                                        if (!context.mounted || path.isEmpty)
+                                          return;
+
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'تم حفظ ملف PDF في $path',
+                                            ),
+                                          ),
+                                        );
+                                        // await pdfVc.openDoc(path);
+                                      }
+                                    } catch (e) {
+                                      if (!context.mounted) return;
+
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text('تعذر حفظ ملف PDF: $e'),
+                                        ),
+                                      );
+                                    }
+                                  },
                                 );
                               },
                             ),

@@ -34,7 +34,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: scheme.background,
+      backgroundColor: scheme.surface,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -50,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     borderRadius: BorderRadius.circular(context.scaleW(24)),
                     boxShadow: [
                       BoxShadow(
-                        color: scheme.primary.withOpacity(0.25),
+                        color: scheme.primary.withValues(alpha:0.25),
                         blurRadius: 24,
                         offset: const Offset(0, 10),
                       ),
@@ -68,7 +68,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   'مداخيل',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: scheme.onBackground,
+                    color: scheme.onSurface,
                   ),
                 ),
                 SizedBox(height: context.scaleH(10)),

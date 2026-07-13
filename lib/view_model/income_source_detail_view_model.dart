@@ -1,12 +1,19 @@
+// ignore_for_file: unused_import
+
 import 'package:flutter/material.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
+import 'package:madakhel_app/data/pdf/income_source_pdf_export_service.dart';
+import 'package:madakhel_app/data/repositories/transaction_category_repository.dart';
 import 'package:madakhel_app/data/repositories/transaction_repository.dart';
+import 'package:madakhel_app/model/income_source_with_balance.dart';
+import 'package:provider/provider.dart';
 
 class IncomeSourceDetailState {
   final List<FinancialTransaction> transactions;
   final int totalCount;
   final bool isInitialLoading;
   final bool isLoadingMore;
+  final bool isExportingPdf;
   final String? errorMessage;
 
   const IncomeSourceDetailState({
@@ -14,6 +21,7 @@ class IncomeSourceDetailState {
     this.totalCount = 0,
     this.isInitialLoading = false,
     this.isLoadingMore = false,
+    this.isExportingPdf = false,
     this.errorMessage,
   });
 
@@ -24,6 +32,7 @@ class IncomeSourceDetailState {
     int? totalCount,
     bool? isInitialLoading,
     bool? isLoadingMore,
+    bool? isExportingPdf,
     String? errorMessage,
   }) {
     return IncomeSourceDetailState(
@@ -31,20 +40,27 @@ class IncomeSourceDetailState {
       totalCount: totalCount ?? this.totalCount,
       isInitialLoading: isInitialLoading ?? this.isInitialLoading,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      isExportingPdf: isExportingPdf ?? this.isExportingPdf,
       errorMessage: errorMessage,
     );
   }
 }
 
 class IncomeSourceDetailViewModel extends ChangeNotifier {
-    int initialPageSize = 5;
-    int pageSize = 5;
+  int initialPageSize = 5;
+  int pageSize = 5;
 
   final TransactionRepository _repository;
+  final TransactionCategoryRepository _categoryRepository;
+  final IncomeSourcePdfExportService _pdfExportService;
   IncomeSourceDetailState _state = const IncomeSourceDetailState();
   int? _incomeSourceId;
 
-  IncomeSourceDetailViewModel(this._repository);
+  IncomeSourceDetailViewModel(
+    this._repository,
+    this._categoryRepository,
+    this._pdfExportService,
+  );
 
   IncomeSourceDetailState get state => _state;
 
@@ -129,6 +145,40 @@ class IncomeSourceDetailViewModel extends ChangeNotifier {
   Future<double> getOutSum(int incomeSourceId) {
     return _repository.getOutSum(incomeSourceId);
   }
+
+  Future<String> exportPdf(IncomeSourceWithBalance source) async {
+    if (_state.isExportingPdf) return '';
+
+    _setState(_state.copyWith(isExportingPdf: true));
+    try {
+      final transactions = await _repository.getTransactions(source.id);
+      final categories = await _categoryRepository.getAll();
+      final inSum = await _repository.getInSum(source.id);
+      final outSum = await _repository.getOutSum(source.id);
+      final path = await _pdfExportService.saveIncomeSourceDetails(
+        source: source,
+        transactions: transactions,
+        categories: categories,
+        inSum: inSum,
+        outSum: outSum,
+      );
+      _setState(_state.copyWith(isExportingPdf: false));
+      debugPrint("$path NNNN");
+      return path;
+    } catch (_) {
+      _setState(_state.copyWith(isExportingPdf: false));
+      rethrow;
+    }
+  }
+
+  // Future<bool> openDoc(String path) async {
+  //   try {
+  //     await _pdfExportService.readFile(path: path);
+  //     return true;
+  //   } catch (e) {
+  //     return false;
+  //   }
+  // }
 
   void _setState(IncomeSourceDetailState state) {
     _state = state;

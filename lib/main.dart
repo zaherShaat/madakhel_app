@@ -5,6 +5,7 @@ import 'package:madakhel_app/core/theme/app_theme.dart';
 import 'package:madakhel_app/data/backup/backup_service.dart';
 import 'package:madakhel_app/data/connectivity/connectivity_service.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
+import 'package:madakhel_app/data/pdf/income_source_pdf_export_service.dart';
 import 'package:madakhel_app/data/repositories/income_type_repository.dart';
 import 'package:madakhel_app/data/repositories/transaction_category_repository.dart';
 import 'package:madakhel_app/data/repositories/transaction_repository.dart';
@@ -80,18 +81,25 @@ Future<void> main() async {
         ),
         // Repositories
         Provider<IncomeTypeRepository>(
-          create: (ctx) =>
-              IncomeTypeRepository(db, () => authService.currentAuthUser?.email),
+          create: (ctx) => IncomeTypeRepository(
+            db,
+            () => authService.currentAuthUser?.email,
+          ),
         ),
         Provider<TransactionRepository>(
-          create: (ctx) =>
-              TransactionRepository(db, () => authService.currentAuthUser?.email),
+          create: (ctx) => TransactionRepository(
+            db,
+            () => authService.currentAuthUser?.email,
+          ),
         ),
         Provider<TransactionCategoryRepository>(
           create: (ctx) => TransactionCategoryRepository(
             db,
             () => authService.currentAuthUser?.email,
           ),
+        ),
+        Provider<IncomeSourcePdfExportService>(
+          create: (ctx) => IncomeSourcePdfExportService(),
         ),
         // ViewModels
         ChangeNotifierProvider<TransactionViewModel>(
@@ -103,8 +111,9 @@ Future<void> main() async {
               TransactionsViewModel(ctx.read<TransactionRepository>()),
         ),
         ChangeNotifierProvider<CategoryViewModel>(
-          create: (ctx) =>
-              CategoryViewModel(ctx.read<TransactionCategoryRepository>()..getAll()),
+          create: (ctx) => CategoryViewModel(
+            ctx.read<TransactionCategoryRepository>()..getAll(),
+          ),
         ),
         ChangeNotifierProvider<IncomeSourceViewModel>(
           create: (ctx) =>
@@ -114,8 +123,11 @@ Future<void> main() async {
           create: (ctx) => HomeViewModel(ctx.read<IncomeTypeRepository>()),
         ),
         ChangeNotifierProvider<IncomeSourceDetailViewModel>(
-          create: (ctx) =>
-              IncomeSourceDetailViewModel(ctx.read<TransactionRepository>()),
+          create: (ctx) => IncomeSourceDetailViewModel(
+            ctx.read<TransactionRepository>(),
+            ctx.read<TransactionCategoryRepository>(),
+            ctx.read<IncomeSourcePdfExportService>(),
+          ),
         ),
         ChangeNotifierProvider<SplashViewModel>(
           create: (ctx) => SplashViewModel(
