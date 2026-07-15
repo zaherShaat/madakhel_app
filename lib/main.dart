@@ -133,6 +133,7 @@ Future<void> main() async {
           create: (ctx) => SplashViewModel(
             ctx.read<AuthViewModel>(),
             ctx.read<IncomeTypeRepository>(),
+            ctx.read<IncomeTypeRepository>(),
           ),
         ),
       ],

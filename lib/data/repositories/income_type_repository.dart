@@ -64,7 +64,8 @@ class IncomeTypeRepository {
     if (userId == null) return [];
 
     return (_db.select(_db.incomeSources)
-          ..where((t) => t.userId.equals(userId) & t.isDeleted.equals(false))
+          // & t.isDeleted.equals(false) to disable viewing deleted ones
+          ..where((t) => t.userId.equals(userId))
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
         .get();
   }

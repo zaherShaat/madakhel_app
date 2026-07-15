@@ -156,4 +156,4 @@ extension IterableExt<T> on Iterable<T> {
   }
 }
 
-enum TransactionClassifier { inFlows, outFlows,allFlows }
+enum TransactionClassifier { inFlow, outFlow, allFlow }

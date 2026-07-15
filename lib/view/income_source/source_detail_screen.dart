@@ -4,7 +4,6 @@ import 'package:madakhel_app/core/utils.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
 import 'package:madakhel_app/data/pdf/permissions_manager.dart';
 import 'package:madakhel_app/model/income_source_with_balance.dart';
-import 'package:madakhel_app/model/transaction_direction.dart';
 import 'package:madakhel_app/view/components/app_confirm_action_dialog.dart';
 import 'package:madakhel_app/view/income_source/components/add_transaction_sheet.dart';
 import 'package:madakhel_app/view/income_source/components/pdf_export_btn.dart';
@@ -27,13 +26,13 @@ class SourceDetailScreen extends StatefulWidget {
 }
 
 class _SourceDetailScreenState extends State<SourceDetailScreen> {
-  TransactionClassifier selectedClassifier = TransactionClassifier.allFlows;
+  TransactionClassifier selectedClassifier = TransactionClassifier.allFlow;
 
-  @override
-  void initState() {
-    super.initState();
-    // _loadInitialTransactions();
-  }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _loadInitialTransactions();
+  // }
 
   @override
   void didUpdateWidget(covariant SourceDetailScreen oldWidget) {
@@ -44,14 +43,25 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
   }
 
   void _loadInitialTransactions() {
+    debugPrint(
+      "$selectedClassifier >> selected clasifier > _loadInitialTransactions",
+    );
+
     context.read<IncomeSourceDetailViewModel>().loadInitialTransactions(
       widget.source.id,
+      transactionClassifier: selectedClassifier,
     );
   }
 
-  Future<void> _refreshTransactions() {
+  Future<void> _refreshTransactions({
+    required TransactionClassifier classifier,
+  }) {
+    debugPrint(
+      "$selectedClassifier >> selected clasifier > _refreshTransactions",
+    );
     return context.read<IncomeSourceDetailViewModel>().refreshTransactions(
       widget.source.id,
+      transactionClassifier: classifier,
     );
   }
 
@@ -87,7 +97,8 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
 
                   if (state.errorMessage != null && transactions.isEmpty) {
                     return RefreshIndicator(
-                      onRefresh: _refreshTransactions,
+                      onRefresh: () =>
+                          _refreshTransactions(classifier: selectedClassifier),
                       child: ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: EdgeInsets.symmetric(
@@ -143,312 +154,305 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                       ? 'عرض الكل'
                       : 'عرض المزيد';
 
-                  return RefreshIndicator(
-                    onRefresh: _refreshTransactions,
-                    child: Consumer<CategoryViewModel>(
-                      builder: (context, catV, child) {
-                        final cats = catV.categories;
+                  return Consumer<CategoryViewModel>(
+                    builder: (context, catV, child) {
+                      // final cats = catV.categories;
 
-                        // Build id sets once to avoid repeated lookups and
-                        // to prevent `StateError: No element` from `firstWhere`.
-                        final inFlowIds = cats
-                            .where(
-                              (c) => c.direction == TransactionDirection.inFlow,
-                            )
-                            .map((c) => c.id)
-                            .toSet();
-                        final outFlowIds = cats
-                            .where(
-                              (c) =>
-                                  c.direction == TransactionDirection.outFlow,
-                            )
-                            .map((c) => c.id)
-                            .toSet();
+                      // // Build id sets once to avoid repeated lookups and
+                      // // to prevent `StateError: No element` from `firstWhere`.
+                      // final inFlowIds = cats
+                      //     .where(
+                      //       (c) => c.direction == TransactionDirection.inFlow,
+                      //     )
+                      //     .map((c) => c.id)
+                      //     .toSet();
+                      // final outFlowIds = cats
+                      //     .where(
+                      //       (c) =>
+                      //           c.direction == TransactionDirection.outFlow,
+                      //     )
+                      //     .map((c) => c.id)
+                      //     .toSet();
 
-                        late final List<FinancialTransaction>
-                        currentTransactions;
-                        switch (selectedClassifier) {
-                          case TransactionClassifier.inFlows:
-                            // If there are no in-flow categories, return empty list.
-                            currentTransactions = inFlowIds.isEmpty
-                                ? <FinancialTransaction>[]
-                                : transactions
-                                      .where(
-                                        (t) => inFlowIds.contains(t.categoryId),
-                                      )
-                                      .toList();
-                            break;
-                          case TransactionClassifier.outFlows:
-                            currentTransactions = outFlowIds.isEmpty
-                                ? <FinancialTransaction>[]
-                                : transactions
-                                      .where(
-                                        (t) =>
-                                            outFlowIds.contains(t.categoryId),
-                                      )
-                                      .toList();
-                            break;
-                          case TransactionClassifier.allFlows:
-                            currentTransactions = transactions;
-                            break;
-                        }
-                        return ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: context.scaleW(16),
-                            vertical: context.scaleH(18),
+                      // late final List<FinancialTransaction>
+                      // currentTransactions;
+                      // switch (selectedClassifier) {
+                      //   case TransactionClassifier.inFlows:
+                      //     // If there are no in-flow categories, return empty list.
+                      //     currentTransactions = inFlowIds.isEmpty
+                      //         ? <FinancialTransaction>[]
+                      //         : transactions
+                      //               .where(
+                      //                 (t) => inFlowIds.contains(t.categoryId),
+                      //               )
+                      //               .toList();
+                      //     break;
+                      //   case TransactionClassifier.outFlows:
+                      //     currentTransactions = outFlowIds.isEmpty
+                      //         ? <FinancialTransaction>[]
+                      //         : transactions
+                      //               .where(
+                      //                 (t) =>
+                      //                     outFlowIds.contains(t.categoryId),
+                      //               )
+                      //               .toList();
+                      //     break;
+                      //   case TransactionClassifier.allFlows:
+                      //     currentTransactions = transactions;
+                      //     break;
+                      // }
+                      return ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: context.scaleW(16),
+                          vertical: context.scaleH(18),
+                        ),
+                        children: [
+                          FutureBuilder<List<double>>(
+                            future: Future.wait([
+                              detailViewModel.getInSum(widget.source.id),
+                              detailViewModel.getOutSum(widget.source.id),
+                            ]),
+                            builder: (context, sumsSnap) {
+                              final inSum =
+                                  (sumsSnap.data != null &&
+                                      sumsSnap.data!.isNotEmpty)
+                                  ? sumsSnap.data![0]
+                                  : 0.0;
+                              final outSum =
+                                  (sumsSnap.data != null &&
+                                      sumsSnap.data!.length > 1)
+                                  ? sumsSnap.data![1]
+                                  : 0.0;
+
+                              return GridView.count(
+                                crossAxisCount: 2,
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                mainAxisSpacing: context.scaleH(12),
+                                crossAxisSpacing: context.scaleW(12),
+                                childAspectRatio: 1.4,
+                                children: [
+                                  StatCard(
+                                    value: (inSum - outSum).toStringAsFixed(2),
+                                    label: 'الرصيد',
+                                  ),
+                                  StatCard(
+                                    value: inSum.toStringAsFixed(2),
+                                    label: 'إجمالي الدخل',
+                                    isIncome: true,
+                                  ),
+                                  StatCard(
+                                    value: outSum.toStringAsFixed(2),
+                                    label: 'إجمالي المصروف',
+                                    isIncome: false,
+                                  ),
+                                  StatCard(
+                                    value: state.totalCount.toString(),
+                                    label: 'عدد المعاملات',
+                                  ),
+                                ],
+                              );
+                            },
                           ),
-                          children: [
-                            FutureBuilder<List<double>>(
-                              future: Future.wait([
-                                detailViewModel.getInSum(widget.source.id),
-                                detailViewModel.getOutSum(widget.source.id),
-                              ]),
-                              builder: (context, sumsSnap) {
-                                final inSum =
-                                    (sumsSnap.data != null &&
-                                        sumsSnap.data!.isNotEmpty)
-                                    ? sumsSnap.data![0]
-                                    : 0.0;
-                                final outSum =
-                                    (sumsSnap.data != null &&
-                                        sumsSnap.data!.length > 1)
-                                    ? sumsSnap.data![1]
-                                    : 0.0;
-
-                                return GridView.count(
-                                  crossAxisCount: 2,
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  mainAxisSpacing: context.scaleH(12),
-                                  crossAxisSpacing: context.scaleW(12),
-                                  childAspectRatio: 1.4,
-                                  children: [
-                                    StatCard(
-                                      value: (inSum - outSum).toStringAsFixed(
-                                        2,
-                                      ),
-                                      label: 'الرصيد',
-                                    ),
-                                    StatCard(
-                                      value: inSum.toStringAsFixed(2),
-                                      label: 'إجمالي الدخل',
-                                      isIncome: true,
-                                    ),
-                                    StatCard(
-                                      value: outSum.toStringAsFixed(2),
-                                      label: 'إجمالي المصروف',
-                                      isIncome: false,
-                                    ),
-                                    StatCard(
-                                      value: state.totalCount.toString(),
-                                      label: 'عدد المعاملات',
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                            SizedBox(height: context.scaleH(20)),
-                            Consumer<IncomeSourceDetailViewModel>(
-                              builder: (context, pdfVc, _) {
-                                return PdfExportButton(
-                                  isLoading: state.isExportingPdf,
-                                  onPressed: () async {
-                                    try {
-                                      final hasPermission =
-                                          await permissionsServices
-                                              .checkAndRequestPermission(
-                                                context,
-                                              );
-                                      if (!hasPermission) {
+                          SizedBox(height: context.scaleH(20)),
+                          Consumer<IncomeSourceDetailViewModel>(
+                            builder: (context, pdfVc, _) {
+                              return PdfExportButton(
+                                isLoading: state.isExportingPdf,
+                                onPressed: () async {
+                                  try {
+                                    final hasPermission =
+                                        await permissionsServices
+                                            .checkAndRequestPermission(context);
+                                    if (!hasPermission) {
+                                      return;
+                                    } else {
+                                      final path = await pdfVc.exportPdf(
+                                        widget.source,
+                                      );
+                                      if (!context.mounted || path.isEmpty)
                                         return;
-                                      } else {
-                                        final path = await pdfVc.exportPdf(
-                                          widget.source,
-                                        );
-                                        if (!context.mounted || path.isEmpty)
-                                          return;
-
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'تم حفظ ملف PDF في $path',
-                                            ),
-                                          ),
-                                        );
-                                        // await pdfVc.openDoc(path);
-                                      }
-                                    } catch (e) {
-                                      if (!context.mounted) return;
 
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
                                         SnackBar(
-                                          content: Text('تعذر حفظ ملف PDF: $e'),
+                                          content: Text(
+                                            'تم حفظ ملف PDF في $path',
+                                          ),
                                         ),
                                       );
+                                      // await pdfVc.openDoc(path);
                                     }
-                                  },
-                                );
-                              },
-                            ),
-                            SizedBox(height: context.scaleH(20)),
-                            Text(
-                              'آخر المعاملات',
-                              style: TextStyle(
-                                fontSize: context.scaleSp(14),
-                                fontWeight: FontWeight.bold,
-                                color: scheme.onSurface,
-                              ),
-                            ),
-                            Wrap(
-                              alignment: WrapAlignment.center,
-                              spacing: context.scaleW(8),
-                              children: TransactionClassifier.values.map((
-                                classifier,
-                              ) {
-                                final isSelected =
-                                    selectedClassifier == classifier;
-                                final label = () {
-                                  switch (classifier) {
-                                    case TransactionClassifier.inFlows:
-                                      return 'الدخل';
-                                    case TransactionClassifier.outFlows:
-                                      return 'المصروفات';
-                                    case TransactionClassifier.allFlows:
-                                      return 'عرض الكل';
-                                  }
-                                }();
+                                  } catch (e) {
+                                    if (!context.mounted) return;
 
-                                return ChoiceChip(
-                                  selected: isSelected,
-                                  label: Text(label),
-                                  selectedColor: scheme.primary,
-                                  backgroundColor:
-                                      scheme.surfaceContainerHighest,
-                                  labelStyle: TextStyle(
-                                    color: isSelected
-                                        ? scheme.onPrimary
-                                        : scheme.onSurface,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                  onSelected: (selected) {
-                                    if (!selected) return;
-                                    setState(() {
-                                      selectedClassifier = classifier;
-                                    });
-                                  },
-                                );
-                              }).toList(),
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('تعذر حفظ ملف PDF: $e'),
+                                      ),
+                                    );
+                                  }
+                                },
+                              );
+                            },
+                          ),
+                          SizedBox(height: context.scaleH(20)),
+                          Text(
+                            'آخر المعاملات',
+                            style: TextStyle(
+                              fontSize: context.scaleSp(14),
+                              fontWeight: FontWeight.bold,
+                              color: scheme.onSurface,
                             ),
-                            SizedBox(height: context.scaleH(12)),
-                            if (transactions.isEmpty)
-                              Center(
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: context.scaleH(24),
-                                  ),
-                                  child: Text(
-                                    'لا توجد معاملات حتى الآن',
-                                    style: TextStyle(
-                                      fontSize: context.scaleSp(14),
-                                      color: scheme.onSurfaceVariant,
-                                    ),
-                                  ),
+                          ),
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: context.scaleW(8),
+                            children: TransactionClassifier.values.map((
+                              classifier,
+                            ) {
+                              final isSelected =
+                                  selectedClassifier == classifier;
+                              final label = () {
+                                switch (classifier) {
+                                  case TransactionClassifier.inFlow:
+                                    return 'الدخل';
+                                  case TransactionClassifier.outFlow:
+                                    return 'المصروفات';
+                                  case TransactionClassifier.allFlow:
+                                    return 'عرض الكل';
+                                }
+                              }();
+
+                              return ChoiceChip(
+                                selected: isSelected,
+                                label: Text(label),
+                                selectedColor: scheme.primary,
+                                backgroundColor: scheme.surfaceContainerHighest,
+                                labelStyle: TextStyle(
+                                  color: isSelected
+                                      ? scheme.onPrimary
+                                      : scheme.onSurface,
+                                  fontWeight: FontWeight.w700,
                                 ),
-                              )
-                            else
-                              ...currentTransactions.asMap().entries.map((
-                                entry,
-                              ) {
-                                return Padding(
-                                  padding: EdgeInsets.only(
-                                    bottom: entry.key < transactions.length - 1
-                                        ? context.scaleH(12)
-                                        : 0,
-                                  ),
-                                  child: GestureDetector(
-                                    onTap: () => _showEditTransactionSheet(
-                                      context,
-                                      entry.value,
-                                    ),
-                                    onLongPress: () => _showDeleteConfirmation(
-                                      context,
-                                      entry.value,
-                                    ),
-                                    child: TransactionRow(
-                                      transaction: entry.value,
-                                      showBorder: false,
-                                    ),
-                                  ),
-                                );
-                              }),
-                            if (state.errorMessage != null)
-                              Padding(
-                                padding: EdgeInsets.only(
-                                  top: context.scaleH(10),
+                                onSelected: (selected) {
+                                  if (!selected) return;
+                                  setState(() {
+                                    selectedClassifier = classifier;
+                                    _refreshTransactions(
+                                      classifier: selectedClassifier,
+                                    );
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
+                          SizedBox(height: context.scaleH(12)),
+                          if (transactions.isEmpty)
+                            Center(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: context.scaleH(24),
                                 ),
                                 child: Text(
-                                  'تعذر تحميل المزيد من المعاملات',
-                                  textAlign: TextAlign.center,
+                                  'لا توجد معاملات حتى الآن',
+                                  style: TextStyle(
+                                    fontSize: context.scaleSp(14),
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            )
+                          else
+                            ...transactions.asMap().entries.map((entry) {
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: entry.key < transactions.length - 1
+                                      ? context.scaleH(12)
+                                      : 0,
+                                ),
+                                child: GestureDetector(
+                                  onTap: () => _showEditTransactionSheet(
+                                    context,
+                                    entry.value,
+                                  ),
+                                  onLongPress: () => _showDeleteConfirmation(
+                                    context,
+                                    entry.value,
+                                  ),
+                                  child: TransactionRow(
+                                    transaction: entry.value,
+                                    showBorder: false,
+                                  ),
+                                ),
+                              );
+                            }),
+                          if (state.errorMessage != null)
+                            Padding(
+                              padding: EdgeInsets.only(top: context.scaleH(10)),
+                              child: Text(
+                                'تعذر تحميل المزيد من المعاملات',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: context.scaleSp(12),
+                                  color: scheme.error,
+                                ),
+                              ),
+                            ),
+                          if (state.hasMore)
+                            Padding(
+                              padding: EdgeInsets.only(top: context.scaleH(12)),
+                              child: Center(
+                                child: TextButton(
+                                  onPressed: () {
+                                    debugPrint(
+                                      "$selectedClassifier >> selectedClassifier from text button",
+                                    );
+                                    state.isLoadingMore
+                                        ? null
+                                        : detailViewModel.loadMoreTransactions(
+                                            transactionClassifier:
+                                                selectedClassifier,
+                                          );
+                                  },
+                                  child: state.isLoadingMore
+                                      ? SizedBox(
+                                          height: context.scaleH(18),
+                                          width: context.scaleW(18),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: scheme.primary,
+                                          ),
+                                        )
+                                      : Text(
+                                          loadMoreLabel,
+                                          style: TextStyle(
+                                            fontSize: context.scaleSp(12),
+                                            color: scheme.primary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ),
+                          if (transactions.isNotEmpty && !state.hasMore)
+                            Padding(
+                              padding: EdgeInsets.only(top: context.scaleH(16)),
+                              child: Center(
+                                child: Text(
+                                  'أنت في نهاية القائمة',
                                   style: TextStyle(
                                     fontSize: context.scaleSp(12),
-                                    color: scheme.error,
+                                    color: scheme.onSurfaceVariant,
                                   ),
                                 ),
                               ),
-                            if (state.hasMore)
-                              Padding(
-                                padding: EdgeInsets.only(
-                                  top: context.scaleH(12),
-                                ),
-                                child: Center(
-                                  child: TextButton(
-                                    onPressed: state.isLoadingMore
-                                        ? null
-                                        : detailViewModel.loadMoreTransactions,
-                                    child: state.isLoadingMore
-                                        ? SizedBox(
-                                            height: context.scaleH(18),
-                                            width: context.scaleW(18),
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: scheme.primary,
-                                            ),
-                                          )
-                                        : Text(
-                                            loadMoreLabel,
-                                            style: TextStyle(
-                                              fontSize: context.scaleSp(12),
-                                              color: scheme.primary,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                  ),
-                                ),
-                              ),
-                            if (transactions.isNotEmpty && !state.hasMore)
-                              Padding(
-                                padding: EdgeInsets.only(
-                                  top: context.scaleH(16),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    'أنت في نهاية القائمة',
-                                    style: TextStyle(
-                                      fontSize: context.scaleSp(12),
-                                      color: scheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
+                            ),
+                        ],
+                      );
+                    },
                   );
                 },
               ),
@@ -470,7 +474,9 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                   ),
                   builder: (context) =>
                       AddTransactionSheet(incomeTypeId: widget.source.id),
-                ).whenComplete(_refreshTransactions);
+                ).whenComplete(
+                  () => _refreshTransactions(classifier: selectedClassifier),
+                );
               },
               backgroundColor: scheme.primary,
               shape: RoundedRectangleBorder(
@@ -510,7 +516,7 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
           if (!dialogContext.mounted) return;
           Navigator.pop(dialogContext);
           if (!context.mounted) return;
-          await _refreshTransactions();
+          await _refreshTransactions(classifier: selectedClassifier);
           if (!context.mounted) return;
           ScaffoldMessenger.of(
             context,
@@ -543,7 +549,7 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
         incomeTypeId: widget.source.id,
         initial: transaction,
       ),
-    ).whenComplete(_refreshTransactions);
+    ).whenComplete(() => _refreshTransactions(classifier: selectedClassifier));
   }
 
   void _showSourceActions(BuildContext context) {

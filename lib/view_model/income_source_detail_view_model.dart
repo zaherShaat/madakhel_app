@@ -1,6 +1,7 @@
 // ignore_for_file: unused_import
 
 import 'package:flutter/material.dart';
+import 'package:madakhel_app/core/utils.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
 import 'package:madakhel_app/data/pdf/income_source_pdf_export_service.dart';
 import 'package:madakhel_app/data/repositories/transaction_category_repository.dart';
@@ -64,7 +65,11 @@ class IncomeSourceDetailViewModel extends ChangeNotifier {
 
   IncomeSourceDetailState get state => _state;
 
-  Future<void> loadInitialTransactions(int incomeSourceId) async {
+  Future<void> loadInitialTransactions(
+    int incomeSourceId, {
+    TransactionClassifier transactionClassifier =
+        TransactionClassifier.allFlow,
+  }) async {
     _incomeSourceId = incomeSourceId;
     _setState(const IncomeSourceDetailState(isInitialLoading: true));
 
@@ -74,6 +79,7 @@ class IncomeSourceDetailViewModel extends ChangeNotifier {
         incomeSourceId: incomeSourceId,
         limit: initialPageSize,
         offset: 0,
+        transactionClassifier: transactionClassifier,
       );
 
       if (_incomeSourceId != incomeSourceId) return;
@@ -91,7 +97,10 @@ class IncomeSourceDetailViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> loadMoreTransactions() async {
+  Future<void> loadMoreTransactions( {
+    TransactionClassifier transactionClassifier =
+        TransactionClassifier.allFlow,
+  }) async {
     final incomeSourceId = _incomeSourceId;
     if (incomeSourceId == null ||
         _state.isInitialLoading ||
@@ -109,6 +118,7 @@ class IncomeSourceDetailViewModel extends ChangeNotifier {
         incomeSourceId: incomeSourceId,
         limit: pageSize,
         offset: _state.transactions.length,
+        transactionClassifier: transactionClassifier,
       );
 
       if (_incomeSourceId != incomeSourceId) return;
@@ -130,8 +140,11 @@ class IncomeSourceDetailViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> refreshTransactions(int incomeSourceId) {
-    return loadInitialTransactions(incomeSourceId);
+  Future<void> refreshTransactions(int incomeSourceId, {
+    TransactionClassifier transactionClassifier =
+        TransactionClassifier.allFlow,
+  }) {
+    return loadInitialTransactions(incomeSourceId,transactionClassifier: transactionClassifier);
   }
 
   Stream<List<FinancialTransaction>> watchTransactions(int incomeSourceId) {
