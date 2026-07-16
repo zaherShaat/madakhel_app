@@ -48,7 +48,7 @@ class HomeTopBar extends StatelessWidget {
               Align(
                 alignment: Alignment.center,
                 child: Text(
-                  'مداخيلي',
+                  'مداخيل',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: scheme.onSurface,
