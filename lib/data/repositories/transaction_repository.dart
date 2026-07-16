@@ -147,7 +147,6 @@ class TransactionRepository {
               default:
                 return t.incomeSourceId.equals(incomeSourceId) &
                     t.userId.equals(userId) &
-                    //TODO: solve the classification depend on tx direction
                     t.direction.equals(direction!) &
                     t.isDeleted.equals(false);
             }
