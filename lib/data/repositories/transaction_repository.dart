@@ -1,5 +1,4 @@
 import 'package:drift/drift.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:madakhel_app/core/utils.dart';
 
 import '../../model/transaction_direction.dart';
@@ -330,8 +329,8 @@ WHERE income_source_id = ? AND user_id = ? AND direction = ? AND is_deleted = 0
           readsFrom: {_db.financialTransactions},
         )
         .get();
-
-    return rows.isNotEmpty ? rows.first.read<double>('s') : 0.0;
+    final inSum = rows.isNotEmpty ? rows.first.read<double>('s') : 0.0;
+    return inSum;
   }
 
   /// Get total outflow for an income source

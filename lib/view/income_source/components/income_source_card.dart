@@ -82,7 +82,7 @@ class IncomeSourceCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      source.balance.toString(),
+                      _formatBalance(source.balance),
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(fontWeight: FontWeight.w700),
                     ),
@@ -101,5 +101,10 @@ class IncomeSourceCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatBalance(double value) {
+    final rounded = value.toStringAsFixed(3);
+    return rounded.replaceFirst(RegExp(r'\.?0+$'), '');
   }
 }

@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
 import 'package:madakhel_app/model/income_source_with_balance.dart';
 import 'package:madakhel_app/model/transaction_direction.dart';
-// import 'package:open_document/open_document.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -16,9 +15,7 @@ import 'package:pdf/widgets.dart' as pw;
 class IncomeSourcePdfExportService {
   static const _folderName = 'Madakhel';
   static const _fontAsset = 'assets/fonts/NotoSansArabic.ttf';
-  // static const _storageChannel = MethodChannel(
-  //   'madakhel_app/document_storage',
-  // );
+  static const _storageChannel = MethodChannel('madakhel_app/document_storage');
 
   Future<String> saveIncomeSourceDetails({
     required IncomeSourceWithBalance source,
@@ -26,6 +23,8 @@ class IncomeSourcePdfExportService {
     required List<TransactionCategory> categories,
     required double inSum,
     required double outSum,
+    DateTime? startDate,
+    DateTime? endDate,
   }) async {
     final fontData = await rootBundle.load(_fontAsset);
     final font = pw.Font.ttf(fontData.buffer.asByteData());
@@ -54,7 +53,7 @@ class IncomeSourcePdfExportService {
           ),
         ),
         build: (context) => [
-          _header(source, exportedAt),
+          _header(source, exportedAt, startDate: startDate, endDate: endDate),
           pw.SizedBox(height: 18),
           pw.Wrap(
             spacing: 10,
@@ -120,13 +119,20 @@ class IncomeSourcePdfExportService {
     return madakhelDir;
   }
 
-  // Future<void> readFile({required String path}) async {
-  //   File file = File(path); // 1
-  //   await file.readAsBytes(); // 2
-  //   await OpenDocument.openDocument(filePath: path);
-  // }
+  Future<void> openSavedPdf(String path) async {
+    if (!Platform.isAndroid) return;
+    // ignore: avoid_slow_async_io
+    if (!await File(path).exists()) return;
+    await _storageChannel.invokeMethod<void>('openDocument', {'path': path});
+  }
 
-  pw.Widget _header(IncomeSourceWithBalance source, DateTime exportedAt) {
+  pw.Widget _header(
+    IncomeSourceWithBalance source,
+    DateTime exportedAt, {
+    DateTime? startDate,
+    DateTime? endDate,
+  }) {
+    final rangeLabel = _dateRangeLabel(startDate, endDate);
     return pw.Container(
       width: double.infinity,
       padding: const pw.EdgeInsets.all(18),
@@ -160,6 +166,14 @@ class IncomeSourcePdfExportService {
             'تقرير تفاصيل مصدر الدخل - ${DateFormat('yyyy-MM-dd HH:mm').format(exportedAt)}',
             style: const pw.TextStyle(fontSize: 11, color: PdfColors.white),
           ),
+          if (rangeLabel != null) ...[
+            pw.SizedBox(height: 6),
+            pw.Text(
+              rangeLabel,
+              textDirection: pw.TextDirection.ltr,
+              style: const pw.TextStyle(fontSize: 10, color: PdfColors.white),
+            ),
+          ],
         ],
       ),
     );
@@ -307,5 +321,13 @@ class IncomeSourcePdfExportService {
         .replaceAll(RegExp(r'\s+'), '_');
     if (sanitized.isEmpty) return 'source';
     return sanitized.length > 40 ? sanitized.substring(0, 40) : sanitized;
+  }
+
+  String? _dateRangeLabel(DateTime? startDate, DateTime? endDate) {
+    if (startDate == null && endDate == null) return null;
+    final formatter = DateFormat('yyyy-MM-dd');
+    final start = startDate == null ? 'first' : formatter.format(startDate);
+    final end = endDate == null ? 'latest' : formatter.format(endDate);
+    return 'Range: $start - $end';
   }
 }

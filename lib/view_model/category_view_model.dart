@@ -8,13 +8,19 @@ class CategoryViewModel extends ChangeNotifier {
   final TransactionCategoryRepository _repository;
   ActionState _actionState = const ActionIdle();
 
-  CategoryViewModel(this._repository);
+  CategoryViewModel(this._repository) {
+    getCategories();
+  }
   final categories = <TransactionCategory>[];
   ActionState get actionState => _actionState;
-  Stream<List<TransactionCategory>> watchCategories() => _repository.watchAll();
+  Stream<List<TransactionCategory>> watchCategories() {
+    final catStream = _repository.watchAll();
+    
+    return catStream;
+  }
+
   Future<List<TransactionCategory>> getCategories() async {
     final cats = await _repository.getAll();
-
     categories.addAll(cats);
     notifyListeners();
     return cats;
@@ -23,7 +29,7 @@ class CategoryViewModel extends ChangeNotifier {
   Future<TransactionCategory?> getCategoryById(int id) =>
       _repository.getById(id);
 
-  Future<void> saveCategory({
+  Future<TransactionCategory?> saveCategory({
     int? id,
     required String name,
     required TransactionDirection direction,
@@ -31,13 +37,22 @@ class CategoryViewModel extends ChangeNotifier {
     _setActionState(const ActionLoading());
     try {
       if (id == null) {
-        await _repository.createCategory(name: name, direction: direction);
+        final newId = await _repository.createCategory(
+          name: name,
+          direction: direction,
+        );
+        final category = await _repository.getById(newId);
+        _setActionState(const ActionSuccess());
+        return category;
       } else {
         await _repository.updateCategory(id: id, name: name);
+        final category = await _repository.getById(id);
+        _setActionState(const ActionSuccess());
+        return category;
       }
-      _setActionState(const ActionSuccess());
     } catch (e) {
       _setActionState(ActionError(e.toString()));
+      return null;
     }
   }
 

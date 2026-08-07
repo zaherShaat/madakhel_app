@@ -7,6 +7,7 @@ import 'package:madakhel_app/data/pdf/income_source_pdf_export_service.dart';
 import 'package:madakhel_app/data/repositories/transaction_category_repository.dart';
 import 'package:madakhel_app/data/repositories/transaction_repository.dart';
 import 'package:madakhel_app/model/income_source_with_balance.dart';
+import 'package:madakhel_app/model/transaction_direction.dart';
 import 'package:provider/provider.dart';
 
 class IncomeSourceDetailState {
@@ -57,6 +58,12 @@ class IncomeSourceDetailViewModel extends ChangeNotifier {
   IncomeSourceDetailState _state = const IncomeSourceDetailState();
   int? _incomeSourceId;
 
+  double _sourceInSum = 0;
+
+  double _sourceOutSum = 0;
+  double get inSum => _sourceInSum;
+  double get outSum => _sourceOutSum;
+
   IncomeSourceDetailViewModel(
     this._repository,
     this._categoryRepository,
@@ -67,8 +74,7 @@ class IncomeSourceDetailViewModel extends ChangeNotifier {
 
   Future<void> loadInitialTransactions(
     int incomeSourceId, {
-    TransactionClassifier transactionClassifier =
-        TransactionClassifier.allFlow,
+    TransactionClassifier transactionClassifier = TransactionClassifier.allFlow,
   }) async {
     _incomeSourceId = incomeSourceId;
     _setState(const IncomeSourceDetailState(isInitialLoading: true));
@@ -97,9 +103,8 @@ class IncomeSourceDetailViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> loadMoreTransactions( {
-    TransactionClassifier transactionClassifier =
-        TransactionClassifier.allFlow,
+  Future<void> loadMoreTransactions({
+    TransactionClassifier transactionClassifier = TransactionClassifier.allFlow,
   }) async {
     final incomeSourceId = _incomeSourceId;
     if (incomeSourceId == null ||
@@ -140,43 +145,76 @@ class IncomeSourceDetailViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> refreshTransactions(int incomeSourceId, {
-    TransactionClassifier transactionClassifier =
-        TransactionClassifier.allFlow,
+  Future<void> refreshTransactions(
+    int incomeSourceId, {
+    TransactionClassifier transactionClassifier = TransactionClassifier.allFlow,
   }) {
-    return loadInitialTransactions(incomeSourceId,transactionClassifier: transactionClassifier);
+    return loadInitialTransactions(
+      incomeSourceId,
+      transactionClassifier: transactionClassifier,
+    );
   }
 
   Stream<List<FinancialTransaction>> watchTransactions(int incomeSourceId) {
     return _repository.watchTransactions(incomeSourceId);
   }
 
-  Future<double> getInSum(int incomeSourceId) {
-    return _repository.getInSum(incomeSourceId);
+  Future<double> getInSum(int incomeSourceId) async {
+    final inSum = _repository.getInSum(incomeSourceId);
+    _sourceInSum = await inSum;
+    notifyListeners();
+
+    return inSum;
   }
 
-  Future<double> getOutSum(int incomeSourceId) {
-    return _repository.getOutSum(incomeSourceId);
+  Future<double> getOutSum(int incomeSourceId) async {
+    final outSum = _repository.getOutSum(incomeSourceId);
+    _sourceOutSum = await outSum;
+    notifyListeners();
+    return outSum;
   }
 
-  Future<String> exportPdf(IncomeSourceWithBalance source) async {
+  Future<String> exportPdf(
+    IncomeSourceWithBalance source, {
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
     if (_state.isExportingPdf) return '';
 
     _setState(_state.copyWith(isExportingPdf: true));
     try {
-      final transactions = await _repository.getTransactions(source.id);
+      final allTransactions = await _repository.getTransactions(source.id);
+      final transactions = allTransactions.where((transaction) {
+        final date = DateUtils.dateOnly(transaction.date);
+        final startsOk =
+            startDate == null || !date.isBefore(DateUtils.dateOnly(startDate));
+        final endsOk =
+            endDate == null || !date.isAfter(DateUtils.dateOnly(endDate));
+        return startsOk && endsOk;
+      }).toList();
       final categories = await _categoryRepository.getAll();
-      final inSum = await _repository.getInSum(source.id);
-      final outSum = await _repository.getOutSum(source.id);
+      final inSum = transactions
+          .where(
+            (transaction) =>
+                transaction.direction == TransactionDirection.inFlow,
+          )
+          .fold<double>(0, (sum, transaction) => sum + transaction.amount);
+      final outSum = transactions
+          .where(
+            (transaction) =>
+                transaction.direction == TransactionDirection.outFlow,
+          )
+          .fold<double>(0, (sum, transaction) => sum + transaction.amount);
       final path = await _pdfExportService.saveIncomeSourceDetails(
         source: source,
         transactions: transactions,
         categories: categories,
         inSum: inSum,
         outSum: outSum,
+        startDate: startDate,
+        endDate: endDate,
       );
       _setState(_state.copyWith(isExportingPdf: false));
-      debugPrint("$path NNNN");
       return path;
     } catch (_) {
       _setState(_state.copyWith(isExportingPdf: false));
@@ -184,14 +222,8 @@ class IncomeSourceDetailViewModel extends ChangeNotifier {
     }
   }
 
-  // Future<bool> openDoc(String path) async {
-  //   try {
-  //     await _pdfExportService.readFile(path: path);
-  //     return true;
-  //   } catch (e) {
-  //     return false;
-  //   }
-  // }
+  Future<void> openSavedPdf(String path) async=>
+    await  _pdfExportService.openSavedPdf(path);
 
   void _setState(IncomeSourceDetailState state) {
     _state = state;

@@ -31,42 +31,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const SnackBar(content: Text('اكتمل النسخ الاحتياطي بنجاح.')),
       );
     } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(e.toString() ?? 'فشل النسخ الاحتياطي.')),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
   Future<void> _restoreBackup() async {
-    final confirmed = await showDialog<bool>(
+    final backupVm = context.read<BackupViewModel>();
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    BackupSnapshot snapshot;
+
+    try {
+      snapshot = await backupVm.downloadBackupSnapshot();
+    } catch (e) {
+      debugPrint('Restore backup download error: $e');
+      scaffoldMessenger.showSnackBar(SnackBar(content: Text(e.toString())));
+      return;
+    }
+
+    if (!mounted) return;
+    final approvedReplacement = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AppConfirmActionDialog(
-        title: 'استعادة النسخة الاحتياطية',
+        title: 'Restore backup',
         message:
-            'هل تريد استعادة النسخة الاحتياطية؟ سيتم استبدال البيانات الحالية.',
-        confirmLabel: 'استعادة',
-        cancelLabel: 'إلغاء',
+            'Backup downloaded: ${snapshot.incomeSources.length} sources, ${snapshot.categories.length} categories, ${snapshot.transactions.length} transactions. Replace current local data with this backup?',
+        confirmLabel: 'Replace',
+        cancelLabel: 'Cancel',
+        isDanger: true,
         onConfirm: () async {
           Navigator.pop(dialogContext, true);
         },
       ),
     );
 
-    if (confirmed != true) return;
-    final vm = context.read<BackupViewModel>();
-    final messenger = ScaffoldMessenger.of(context);
+    if (approvedReplacement != true) return;
     try {
-      await vm.restore(merge: true);
-      messenger.showSnackBar(
-        const SnackBar(content: Text('تمت استعادة النسخة الاحتياطية بنجاح.')),
+      await backupVm.replaceWithSnapshot(snapshot);
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Backup restored successfully.')),
       );
     } catch (e) {
       debugPrint('Restore backup error: $e');
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(e.toString() ?? 'فشل استعادة النسخة الاحتياطية.'),
-        ),
-      );
+      scaffoldMessenger.showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 

@@ -232,7 +232,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
     final viewModel = context.read<CategoryViewModel>();
     final name = _nameController.text.trim();
 
-    await viewModel.saveCategory(
+    final category = await viewModel.saveCategory(
       id: widget.initial?.id,
       name: name,
       direction: _selectedDirection,
@@ -240,7 +240,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
 
     if (!mounted) return;
     if (viewModel.actionState is! ActionError) {
-      context.pop();
+      context.pop(category);
       return;
     }
 

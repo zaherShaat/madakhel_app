@@ -157,3 +157,12 @@ extension IterableExt<T> on Iterable<T> {
 }
 
 enum TransactionClassifier { inFlow, outFlow, allFlow }
+
+extension FormattedDate on DateTime {
+  String formattedReadableDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+    String formattedReadableTime(DateTime date) {
+    return "${date.hour}:${date.minute}";
+  }
+}

@@ -69,6 +69,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                     onTap: () {
                                       context
                                           .read<IncomeSourceDetailViewModel>()
+                                          .getInSum(source.id);
+                                      context
+                                          .read<IncomeSourceDetailViewModel>()
+                                          .getOutSum(source.id);
+                                      context
+                                          .read<IncomeSourceDetailViewModel>()
                                           .loadInitialTransactions(source.id);
                                       context.push(
                                         '/source-detail',

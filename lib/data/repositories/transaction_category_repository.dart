@@ -6,7 +6,7 @@ import '../db/app_db.dart';
 class TransactionCategoryRepository {
   final AppDatabase _db;
   final String? Function() _currentUserId;
-
+  final categories = <TransactionCategory>[];
   TransactionCategoryRepository(this._db, this._currentUserId);
 
   String? get _userId {
@@ -54,14 +54,18 @@ class TransactionCategoryRepository {
         .getSingleOrNull();
   }
 
-  Future<List<TransactionCategory>> getAll() {
+  Future<List<TransactionCategory>> getAll()async {
     final userId = _userId;
     if (userId == null) return Future.value([]);
-
-    return (_db.select(_db.transactionCategories)
-          ..where((t) => t.userId.equals(userId) & t.isDeleted.equals(false))
-          ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
-        .get();
+    final categories =
+      await  (_db.select(_db.transactionCategories)
+              ..where(
+                (t) => t.userId.equals(userId) & t.isDeleted.equals(false),
+              )
+              ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
+            .get();
+    this.categories.addAll(categories);
+    return categories;
   }
 
   Stream<List<TransactionCategory>> watchAll() {

@@ -74,7 +74,7 @@ class TransactionViewModel extends ChangeNotifier {
         ),
       );
 
-      _setState(_state.copyWith(isSuccess: false, successMessage: null));
+      // _setState(_state.copyWith(isSuccess: false, successMessage: null));
     } catch (e) {
       _setState(
         _state.copyWith(
@@ -114,7 +114,6 @@ class TransactionViewModel extends ChangeNotifier {
         ),
       );
 
-      await Future.delayed(const Duration(seconds: 1));
       _setState(_state.copyWith(isSuccess: false, successMessage: null));
       unawaited(
         LocalLogger.instance.logDb(
@@ -151,8 +150,8 @@ class TransactionViewModel extends ChangeNotifier {
         LocalLogger.instance.logDb('DELETE_TRANSACTION', 'id:$transactionId'),
       );
 
-      await Future.delayed(const Duration(seconds: 1));
       _setState(_state.copyWith(isSuccess: false, successMessage: null));
+      notifyListeners();
     } catch (e) {
       _setState(
         _state.copyWith(

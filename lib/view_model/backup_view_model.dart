@@ -86,7 +86,7 @@ class BackupViewModel extends ChangeNotifier {
       final List<IncomeSource> remoteIncomeSources = List<IncomeSource>.from(
         backupFileData['incomeSources'] ?? [],
       );
-      debugPrint("incomeSources: ${remoteIncomeSources}");
+      debugPrint("incomeSources: $remoteIncomeSources");
       final List<TransactionCategory> remoteCategories =
           List<TransactionCategory>.from(
             backupFileData['transactionCategories'] ?? [],
@@ -102,6 +102,65 @@ class BackupViewModel extends ChangeNotifier {
       );
       unawaited(
         LocalLogger.instance.logBackup('RESTORE_MERGE', 'merged: $mergeResult'),
+      );
+    } catch (e) {
+      error = e is StateError ? e.message : e.toString();
+      unawaited(LocalLogger.instance.logBackup('ERROR', error ?? e.toString()));
+      rethrow;
+    } finally {
+      isRestoring = false;
+      notifyListeners();
+    }
+  }
+
+  Future<BackupSnapshot> downloadBackupSnapshot() async {
+    try {
+      isRestoring = true;
+      error = null;
+      notifyListeners();
+
+      if (!isInternetHere()) {
+        throw Exception(_connectivityVm.getNoInternetMessage());
+      }
+
+      final backupFileData = await _service.fetchBackupData();
+      return BackupSnapshot(
+        incomeSources: List<IncomeSource>.from(
+          backupFileData['incomeSources'] ?? [],
+        ),
+        categories: List<TransactionCategory>.from(
+          backupFileData['transactionCategories'] ?? [],
+        ),
+        transactions: List<FinancialTransaction>.from(
+          backupFileData['financialTransactions'] ?? [],
+        ),
+      );
+    } catch (e) {
+      error = e is StateError ? e.message : e.toString();
+      unawaited(LocalLogger.instance.logBackup('ERROR', error ?? e.toString()));
+      rethrow;
+    } finally {
+      isRestoring = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> replaceWithSnapshot(BackupSnapshot snapshot) async {
+    try {
+      isRestoring = true;
+      error = null;
+      notifyListeners();
+
+      await _replaceLocalData(
+        snapshot.incomeSources,
+        snapshot.categories,
+        snapshot.transactions,
+      );
+      unawaited(
+        LocalLogger.instance.logBackup(
+          'RESTORE_SUCCESS',
+          'restore (downloaded full replace) completed',
+        ),
       );
     } catch (e) {
       error = e is StateError ? e.message : e.toString();
@@ -288,4 +347,60 @@ class BackupViewModel extends ChangeNotifier {
       'txInserted': txInserted,
     };
   }
+
+  Future<void> _replaceLocalData(
+    List<IncomeSource> incomeSources,
+    List<TransactionCategory> categories,
+    List<FinancialTransaction> transactions,
+  ) async {
+    final backupOwner = incomeSources.isNotEmpty
+        ? incomeSources.first.userId
+        : (categories.isNotEmpty
+              ? categories.first.userId
+              : (transactions.isNotEmpty ? transactions.first.userId : null));
+
+    if (backupOwner == null) {
+      throw StateError(
+        'Cannot restore backup because the backup file is empty.',
+      );
+    }
+
+    await _db.transaction(() async {
+      await (_db.delete(
+        _db.financialTransactions,
+      )..where((t) => t.userId.equals(backupOwner))).go();
+      await (_db.delete(
+        _db.transactionCategories,
+      )..where((t) => t.userId.equals(backupOwner))).go();
+      await (_db.delete(
+        _db.incomeSources,
+      )..where((t) => t.userId.equals(backupOwner))).go();
+
+      for (final source in incomeSources) {
+        await _db.into(_db.incomeSources).insert(source.toCompanion(false));
+      }
+      for (final category in categories) {
+        await _db
+            .into(_db.transactionCategories)
+            .insert(category.toCompanion(false));
+      }
+      for (final transaction in transactions) {
+        await _db
+            .into(_db.financialTransactions)
+            .insert(transaction.toCompanion(false));
+      }
+    });
+  }
+}
+
+class BackupSnapshot {
+  final List<IncomeSource> incomeSources;
+  final List<TransactionCategory> categories;
+  final List<FinancialTransaction> transactions;
+
+  const BackupSnapshot({
+    required this.incomeSources,
+    required this.categories,
+    required this.transactions,
+  });
 }

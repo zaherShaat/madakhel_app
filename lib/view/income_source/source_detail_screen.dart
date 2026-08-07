@@ -67,7 +67,6 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // _loadInitialTransactions();
     const permissionsServices = PermissionsServices();
     final scheme = Theme.of(context).colorScheme;
 
@@ -156,51 +155,15 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
 
                   return Consumer<CategoryViewModel>(
                     builder: (context, catV, child) {
-                      // final cats = catV.categories;
+                      final inSum = context
+                          .select<IncomeSourceDetailViewModel, double>(
+                            (vm) => vm.inSum,
+                          );
+                      final outSum = context
+                          .select<IncomeSourceDetailViewModel, double>(
+                            (vm) => vm.outSum,
+                          );
 
-                      // // Build id sets once to avoid repeated lookups and
-                      // // to prevent `StateError: No element` from `firstWhere`.
-                      // final inFlowIds = cats
-                      //     .where(
-                      //       (c) => c.direction == TransactionDirection.inFlow,
-                      //     )
-                      //     .map((c) => c.id)
-                      //     .toSet();
-                      // final outFlowIds = cats
-                      //     .where(
-                      //       (c) =>
-                      //           c.direction == TransactionDirection.outFlow,
-                      //     )
-                      //     .map((c) => c.id)
-                      //     .toSet();
-
-                      // late final List<FinancialTransaction>
-                      // currentTransactions;
-                      // switch (selectedClassifier) {
-                      //   case TransactionClassifier.inFlows:
-                      //     // If there are no in-flow categories, return empty list.
-                      //     currentTransactions = inFlowIds.isEmpty
-                      //         ? <FinancialTransaction>[]
-                      //         : transactions
-                      //               .where(
-                      //                 (t) => inFlowIds.contains(t.categoryId),
-                      //               )
-                      //               .toList();
-                      //     break;
-                      //   case TransactionClassifier.outFlows:
-                      //     currentTransactions = outFlowIds.isEmpty
-                      //         ? <FinancialTransaction>[]
-                      //         : transactions
-                      //               .where(
-                      //                 (t) =>
-                      //                     outFlowIds.contains(t.categoryId),
-                      //               )
-                      //               .toList();
-                      //     break;
-                      //   case TransactionClassifier.allFlows:
-                      //     currentTransactions = transactions;
-                      //     break;
-                      // }
                       return ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: EdgeInsets.symmetric(
@@ -208,105 +171,130 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                           vertical: context.scaleH(18),
                         ),
                         children: [
-                          FutureBuilder<List<double>>(
-                            future: Future.wait([
-                              detailViewModel.getInSum(widget.source.id),
-                              detailViewModel.getOutSum(widget.source.id),
-                            ]),
-                            builder: (context, sumsSnap) {
-                              final inSum =
-                                  (sumsSnap.data != null &&
-                                      sumsSnap.data!.isNotEmpty)
-                                  ? sumsSnap.data![0]
-                                  : 0.0;
-                              final outSum =
-                                  (sumsSnap.data != null &&
-                                      sumsSnap.data!.length > 1)
-                                  ? sumsSnap.data![1]
-                                  : 0.0;
+                          // FutureBuilder<List<double>>(
+                          //   future: Future.wait([
+                          //     detailViewModel.getInSum(widget.source.id),
+                          //     detailViewModel.getOutSum(widget.source.id),
+                          //   ]),
+                          //   builder: (context, sumsSnap) {
+                          // // widget.source.;
+                          // final inSum =
+                          //     (sumsSnap.data != null &&
+                          //         sumsSnap.data!.isNotEmpty)
+                          //     ? sumsSnap.data![0]
+                          //     : 0.0;
+                          // final outSum =
+                          //     (sumsSnap.data != null &&
+                          //         sumsSnap.data!.length > 1)
+                          //     ? sumsSnap.data![1]
+                          //     : 0.0;
 
-                              return GridView.count(
-                                crossAxisCount: 2,
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                mainAxisSpacing: context.scaleH(12),
-                                crossAxisSpacing: context.scaleW(12),
-                                childAspectRatio: 1.4,
-                                children: [
-                                  StatCard(
-                                    value: (inSum - outSum).toStringAsFixed(2),
-                                    label: 'الرصيد',
-                                  ),
-                                  StatCard(
-                                    value: inSum.toStringAsFixed(2),
-                                    label: 'إجمالي الدخل',
-                                    isIncome: true,
-                                  ),
-                                  StatCard(
-                                    value: outSum.toStringAsFixed(2),
-                                    label: 'إجمالي المصروف',
-                                    isIncome: false,
-                                  ),
-                                  StatCard(
-                                    value: state.totalCount.toString(),
-                                    label: 'عدد المعاملات',
-                                  ),
-                                ],
-                              );
-                            },
+                          // return
+                          GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            mainAxisSpacing: context.scaleH(12),
+                            crossAxisSpacing: context.scaleW(12),
+                            childAspectRatio: 1.4,
+                            children: [
+                              StatCard(
+                                value: (inSum - outSum).toStringAsFixed(2),
+                                label: 'الرصيد',
+                              ),
+                              StatCard(
+                                value: inSum.toStringAsFixed(2),
+                                label: 'إجمالي الدخل',
+                                isIncome: true,
+                              ),
+                              StatCard(
+                                value: outSum.toStringAsFixed(2),
+                                label: 'إجمالي المصروف',
+                                isIncome: false,
+                              ),
+                              StatCard(
+                                value: state.totalCount.toString(),
+                                label: 'عدد المعاملات',
+                              ),
+                            ],
                           ),
+                          // },
+                          // ),
                           SizedBox(height: context.scaleH(20)),
                           Consumer<IncomeSourceDetailViewModel>(
                             builder: (context, pdfVc, _) {
                               return PdfExportButton(
                                 isLoading: state.isExportingPdf,
-                                onPressed: () async {
-                                  try {
-                                    final hasPermission =
-                                        await permissionsServices
-                                            .checkAndRequestPermission(context);
-                                    if (!hasPermission) {
-                                      return;
-                                    } else {
-                                      final path = await pdfVc.exportPdf(
-                                        widget.source,
-                                      );
-                                      if (!context.mounted || path.isEmpty)
-                                        return;
+                                disabled: transactions.isEmpty,
+                                onPressed: transactions.isEmpty
+                                    ? () {}
+                                    : () async {
+                                        try {
+                                          final range = await _pickPdfDateRange(
+                                            context,
+                                          );
+                                          if (!context.mounted ||
+                                              range == null) {
+                                            return;
+                                          }
+                                          final hasPermission =
+                                              await permissionsServices
+                                                  .checkAndRequestPermission(
+                                                    context,
+                                                  );
+                                          if (!hasPermission) {
+                                            return;
+                                          } else {
+                                            final path = await pdfVc.exportPdf(
+                                              widget.source,
+                                              startDate: range.start,
+                                              endDate: range.end,
+                                            );
+                                            if (!context.mounted ||
+                                                path.isEmpty) {
+                                              return;
+                                            }
 
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'تم حفظ ملف PDF في $path',
-                                          ),
-                                        ),
-                                      );
-                                      // await pdfVc.openDoc(path);
-                                    }
-                                  } catch (e) {
-                                    if (!context.mounted) return;
+                                            showPdfSavedSnackBar(
+                                              context,
+                                              path: path,
+                                              onOpen: () async => await pdfVc
+                                                  .openSavedPdf(path),
+                                            );
+                                          }
+                                        } catch (e) {
+                                          if (!context.mounted) return;
 
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('تعذر حفظ ملف PDF: $e'),
-                                      ),
-                                    );
-                                  }
-                                },
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'تعذر حفظ ملف PDF: $e',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
                               );
                             },
                           ),
                           SizedBox(height: context.scaleH(20)),
-                          Text(
-                            'آخر المعاملات',
-                            style: TextStyle(
-                              fontSize: context.scaleSp(14),
-                              fontWeight: FontWeight.bold,
-                              color: scheme.onSurface,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'المعاملات الماليّة',
+                                style: TextStyle(
+                                  fontSize: context.scaleSp(14),
+                                  fontWeight: FontWeight.bold,
+                                  color: scheme.onSurface,
+                                ),
+                              ),
+                            ],
                           ),
+                          SizedBox(height: context.scaleH(8)),
+
                           Wrap(
                             alignment: WrapAlignment.center,
                             spacing: context.scaleW(8),
@@ -550,6 +538,19 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
         initial: transaction,
       ),
     ).whenComplete(() => _refreshTransactions(classifier: selectedClassifier));
+  }
+
+  Future<DateTimeRange?> _pickPdfDateRange(BuildContext context) async {
+    final now = DateTime.now();
+    return showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: now,
+      initialDateRange: DateTimeRange(
+        start: DateTime(now.year, now.month, 1),
+        end: now,
+      ),
+    );
   }
 
   void _showSourceActions(BuildContext context) {
