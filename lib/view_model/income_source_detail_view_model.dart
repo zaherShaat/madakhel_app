@@ -17,15 +17,37 @@ class IncomeSourceDetailState {
   final bool isLoadingMore;
   final bool isExportingPdf;
   final String? errorMessage;
-
-  const IncomeSourceDetailState({
+  final double inSum;
+  final double outSum;
+  IncomeSourceDetailState({
     this.transactions = const [],
     this.totalCount = 0,
     this.isInitialLoading = false,
     this.isLoadingMore = false,
     this.isExportingPdf = false,
     this.errorMessage,
+    this.inSum = 0,
+    this.outSum = 0,
   });
+  //  {
+  //   final inTx = transactions
+  //       .where((tx) => tx.direction == TransactionDirection.inFlow)
+  //       .toList();
+  //   if (inTx.isNotEmpty) {
+  //     for (var tx in inTx) {
+  //       inSum += tx.amount;
+  //     }
+  //   }
+  //   final outTx = transactions
+  //       .where((tx) => tx.direction == TransactionDirection.inFlow)
+  //       .toList();
+  //   if (outTx.isNotEmpty) {
+  //     for (var tx in outTx) {
+  //       outSum += tx.amount;
+  //     }
+  //   }
+  //   debugPrint("$outTx >>");
+  // }
 
   bool get hasMore => transactions.length < totalCount;
 
@@ -36,6 +58,8 @@ class IncomeSourceDetailState {
     bool? isLoadingMore,
     bool? isExportingPdf,
     String? errorMessage,
+    double? inSum,
+    double? outSum,
   }) {
     return IncomeSourceDetailState(
       transactions: transactions ?? this.transactions,
@@ -44,6 +68,8 @@ class IncomeSourceDetailState {
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       isExportingPdf: isExportingPdf ?? this.isExportingPdf,
       errorMessage: errorMessage,
+      inSum: inSum ?? this.inSum,
+      outSum: outSum ?? this.outSum,
     );
   }
 }
@@ -55,7 +81,7 @@ class IncomeSourceDetailViewModel extends ChangeNotifier {
   final TransactionRepository _repository;
   final TransactionCategoryRepository _categoryRepository;
   final IncomeSourcePdfExportService _pdfExportService;
-  IncomeSourceDetailState _state = const IncomeSourceDetailState();
+  IncomeSourceDetailState _state = IncomeSourceDetailState();
   int? _incomeSourceId;
 
   double _sourceInSum = 0;
@@ -77,7 +103,7 @@ class IncomeSourceDetailViewModel extends ChangeNotifier {
     TransactionClassifier transactionClassifier = TransactionClassifier.allFlow,
   }) async {
     _incomeSourceId = incomeSourceId;
-    _setState(const IncomeSourceDetailState(isInitialLoading: true));
+    _setState(IncomeSourceDetailState(isInitialLoading: true));
 
     try {
       final totalCount = await _repository.countTransactions(incomeSourceId);
@@ -87,6 +113,8 @@ class IncomeSourceDetailViewModel extends ChangeNotifier {
         offset: 0,
         transactionClassifier: transactionClassifier,
       );
+      _sourceInSum = await _repository.getInSum(incomeSourceId);
+      _sourceOutSum = await _repository.getOutSum(incomeSourceId);
 
       if (_incomeSourceId != incomeSourceId) return;
 
@@ -148,8 +176,9 @@ class IncomeSourceDetailViewModel extends ChangeNotifier {
   Future<void> refreshTransactions(
     int incomeSourceId, {
     TransactionClassifier transactionClassifier = TransactionClassifier.allFlow,
-  }) {
-    return loadInitialTransactions(
+  }) async {
+
+    return await loadInitialTransactions(
       incomeSourceId,
       transactionClassifier: transactionClassifier,
     );
@@ -222,8 +251,8 @@ class IncomeSourceDetailViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> openSavedPdf(String path) async=>
-    await  _pdfExportService.openSavedPdf(path);
+  Future<void> openSavedPdf(String path) async =>
+      await _pdfExportService.openSavedPdf(path);
 
   void _setState(IncomeSourceDetailState state) {
     _state = state;

@@ -107,7 +107,6 @@ class IncomeSourceViewModel extends ChangeNotifier {
         ),
       );
 
-      await Future.delayed(const Duration(seconds: 1));
       _setState(_state.copyWith(isSuccess: false, successMessage: null));
       unawaited(
         LocalLogger.instance.logDb(
@@ -140,7 +139,6 @@ class IncomeSourceViewModel extends ChangeNotifier {
           successMessage: 'تم حذف مصدر الدخل بنجاح',
         ),
       );
-      await Future.delayed(const Duration(seconds: 1));
       _setState(_state.copyWith(isSuccess: false, successMessage: null));
       unawaited(LocalLogger.instance.logDb('DELETE_INCOME_SOURCE', 'id:$id'));
     } catch (e) {

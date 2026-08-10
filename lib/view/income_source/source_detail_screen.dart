@@ -4,13 +4,13 @@ import 'package:madakhel_app/core/utils.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
 import 'package:madakhel_app/data/pdf/permissions_manager.dart';
 import 'package:madakhel_app/model/income_source_with_balance.dart';
+import 'package:madakhel_app/model/transaction_direction.dart';
 import 'package:madakhel_app/view/components/app_confirm_action_dialog.dart';
 import 'package:madakhel_app/view/income_source/components/add_transaction_sheet.dart';
 import 'package:madakhel_app/view/income_source/components/pdf_export_btn.dart';
 import 'package:madakhel_app/view/income_source/components/source_detail_top_bar.dart';
 import 'package:madakhel_app/view/income_source/components/stat_card.dart';
 import 'package:madakhel_app/view/income_source/components/transaction_row.dart';
-import 'package:madakhel_app/view_model/category_view_model.dart';
 import 'package:madakhel_app/view_model/income_source_detail_view_model.dart';
 import 'package:madakhel_app/view_model/income_source_view_model.dart';
 import 'package:madakhel_app/view_model/transaction_view_model.dart';
@@ -56,9 +56,6 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
   Future<void> _refreshTransactions({
     required TransactionClassifier classifier,
   }) {
-    debugPrint(
-      "$selectedClassifier >> selected clasifier > _refreshTransactions",
-    );
     return context.read<IncomeSourceDetailViewModel>().refreshTransactions(
       widget.source.id,
       transactionClassifier: classifier,
@@ -69,7 +66,12 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
   Widget build(BuildContext context) {
     const permissionsServices = PermissionsServices();
     final scheme = Theme.of(context).colorScheme;
+    final sourceDetailesC = context.watch<IncomeSourceDetailViewModel>();
+    final state = sourceDetailesC.state;
+    final transactions = state.transactions;
 
+    double outSum = sourceDetailesC.outSum;
+    double inSum = sourceDetailesC.inSum;
     return Scaffold(
       backgroundColor: scheme.background,
       body: SafeArea(
@@ -83,11 +85,8 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
               onBackTap: () => Navigator.pop(context),
             ),
             Expanded(
-              child: Consumer<IncomeSourceDetailViewModel>(
-                builder: (context, detailViewModel, child) {
-                  final state = detailViewModel.state;
-                  final transactions = state.transactions;
-
+              child: Builder(
+                builder: (context) {
                   if (state.isInitialLoading && transactions.isEmpty) {
                     return Center(
                       child: CircularProgressIndicator(color: scheme.primary),
@@ -149,298 +148,250 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
                   }
 
                   final loadMoreLabel =
-                      transactions.length <= detailViewModel.initialPageSize
+                      transactions.length <= sourceDetailesC.initialPageSize
                       ? 'عرض الكل'
                       : 'عرض المزيد';
-
-                  return Consumer<CategoryViewModel>(
-                    builder: (context, catV, child) {
-                      final inSum = context
-                          .select<IncomeSourceDetailViewModel, double>(
-                            (vm) => vm.inSum,
-                          );
-                      final outSum = context
-                          .select<IncomeSourceDetailViewModel, double>(
-                            (vm) => vm.outSum,
-                          );
-
-                      return ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: context.scaleW(16),
-                          vertical: context.scaleH(18),
-                        ),
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: context.scaleW(16),
+                      vertical: context.scaleH(18),
+                    ),
+                    children: [
+                      GridView.count(
+                        crossAxisCount: 2,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        mainAxisSpacing: context.scaleH(12),
+                        crossAxisSpacing: context.scaleW(12),
+                        childAspectRatio: 1.4,
                         children: [
-                          // FutureBuilder<List<double>>(
-                          //   future: Future.wait([
-                          //     detailViewModel.getInSum(widget.source.id),
-                          //     detailViewModel.getOutSum(widget.source.id),
-                          //   ]),
-                          //   builder: (context, sumsSnap) {
-                          // // widget.source.;
-                          // final inSum =
-                          //     (sumsSnap.data != null &&
-                          //         sumsSnap.data!.isNotEmpty)
-                          //     ? sumsSnap.data![0]
-                          //     : 0.0;
-                          // final outSum =
-                          //     (sumsSnap.data != null &&
-                          //         sumsSnap.data!.length > 1)
-                          //     ? sumsSnap.data![1]
-                          //     : 0.0;
-
-                          // return
-                          GridView.count(
-                            crossAxisCount: 2,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            mainAxisSpacing: context.scaleH(12),
-                            crossAxisSpacing: context.scaleW(12),
-                            childAspectRatio: 1.4,
-                            children: [
-                              StatCard(
-                                value: (inSum - outSum).toStringAsFixed(2),
-                                label: 'الرصيد',
-                              ),
-                              StatCard(
-                                value: inSum.toStringAsFixed(2),
-                                label: 'إجمالي الدخل',
-                                isIncome: true,
-                              ),
-                              StatCard(
-                                value: outSum.toStringAsFixed(2),
-                                label: 'إجمالي المصروف',
-                                isIncome: false,
-                              ),
-                              StatCard(
-                                value: state.totalCount.toString(),
-                                label: 'عدد المعاملات',
-                              ),
-                            ],
+                          StatCard(
+                            value: (inSum - outSum).toStringAsFixed(2),
+                            label: 'الرصيد',
                           ),
-                          // },
-                          // ),
-                          SizedBox(height: context.scaleH(20)),
-                          Consumer<IncomeSourceDetailViewModel>(
-                            builder: (context, pdfVc, _) {
-                              return PdfExportButton(
-                                isLoading: state.isExportingPdf,
-                                disabled: transactions.isEmpty,
-                                onPressed: transactions.isEmpty
-                                    ? () {}
-                                    : () async {
-                                        try {
-                                          final range = await _pickPdfDateRange(
-                                            context,
-                                          );
-                                          if (!context.mounted ||
-                                              range == null) {
-                                            return;
-                                          }
-                                          final hasPermission =
-                                              await permissionsServices
-                                                  .checkAndRequestPermission(
-                                                    context,
-                                                  );
-                                          if (!hasPermission) {
-                                            return;
-                                          } else {
-                                            final path = await pdfVc.exportPdf(
-                                              widget.source,
-                                              startDate: range.start,
-                                              endDate: range.end,
-                                            );
-                                            if (!context.mounted ||
-                                                path.isEmpty) {
-                                              return;
-                                            }
-
-                                            showPdfSavedSnackBar(
-                                              context,
-                                              path: path,
-                                              onOpen: () async => await pdfVc
-                                                  .openSavedPdf(path),
-                                            );
-                                          }
-                                        } catch (e) {
-                                          if (!context.mounted) return;
-
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'تعذر حفظ ملف PDF: $e',
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      },
-                              );
-                            },
+                          StatCard(
+                            value: inSum.toStringAsFixed(2),
+                            label: 'إجمالي الدخل',
+                            isIncome: true,
                           ),
-                          SizedBox(height: context.scaleH(20)),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'المعاملات الماليّة',
-                                style: TextStyle(
-                                  fontSize: context.scaleSp(14),
-                                  fontWeight: FontWeight.bold,
-                                  color: scheme.onSurface,
-                                ),
-                              ),
-                            ],
+                          StatCard(
+                            value: outSum.toStringAsFixed(2),
+                            label: 'إجمالي المصروف',
+                            isIncome: false,
                           ),
-                          SizedBox(height: context.scaleH(8)),
-
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: context.scaleW(8),
-                            children: TransactionClassifier.values.map((
-                              classifier,
-                            ) {
-                              final isSelected =
-                                  selectedClassifier == classifier;
-                              final label = () {
-                                switch (classifier) {
-                                  case TransactionClassifier.inFlow:
-                                    return 'الدخل';
-                                  case TransactionClassifier.outFlow:
-                                    return 'المصروفات';
-                                  case TransactionClassifier.allFlow:
-                                    return 'عرض الكل';
-                                }
-                              }();
-
-                              return ChoiceChip(
-                                selected: isSelected,
-                                label: Text(label),
-                                selectedColor: scheme.primary,
-                                backgroundColor: scheme.surfaceContainerHighest,
-                                labelStyle: TextStyle(
-                                  color: isSelected
-                                      ? scheme.onPrimary
-                                      : scheme.onSurface,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                                onSelected: (selected) {
-                                  if (!selected) return;
-                                  setState(() {
-                                    selectedClassifier = classifier;
-                                    _refreshTransactions(
-                                      classifier: selectedClassifier,
-                                    );
-                                  });
-                                },
-                              );
-                            }).toList(),
+                          StatCard(
+                            value: state.totalCount.toString(),
+                            label: 'عدد المعاملات',
                           ),
-                          SizedBox(height: context.scaleH(12)),
-                          if (transactions.isEmpty)
-                            Center(
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(
-                                  vertical: context.scaleH(24),
-                                ),
-                                child: Text(
-                                  'لا توجد معاملات حتى الآن',
-                                  style: TextStyle(
-                                    fontSize: context.scaleSp(14),
-                                    color: scheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ),
-                            )
-                          else
-                            ...transactions.asMap().entries.map((entry) {
-                              return Padding(
-                                padding: EdgeInsets.only(
-                                  bottom: entry.key < transactions.length - 1
-                                      ? context.scaleH(12)
-                                      : 0,
-                                ),
-                                child: GestureDetector(
-                                  onTap: () => _showEditTransactionSheet(
-                                    context,
-                                    entry.value,
-                                  ),
-                                  onLongPress: () => _showDeleteConfirmation(
-                                    context,
-                                    entry.value,
-                                  ),
-                                  child: TransactionRow(
-                                    transaction: entry.value,
-                                    showBorder: false,
-                                  ),
-                                ),
-                              );
-                            }),
-                          if (state.errorMessage != null)
-                            Padding(
-                              padding: EdgeInsets.only(top: context.scaleH(10)),
-                              child: Text(
-                                'تعذر تحميل المزيد من المعاملات',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: context.scaleSp(12),
-                                  color: scheme.error,
-                                ),
-                              ),
-                            ),
-                          if (state.hasMore)
-                            Padding(
-                              padding: EdgeInsets.only(top: context.scaleH(12)),
-                              child: Center(
-                                child: TextButton(
-                                  onPressed: () {
-                                    debugPrint(
-                                      "$selectedClassifier >> selectedClassifier from text button",
-                                    );
-                                    state.isLoadingMore
-                                        ? null
-                                        : detailViewModel.loadMoreTransactions(
-                                            transactionClassifier:
-                                                selectedClassifier,
-                                          );
-                                  },
-                                  child: state.isLoadingMore
-                                      ? SizedBox(
-                                          height: context.scaleH(18),
-                                          width: context.scaleW(18),
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: scheme.primary,
-                                          ),
-                                        )
-                                      : Text(
-                                          loadMoreLabel,
-                                          style: TextStyle(
-                                            fontSize: context.scaleSp(12),
-                                            color: scheme.primary,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                ),
-                              ),
-                            ),
-                          if (transactions.isNotEmpty && !state.hasMore)
-                            Padding(
-                              padding: EdgeInsets.only(top: context.scaleH(16)),
-                              child: Center(
-                                child: Text(
-                                  'أنت في نهاية القائمة',
-                                  style: TextStyle(
-                                    fontSize: context.scaleSp(12),
-                                    color: scheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ),
-                            ),
                         ],
-                      );
-                    },
+                      ),
+
+                      SizedBox(height: context.scaleH(20)),
+                      PdfExportButton(
+                        isLoading: state.isExportingPdf,
+                        disabled: transactions.isEmpty,
+                        onPressed: transactions.isEmpty
+                            ? () {}
+                            : () async {
+                                try {
+                                  final range = await _pickPdfDateRange(
+                                    context,
+                                  );
+                                  if (!context.mounted || range == null) {
+                                    return;
+                                  }
+                                  final hasPermission =
+                                      await permissionsServices
+                                          .checkAndRequestPermission(context);
+                                  if (!hasPermission) {
+                                    return;
+                                  } else {
+                                    final path = await sourceDetailesC
+                                        .exportPdf(
+                                          widget.source,
+                                          startDate: range.start,
+                                          endDate: range.end,
+                                        );
+                                    if (!context.mounted || path.isEmpty) {
+                                      return;
+                                    }
+
+                                    showPdfSavedSnackBar(
+                                      context,
+                                      path: path,
+                                      onOpen: () async => await sourceDetailesC
+                                          .openSavedPdf(path),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (!context.mounted) return;
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('تعذر حفظ ملف PDF: $e'),
+                                    ),
+                                  );
+                                }
+                              },
+                      ),
+                      SizedBox(height: context.scaleH(20)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'المعاملات الماليّة',
+                            style: TextStyle(
+                              fontSize: context.scaleSp(14),
+                              fontWeight: FontWeight.bold,
+                              color: scheme.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: context.scaleH(8)),
+
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: context.scaleW(8),
+                        children: TransactionClassifier.values.map((
+                          classifier,
+                        ) {
+                          final isSelected = selectedClassifier == classifier;
+                          final label = () {
+                            switch (classifier) {
+                              case TransactionClassifier.inFlow:
+                                return 'الدخل';
+                              case TransactionClassifier.outFlow:
+                                return 'المصروفات';
+                              case TransactionClassifier.allFlow:
+                                return 'عرض الكل';
+                            }
+                          }();
+
+                          return ChoiceChip(
+                            selected: isSelected,
+                            label: Text(label),
+                            selectedColor: scheme.primary,
+                            backgroundColor: scheme.surfaceContainerHighest,
+                            labelStyle: TextStyle(
+                              color: isSelected
+                                  ? scheme.onPrimary
+                                  : scheme.onSurface,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            onSelected: (selected) {
+                              if (!selected) return;
+                              setState(() {
+                                selectedClassifier = classifier;
+                                _refreshTransactions(
+                                  classifier: selectedClassifier,
+                                );
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                      SizedBox(height: context.scaleH(12)),
+                      if (transactions.isEmpty)
+                        Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: context.scaleH(24),
+                            ),
+                            child: Text(
+                              'لا توجد معاملات حتى الآن',
+                              style: TextStyle(
+                                fontSize: context.scaleSp(14),
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        ...transactions.asMap().entries.map((entry) {
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              bottom: entry.key < transactions.length - 1
+                                  ? context.scaleH(12)
+                                  : 0,
+                            ),
+                            child: GestureDetector(
+                              onTap: () => _showEditTransactionSheet(
+                                context,
+                                entry.value,
+                              ),
+                              onLongPress: () =>
+                                  _showDeleteConfirmation(context, entry.value),
+                              child: TransactionRow(
+                                transaction: entry.value,
+                                showBorder: false,
+                              ),
+                            ),
+                          );
+                        }),
+                      if (state.errorMessage != null)
+                        Padding(
+                          padding: EdgeInsets.only(top: context.scaleH(10)),
+                          child: Text(
+                            'تعذر تحميل المزيد من المعاملات',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: context.scaleSp(12),
+                              color: scheme.error,
+                            ),
+                          ),
+                        ),
+                      if (state.hasMore)
+                        Padding(
+                          padding: EdgeInsets.only(top: context.scaleH(12)),
+                          child: Center(
+                            child: TextButton(
+                              onPressed: () {
+                                debugPrint(
+                                  "$selectedClassifier >> selectedClassifier from text button",
+                                );
+                                state.isLoadingMore
+                                    ? null
+                                    : sourceDetailesC.loadMoreTransactions(
+                                        transactionClassifier:
+                                            selectedClassifier,
+                                      );
+                              },
+                              child: state.isLoadingMore
+                                  ? SizedBox(
+                                      height: context.scaleH(18),
+                                      width: context.scaleW(18),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: scheme.primary,
+                                      ),
+                                    )
+                                  : Text(
+                                      loadMoreLabel,
+                                      style: TextStyle(
+                                        fontSize: context.scaleSp(12),
+                                        color: scheme.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ),
+                      if (transactions.isNotEmpty && !state.hasMore)
+                        Padding(
+                          padding: EdgeInsets.only(top: context.scaleH(16)),
+                          child: Center(
+                            child: Text(
+                              'أنت في نهاية القائمة',
+                              style: TextStyle(
+                                fontSize: context.scaleSp(12),
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   );
                 },
               ),
@@ -502,6 +453,7 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
             transaction.id,
           );
           if (!dialogContext.mounted) return;
+
           Navigator.pop(dialogContext);
           if (!context.mounted) return;
           await _refreshTransactions(classifier: selectedClassifier);
@@ -537,7 +489,9 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
         incomeTypeId: widget.source.id,
         initial: transaction,
       ),
-    ).whenComplete(() => _refreshTransactions(classifier: selectedClassifier));
+    ).whenComplete(() {
+      _refreshTransactions(classifier: selectedClassifier);
+    });
   }
 
   Future<DateTimeRange?> _pickPdfDateRange(BuildContext context) async {
@@ -607,6 +561,7 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
             await context.read<IncomeSourceViewModel>().deleteIncomeSource(
               widget.source.id,
             );
+            await _refreshTransactions(classifier: selectedClassifier);
             if (!context.mounted) return;
             Navigator.pop(dialogContext);
             context.pop();

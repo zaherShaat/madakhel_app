@@ -57,7 +57,6 @@ class TransactionViewModel extends ChangeNotifier {
         categoryId: categoryId,
         note: note,
       );
-
       _setState(
         _state.copyWith(
           isLoading: false,
@@ -138,7 +137,7 @@ class TransactionViewModel extends ChangeNotifier {
 
     try {
       await _repository.deleteById(transactionId);
-      _setState(
+       _setState(
         _state.copyWith(
           isLoading: false,
           isSuccess: true,
