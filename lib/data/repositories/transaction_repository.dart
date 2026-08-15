@@ -197,7 +197,7 @@ class TransactionRepository {
                   c.isDeleted.equals(false),
             ))
             .getSingle();
-
+    
     return await _db
         .into(_db.financialTransactions)
         .insert(

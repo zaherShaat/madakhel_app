@@ -52,11 +52,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final approvedReplacement = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AppConfirmActionDialog(
-        title: 'Restore backup',
+        title: 'استعادة النسخة الاحتياطية',
         message:
-            'Backup downloaded: ${snapshot.incomeSources.length} sources, ${snapshot.categories.length} categories, ${snapshot.transactions.length} transactions. Replace current local data with this backup?',
-        confirmLabel: 'Replace',
-        cancelLabel: 'Cancel',
+            'تم تحميل النسخة الاحتياطية: ${snapshot.incomeSources.length} مصادر دخل، ${snapshot.categories.length} فئات، ${snapshot.transactions.length} معاملات. هل تريد استبدال البيانات المحلية الحالية بهذه النسخة؟',
+        confirmLabel: 'استبدال',
+        cancelLabel: 'إلغاء',
         isDanger: true,
         onConfirm: () async {
           Navigator.pop(dialogContext, true);
@@ -68,7 +68,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       await backupVm.replaceWithSnapshot(snapshot);
       scaffoldMessenger.showSnackBar(
-        const SnackBar(content: Text('Backup restored successfully.')),
+        const SnackBar(content: Text('تمت استعادة النسخة الاحتياطية بنجاح.')),
       );
     } catch (e) {
       debugPrint('Restore backup error: $e');

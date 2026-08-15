@@ -23,6 +23,8 @@ class BackupViewModel extends ChangeNotifier {
     return _connectivityVm.hasInternet;
   }
 
+  /// Backup to Google Drive using the authenticated user's access token.
+  /// This method now calls backupToDrive() instead of the deprecated Supabase method.
   Future<String> backup() async {
     try {
       isBackingUp = true;
@@ -30,18 +32,24 @@ class BackupViewModel extends ChangeNotifier {
       notifyListeners();
 
       // Log start
-      unawaited(LocalLogger.instance.logBackup('START', 'backup initiated'));
+      unawaited(
+        LocalLogger.instance.logBackup('START', 'backup initiated (G Drive)'),
+      );
       // Check internet connection
       if (!isInternetHere()) {
         throw Exception(_connectivityVm.getNoInternetMessage());
       }
 
-      final path = await _service.backupUserData();
-      // Log success
+      // Use Google Drive backup instead of Supabase
+      final fileId = await _service.backupToDrive();
+      // Log success with G Drive file ID
       unawaited(
-        LocalLogger.instance.logBackup('SUCCESS', 'backup saved:$path'),
+        LocalLogger.instance.logBackup(
+          'SUCCESS',
+          'backup saved to G Drive: $fileId',
+        ),
       );
-      return path;
+      return fileId;
     } catch (e) {
       error = e is StateError ? e.message : e.toString();
       debugPrint('Backup error: $error');
@@ -71,17 +79,17 @@ class BackupViewModel extends ChangeNotifier {
       }
 
       if (!merge) {
-        await _service.restoreUserData();
+        await _service.restoreUserDataFromGDrive();
         unawaited(
           LocalLogger.instance.logBackup(
             'RESTORE_SUCCESS',
-            'restore (full replace) completed',
+            'restore (full replace from G Drive) completed',
           ),
         );
         return;
       }
 
-      final backupFileData = await _service.fetchBackupData();
+      final backupFileData = await _service.fetchBackupDataFromGDrive();
 
       final List<IncomeSource> remoteIncomeSources = List<IncomeSource>.from(
         backupFileData['incomeSources'] ?? [],
@@ -123,7 +131,8 @@ class BackupViewModel extends ChangeNotifier {
         throw Exception(_connectivityVm.getNoInternetMessage());
       }
 
-      final backupFileData = await _service.fetchBackupData();
+      // Use Google Drive backup restoration instead of Supabase
+      final backupFileData = await _service.fetchBackupDataFromGDrive();
       return BackupSnapshot(
         incomeSources: List<IncomeSource>.from(
           backupFileData['incomeSources'] ?? [],

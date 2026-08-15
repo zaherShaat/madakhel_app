@@ -1,12 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:madakhel_app/data/auth/auth_storage.dart';
 
 import '../../model/auth_user.dart';
 
 class AuthService {
   final FirebaseAuth _auth;
   final GoogleSignIn _googleSignIn;
-
+  // final GoogleSignInAccount? gUser;
   AuthService({FirebaseAuth? firebaseAuth, GoogleSignIn? googleSignIn})
     : _auth = firebaseAuth ?? FirebaseAuth.instance,
       _googleSignIn = googleSignIn ?? GoogleSignIn.instance;
@@ -25,7 +26,11 @@ class AuthService {
     // await _googleSignIn.initialize();
 
     final googleUser = await _googleSignIn.authenticate();
-
+    final gSignInClientAuthorization = await googleUser.authorizationClient
+        .authorizeScopes(['https://www.googleapis.com/auth/drive.file']);
+    final authStorageInstance = await AuthUserStorage.instance();
+    final accessToken = gSignInClientAuthorization.accessToken;
+    await authStorageInstance.saveAccessToken(accessToken);
     final googleAuth = googleUser.authentication;
     final credential = GoogleAuthProvider.credential(
       idToken: googleAuth.idToken,
