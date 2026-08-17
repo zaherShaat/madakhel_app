@@ -14,7 +14,6 @@ import 'package:madakhel_app/model/auth_user.dart';
 import 'package:madakhel_app/view_model/connectivity_view_model.dart';
 import 'package:madakhel_app/view_model/theme_view_model.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
 
 import 'core/routing/app_router.dart';
 import 'data/auth/auth_service.dart';
@@ -35,10 +34,10 @@ const _supabasePublishableKey =
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await Supabase.initialize(
-    url: _supabaseUrl,
-    publishableKey: _supabasePublishableKey,
-  );
+  // await Supabase.initialize(
+  //   url: _supabaseUrl,
+  //   publishableKey: _supabasePublishableKey,
+  // );
   await GoogleSignIn.instance.initialize(
     clientId:
         '997046209271-jh0ll4tm1m94s597tc9esuh7pnalbpet.apps.googleusercontent.com',
@@ -132,7 +131,6 @@ Future<void> main() async {
         ChangeNotifierProvider<SplashViewModel>(
           create: (ctx) => SplashViewModel(
             ctx.read<AuthViewModel>(),
-            ctx.read<IncomeTypeRepository>(),
             ctx.read<IncomeTypeRepository>(),
           ),
         ),

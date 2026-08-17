@@ -26,11 +26,13 @@ class AuthService {
     // await _googleSignIn.initialize();
 
     final googleUser = await _googleSignIn.authenticate();
-    final gSignInClientAuthorization = await googleUser.authorizationClient
-        .authorizeScopes(['https://www.googleapis.com/auth/drive.file']);
-    final authStorageInstance = await AuthUserStorage.instance();
-    final accessToken = gSignInClientAuthorization.accessToken;
-    await authStorageInstance.saveAccessToken(accessToken);
+    // final gSignInClientAuthorization = await googleUser.authorizationClient
+    //     .authorizeScopes(['https://www.googleapis.com/auth/drive.file']);
+    // final authStorageInstance = await AuthUserStorage.instance();
+    // final accessToken = gSignInClientAuthorization.accessToken;
+    // await authStorageInstance.saveAccessToken(accessToken);
+    // Silently checks native session state — no UI, no popup
+    await _googleSignIn.attemptLightweightAuthentication();
     final googleAuth = googleUser.authentication;
     final credential = GoogleAuthProvider.credential(
       idToken: googleAuth.idToken,

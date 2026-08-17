@@ -92,16 +92,16 @@ class BackupViewModel extends ChangeNotifier {
       final backupFileData = await _service.fetchBackupDataFromGDrive();
 
       final List<IncomeSource> remoteIncomeSources = List<IncomeSource>.from(
-        backupFileData['incomeSources'] ?? [],
+        backupFileData[incomeSourcesKey] ?? [],
       );
       debugPrint("incomeSources: $remoteIncomeSources");
       final List<TransactionCategory> remoteCategories =
           List<TransactionCategory>.from(
-            backupFileData['transactionCategories'] ?? [],
+            backupFileData[transactionCategoriesKey] ?? [],
           );
       final List<FinancialTransaction> remoteTransactions =
           List<FinancialTransaction>.from(
-            backupFileData['financialTransactions'] ?? [],
+            backupFileData[financialTransactionsKey] ?? [],
           );
       final mergeResult = await _mergeRemoteDataIntoLocal(
         remoteIncomeSources,
@@ -133,15 +133,30 @@ class BackupViewModel extends ChangeNotifier {
 
       // Use Google Drive backup restoration instead of Supabase
       final backupFileData = await _service.fetchBackupDataFromGDrive();
+
+      // Fail loudly on incomplete/malformed data instead of silently defaulting
+      const requiredKeys = [
+        incomeSourcesKey,
+        transactionCategoriesKey,
+        financialTransactionsKey,
+      ];
+      final missingKeys = requiredKeys
+          .where((k) => !backupFileData.containsKey(k))
+          .toList();
+      if (missingKeys.isNotEmpty) {
+        throw StateError(
+          'Backup data incomplete — missing: ${missingKeys.join(', ')}',
+        );
+      }
       return BackupSnapshot(
         incomeSources: List<IncomeSource>.from(
-          backupFileData['incomeSources'] ?? [],
+          backupFileData[incomeSourcesKey] ?? [],
         ),
         categories: List<TransactionCategory>.from(
-          backupFileData['transactionCategories'] ?? [],
+          backupFileData[transactionCategoriesKey] ?? [],
         ),
         transactions: List<FinancialTransaction>.from(
-          backupFileData['financialTransactions'] ?? [],
+          backupFileData[financialTransactionsKey] ?? [],
         ),
       );
     } catch (e) {

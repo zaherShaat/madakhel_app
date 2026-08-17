@@ -33,6 +33,10 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
   //   super.initState();
   //   _loadInitialTransactions();
   // }
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   @override
   void didUpdateWidget(covariant SourceDetailScreen oldWidget) {

@@ -5,8 +5,11 @@ import 'dart:typed_data';
 
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:googleapis/drive/v3.dart' as drive_api;
 import 'package:http/http.dart' as http;
+import 'package:madakhel_app/core/utils.dart';
 import 'package:madakhel_app/data/auth/auth_service.dart';
 import 'package:madakhel_app/data/auth/auth_storage.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
@@ -20,6 +23,8 @@ class BackupService {
   static const _chunkSize = 2 * 1024 * 1024; // 2 MB
   static const _manifestVersion = 1;
   static const _gdriveFolderName = 'Madakhel Backups';
+  final List<String> scopes = [drive.DriveApi.driveFileScope];
+  final gSignIn = GoogleSignIn.instance;
 
   final AppDatabase _db;
   final AuthService _auth;
@@ -37,8 +42,9 @@ class BackupService {
   /// Backup data to Google Drive using the authenticated user's access token.
   /// This is the primary backup method replacing Supabase.
   Future<String> backupToDrive() async {
-    final authStorageInstance = await AuthUserStorage.instance();
-    final accessToken = await authStorageInstance.storedAccessToken;
+    final gSignInClientAuthorization = await gSignIn.authorizationClient
+        .authorizeScopes(scopes);
+    final accessToken = gSignInClientAuthorization.accessToken;
 
     if (accessToken == null || accessToken.isEmpty) {
       throw StateError(
@@ -86,15 +92,15 @@ class BackupService {
       'userEmail': user.email,
       'backupOwner': backupOwner,
       'timestamp': backupTime.toIso8601String(),
-      'incomeSources': incomeSources.map((e) => e.toJson()).toList(),
-      'transactionCategories': categoriesJson,
-      'financialTransactions': transactionsJson,
+      incomeSourcesKey: incomeSources.map((e) => e.toJson()).toList(),
+      transactionCategoriesKey: categoriesJson,
+      financialTransactionsKey: transactionsJson,
     });
 
-    debugPrint(
-      ">> backupToDrive: incomeSources: ${incomeSources.length}, "
-      "categories: ${categories.length}, transactions: ${transactions.length}",
-    );
+    // debugPrint(
+    //   ">> backupToDrive: incomeSources: ${incomeSources.length}, "
+    //   "categories: ${categories.length}, transactions: ${transactions.length}",
+    // );
 
     final fileName = '$backupOwner-${backupTime.millisecondsSinceEpoch}.json';
     final result = await _uploadToDrive(
@@ -155,9 +161,9 @@ class BackupService {
       'userEmail': user.email,
       'backupOwner': backupOwner,
       'timestamp': backupTime.toIso8601String(),
-      'incomeSources': incomeSources.map((e) => e.toJson()).toList(),
-      'transactionCategories': categoriesJson,
-      'financialTransactions': transactionsJson,
+      incomeSourcesKey: incomeSources.map((e) => e.toJson()).toList(),
+      transactionCategoriesKey: categoriesJson,
+      financialTransactionsKey: transactionsJson,
     });
     debugPrint(">> payload $payload");
     await _uploadJsonBackup(backupPath, utf8.encode(payload));
@@ -237,9 +243,9 @@ class BackupService {
   /// This is the new method replacing Supabase fetchBackupData().
   /// Downloads the most recent backup file from G Drive and parses it.
   Future<Map<String, List<dynamic>>> fetchBackupDataFromGDrive() async {
-    final authStorageInstance = await AuthUserStorage.instance();
-    final accessToken = await authStorageInstance.storedAccessToken;
-
+    final gSignInClientAuthorization = await gSignIn.authorizationClient
+        .authorizeScopes(scopes);
+    final accessToken = gSignInClientAuthorization.accessToken;
     if (accessToken == null || accessToken.isEmpty) {
       throw StateError(
         'No Google access token available. Please sign in again.',
@@ -263,16 +269,16 @@ class BackupService {
       _validateBackupOwner(decoded, backupOwner);
 
       return {
-        'incomeSources': _parseIncomeSources(
-          _extractList(decoded['incomeSources']),
+        incomeSourcesKey: _parseIncomeSources(
+          _extractList(decoded[incomeSourcesKey]),
           backupOwner,
         ),
-        'transactionCategories': _parseCategories(
-          _extractList(decoded['transactionCategories']),
+        transactionCategoriesKey: _parseCategories(
+          _extractList(decoded[transactionCategoriesKey]),
           backupOwner,
         ),
-        'financialTransactions': _parseTransactions(
-          _extractList(decoded['financialTransactions']),
+        financialTransactionsKey: _parseTransactions(
+          _extractList(decoded[financialTransactionsKey]),
           backupOwner,
         ),
       };
@@ -341,11 +347,18 @@ class BackupService {
 
   /// Convert Drive API Media stream to bytes.
   Future<Uint8List> _bytesFromMedia(drive_api.Media media) async {
-    final chunks = <int>[];
-    await media.stream.listen((chunk) {
-      chunks.addAll(chunk);
-    }).asFuture<void>();
-    return Uint8List.fromList(chunks);
+    final builder = BytesBuilder(copy: false);
+    try {
+      await for (final chunk in media.stream.timeout(
+        const Duration(milliseconds: 450),
+      )) {
+        builder.add(chunk);
+      }
+    } catch (e, st) {
+      // Log/rethrow so callers know the download was incomplete
+      rethrow;
+    }
+    return builder.toBytes();
   }
 
   // ========== DEAD CODE: Supabase backup implementation (kept for reference) ==========
@@ -378,15 +391,15 @@ class BackupService {
 
     _validateBackupOwner(decoded, backupOwner);
     final incomeSources = _parseIncomeSources(
-      _extractList(decoded['incomeSources']),
+      _extractList(decoded[incomeSourcesKey]),
       backupOwner,
     );
     final categories = _parseCategories(
-      _extractList(decoded['transactionCategories']),
+      _extractList(decoded[transactionCategoriesKey]),
       backupOwner,
     );
     final transactions = _parseTransactions(
-      _extractList(decoded['financialTransactions']),
+      _extractList(decoded[financialTransactionsKey]),
       backupOwner,
     );
 
@@ -504,15 +517,15 @@ class BackupService {
 
       // Parse the backup data
       final incomeSources = _parseIncomeSources(
-        _extractList(decoded['incomeSources']),
+        _extractList(decoded[incomeSourcesKey]),
         backupOwner,
       );
       final categories = _parseCategories(
-        _extractList(decoded['transactionCategories']),
+        _extractList(decoded[transactionCategoriesKey]),
         backupOwner,
       );
       final transactions = _parseTransactions(
-        _extractList(decoded['financialTransactions']),
+        _extractList(decoded[financialTransactionsKey]),
         backupOwner,
       );
 
@@ -619,16 +632,16 @@ class BackupService {
     _validateBackupOwner(decoded, backupOwner);
 
     return {
-      'incomeSources': _parseIncomeSources(
-        _extractList(decoded['incomeSources']),
+      incomeSourcesKey: _parseIncomeSources(
+        _extractList(decoded[incomeSourcesKey]),
         backupOwner,
       ),
-      'transactionCategories': _parseCategories(
-        _extractList(decoded['transactionCategories']),
+      transactionCategoriesKey: _parseCategories(
+        _extractList(decoded[transactionCategoriesKey]),
         backupOwner,
       ),
-      'financialTransactions': _parseTransactions(
-        _extractList(decoded['financialTransactions']),
+      financialTransactionsKey: _parseTransactions(
+        _extractList(decoded[financialTransactionsKey]),
         backupOwner,
       ),
     };
