@@ -44,9 +44,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           children: [
             const AppTopBar(title: 'المعاملات', subtitle: 'مصنفة حسب الفئة'),
             Expanded(
-              child: Consumer<TransactionsViewModel>(
-                builder: (context, viewModel, child) {
-                  final state = viewModel.state;
+              child: Builder(
+                builder: (context) {
+                  final state = context.watch<TransactionsViewModel>().state;
                   if (state is LoadingState) {
                     return const Center(child: CircularProgressIndicator());
                   }

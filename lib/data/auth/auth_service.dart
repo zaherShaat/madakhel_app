@@ -7,7 +7,6 @@ import '../../model/auth_user.dart';
 class AuthService {
   final FirebaseAuth _auth;
   final GoogleSignIn _googleSignIn;
-  // final GoogleSignInAccount? gUser;
   AuthService({FirebaseAuth? firebaseAuth, GoogleSignIn? googleSignIn})
     : _auth = firebaseAuth ?? FirebaseAuth.instance,
       _googleSignIn = googleSignIn ?? GoogleSignIn.instance;
@@ -23,21 +22,11 @@ class AuthService {
       : AuthUser.fromFirebase(_auth.currentUser!);
 
   Future<UserCredential> _signInWithGoogle() async {
-    // await _googleSignIn.initialize();
-
     final googleUser = await _googleSignIn.authenticate();
-    // final gSignInClientAuthorization = await googleUser.authorizationClient
-    //     .authorizeScopes(['https://www.googleapis.com/auth/drive.file']);
-    // final authStorageInstance = await AuthUserStorage.instance();
-    // final accessToken = gSignInClientAuthorization.accessToken;
-    // await authStorageInstance.saveAccessToken(accessToken);
-    // Silently checks native session state — no UI, no popup
-    await _googleSignIn.attemptLightweightAuthentication();
     final googleAuth = googleUser.authentication;
     final credential = GoogleAuthProvider.credential(
       idToken: googleAuth.idToken,
     );
-
     final result = await _auth.signInWithCredential(credential);
     return result;
   }

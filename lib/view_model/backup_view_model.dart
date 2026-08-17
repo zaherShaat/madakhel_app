@@ -18,8 +18,8 @@ class BackupViewModel extends ChangeNotifier {
   String? error;
 
   BackupViewModel(this._service, this._db, this._connectivityVm);
-  bool isInternetHere() {
-    // Check internet connection
+  Future<bool> isInternetHere() async {
+    await _connectivityVm.checkConnectivity();
     return _connectivityVm.hasInternet;
   }
 
@@ -36,7 +36,7 @@ class BackupViewModel extends ChangeNotifier {
         LocalLogger.instance.logBackup('START', 'backup initiated (G Drive)'),
       );
       // Check internet connection
-      if (!isInternetHere()) {
+      if (!await isInternetHere()) {
         throw Exception(_connectivityVm.getNoInternetMessage());
       }
 
@@ -74,7 +74,7 @@ class BackupViewModel extends ChangeNotifier {
         ),
       );
       // Check internet connection
-      if (!isInternetHere()) {
+      if (!await isInternetHere()) {
         throw Exception(_connectivityVm.getNoInternetMessage());
       }
 
@@ -127,7 +127,7 @@ class BackupViewModel extends ChangeNotifier {
       error = null;
       notifyListeners();
 
-      if (!isInternetHere()) {
+      if (!await isInternetHere()) {
         throw Exception(_connectivityVm.getNoInternetMessage());
       }
 

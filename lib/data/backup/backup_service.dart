@@ -2,7 +2,6 @@
 
 import 'dart:convert';
 import 'dart:typed_data';
-
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -11,11 +10,10 @@ import 'package:googleapis/drive/v3.dart' as drive_api;
 import 'package:http/http.dart' as http;
 import 'package:madakhel_app/core/utils.dart';
 import 'package:madakhel_app/data/auth/auth_service.dart';
-import 'package:madakhel_app/data/auth/auth_storage.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
 import 'package:madakhel_app/model/auth_user.dart';
 import 'package:madakhel_app/model/transaction_direction.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
+// import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
 
 class BackupService {
   static const _backupBucket = 'madakhel-backup';
@@ -28,15 +26,15 @@ class BackupService {
 
   final AppDatabase _db;
   final AuthService _auth;
-  final SupabaseClient _supabase;
+  // final SupabaseClient _supabase;
   final http.Client _httpClient;
 
   BackupService(
     this._db,
     this._auth, {
-    SupabaseClient? supabase,
+    // SupabaseClient? supabase,
     http.Client? httpClient,
-  }) : _supabase = supabase ?? Supabase.instance.client,
+  }) : // _supabase = supabase ?? Supabase.instance.client,
        _httpClient = httpClient ?? http.Client();
 
   /// Backup data to Google Drive using the authenticated user's access token.
@@ -102,7 +100,8 @@ class BackupService {
     //   "categories: ${categories.length}, transactions: ${transactions.length}",
     // );
 
-    final fileName = '$backupOwner-${backupTime.millisecondsSinceEpoch}.json';
+    // A stable name lets every successful backup replace the previous one.
+    final fileName = '$backupOwner.json';
     final result = await _uploadToDrive(
       fileName,
       utf8.encode(payload),
@@ -116,60 +115,60 @@ class BackupService {
   /// [DEAD CODE] [DEPRECATED] - No longer used, replaced by backupToDrive()
   /// This method was used for Supabase storage. Kept for reference only.
   /// Supabase backup is no longer active; all backups now go to Google Drive.
-  Future<String> backupUserData() async {
-    final user = _requireSignedInUser();
-    final backupOwner = _backupOwner(user);
-    final backupTime = DateTime.now().toUtc();
-    final backupPath = _backupPath(backupOwner, backupTime);
+  // Future<String> backupUserData() async {
+  //   final user = _requireSignedInUser();
+  //   final backupOwner = _backupOwner(user);
+  //   final backupTime = DateTime.now().toUtc();
+  //   final backupPath = _backupPath(backupOwner, backupTime);
 
-    final incomeSources = await (_db.select(
-      _db.incomeSources,
-    )..where((incomeTable) => incomeTable.userId.equals(backupOwner))).get();
-    final categories = await (_db.select(
-      _db.transactionCategories,
-    )..where((t) => t.userId.equals(backupOwner))).get();
-    final transactions = await (_db.select(
-      _db.financialTransactions,
-    )..where((t) => t.userId.equals(backupOwner))).get();
+  //   final incomeSources = await (_db.select(
+  //     _db.incomeSources,
+  //   )..where((incomeTable) => incomeTable.userId.equals(backupOwner))).get();
+  //   final categories = await (_db.select(
+  //     _db.transactionCategories,
+  //   )..where((t) => t.userId.equals(backupOwner))).get();
+  //   final transactions = await (_db.select(
+  //     _db.financialTransactions,
+  //   )..where((t) => t.userId.equals(backupOwner))).get();
 
-    if (incomeSources.isEmpty && categories.isEmpty && transactions.isEmpty) {
-      throw StateError(
-        'Cannot create a backup because there is no data to save yet.',
-      );
-    }
+  //   if (incomeSources.isEmpty && categories.isEmpty && transactions.isEmpty) {
+  //     throw StateError(
+  //       'Cannot create a backup because there is no data to save yet.',
+  //     );
+  //   }
 
-    // Convert categories with proper enum serialization
-    const directionConverter = TransactionDirectionConverter();
-    final categoriesJson = categories.map((cat) {
-      final json = cat.toJson();
-      // Ensure direction is serialized as string ('in' or 'out')
-      json['direction'] = directionConverter.toSql(cat.direction);
-      return json;
-    }).toList();
-    debugPrint(
-      ">> backupUserData: incomeSources: ${incomeSources.length}, categories: ${categories.length}, transactions: ${transactions.length}",
-    );
-    // Ensure transactions serialize `direction` as a string ('in'/'out')
-    final transactionsJson = transactions.map((t) {
-      final json = t.toJson();
-      json['direction'] = directionConverter.toSql(t.direction);
-      return json;
-    }).toList();
+  //   // Convert categories with proper enum serialization
+  //   const directionConverter = TransactionDirectionConverter();
+  //   final categoriesJson = categories.map((cat) {
+  //     final json = cat.toJson();
+  //     // Ensure direction is serialized as string ('in' or 'out')
+  //     json['direction'] = directionConverter.toSql(cat.direction);
+  //     return json;
+  //   }).toList();
+  //   debugPrint(
+  //     ">> backupUserData: incomeSources: ${incomeSources.length}, categories: ${categories.length}, transactions: ${transactions.length}",
+  //   );
+  //   // Ensure transactions serialize `direction` as a string ('in'/'out')
+  //   final transactionsJson = transactions.map((t) {
+  //     final json = t.toJson();
+  //     json['direction'] = directionConverter.toSql(t.direction);
+  //     return json;
+  //   }).toList();
 
-    final payload = jsonEncode({
-      'version': 1,
-      'userEmail': user.email,
-      'backupOwner': backupOwner,
-      'timestamp': backupTime.toIso8601String(),
-      incomeSourcesKey: incomeSources.map((e) => e.toJson()).toList(),
-      transactionCategoriesKey: categoriesJson,
-      financialTransactionsKey: transactionsJson,
-    });
-    debugPrint(">> payload $payload");
-    await _uploadJsonBackup(backupPath, utf8.encode(payload));
+  //   final payload = jsonEncode({
+  //     'version': 1,
+  //     'userEmail': user.email,
+  //     'backupOwner': backupOwner,
+  //     'timestamp': backupTime.toIso8601String(),
+  //     incomeSourcesKey: incomeSources.map((e) => e.toJson()).toList(),
+  //     transactionCategoriesKey: categoriesJson,
+  //     financialTransactionsKey: transactionsJson,
+  //   });
+  //   debugPrint(">> payload $payload");
+  //   await _uploadJsonBackup(backupPath, utf8.encode(payload));
 
-    return backupPath;
-  }
+  //   return backupPath;
+  // }
 
   /// Upload backup JSON file to Google Drive using the access token.
   /// Returns the file ID of the uploaded file.
@@ -178,6 +177,7 @@ class BackupService {
     List<int> fileData,
     String accessToken,
   ) async {
+    final temporaryFileName = '$fileName.pending';
     try {
       final driveApi = drive_api.DriveApi(
         _GdriveClient(_httpClient, accessToken),
@@ -185,10 +185,13 @@ class BackupService {
 
       // First, try to find or create the "Madakhel Backups" folder
       final folderId = await _getOrCreateBackupFolder(driveApi);
+      await _deleteFilesNamed(driveApi, folderId, temporaryFileName);
 
       // Create the file metadata
       final fileMetadata = drive_api.File()
-        ..name = fileName
+        // A pending file is never considered a backup by restore. This keeps an
+        // interrupted upload from replacing the user's last good backup.
+        ..name = temporaryFileName
         ..parents = [folderId]
         ..mimeType = 'application/json';
 
@@ -199,12 +202,100 @@ class BackupService {
         uploadMedia: media,
       );
 
-      debugPrint('File uploaded to Google Drive: ${file.id}');
-      return file.id ?? fileName;
+      final fileId = file.id;
+      if (fileId == null) {
+        throw StateError('Unable to retrieve the uploaded backup file ID.');
+      }
+
+      // A completed temporary upload is promoted only after all older backups
+      // for this user are removed. The folder therefore contains at most one
+      // completed backup per user.
+      await _deleteExistingBackups(
+        driveApi,
+        folderId,
+        fileName,
+        excludeFileId: fileId,
+      );
+      await driveApi.files.update(drive_api.File()..name = fileName, fileId);
+
+      debugPrint('File uploaded to Google Drive: $fileId');
+      return fileId;
     } catch (e) {
+      // This also removes a pending file left behind by a cancelled or failed
+      // upload. It is safe to call even if the folder was never created.
+      await _deletePendingBackup(accessToken, temporaryFileName);
       debugPrint('Error uploading to Google Drive: $e');
       rethrow;
     }
+  }
+
+  Future<void> _deleteExistingBackups(
+    drive_api.DriveApi driveApi,
+    String folderId,
+    String fileName, {
+    required String excludeFileId,
+  }) async {
+    final files = await _listBackupFiles(driveApi, folderId);
+    final backupOwner = fileName.substring(0, fileName.length - '.json'.length);
+    final legacyPrefix = '$backupOwner-';
+    for (final file in files) {
+      final name = file.name ?? '';
+      if (file.id != null &&
+          file.id != excludeFileId &&
+          (name == fileName ||
+              name == '$fileName.pending' ||
+              (name.startsWith(legacyPrefix) && name.endsWith('.json')))) {
+        await driveApi.files.delete(file.id!);
+      }
+    }
+  }
+
+  Future<void> _deletePendingBackup(
+    String accessToken,
+    String temporaryFileName,
+  ) async {
+    try {
+      final driveApi = drive_api.DriveApi(
+        _GdriveClient(_httpClient, accessToken),
+      );
+      final folderId = await _getOrCreateBackupFolder(driveApi);
+      await _deleteFilesNamed(driveApi, folderId, temporaryFileName);
+    } catch (cleanupError) {
+      debugPrint(
+        'Unable to clean up pending Google Drive backup: $cleanupError',
+      );
+    }
+  }
+
+  Future<void> _deleteFilesNamed(
+    drive_api.DriveApi driveApi,
+    String folderId,
+    String fileName,
+  ) async {
+    for (final file in await _listBackupFiles(driveApi, folderId)) {
+      if (file.name == fileName && file.id != null) {
+        await driveApi.files.delete(file.id!);
+      }
+    }
+  }
+
+  Future<List<drive_api.File>> _listBackupFiles(
+    drive_api.DriveApi driveApi,
+    String folderId,
+  ) async {
+    final files = <drive_api.File>[];
+    String? pageToken;
+    do {
+      final page = await driveApi.files.list(
+        q: "parents = '$folderId' and trashed = false and mimeType = 'application/json'",
+        spaces: 'drive',
+        pageSize: 100,
+        pageToken: pageToken,
+      );
+      files.addAll(page.files ?? const []);
+      pageToken = page.nextPageToken;
+    } while (pageToken != null);
+    return files;
   }
 
   /// Find or create the "Madakhel Backups" folder in Google Drive.
@@ -304,7 +395,8 @@ class BackupService {
 
       // List files in the backup folder, sorted by creation date (newest first)
       final query =
-          "parents = '$folderId' and trashed = false and mimeType = 'application/json'";
+          "parents = '$folderId' and name = '$backupOwner.json' and trashed = false "
+          "and mimeType = 'application/json'";
       final fileList = await driveApi.files.list(
         q: query,
         spaces: 'drive',
@@ -379,118 +471,119 @@ class BackupService {
 
   /// [DEAD CODE] [DEPRECATED] - No longer used, replaced by restoreUserDataFromGDrive()
   /// Kept for reference only. Uses Supabase storage which is not active.
-  Future<void> restoreUserData() async {
-    final user = _requireSignedInUser();
-    final backupOwner = _backupOwner(user);
-    final bytes = await _downloadLatestBackup(backupOwner);
+  // Future<void> restoreUserData() async {
+  //   final user = _requireSignedInUser();
+  //   final backupOwner = _backupOwner(user);
+  //   final bytes = await _downloadLatestBackup(backupOwner);
 
-    final decoded = jsonDecode(utf8.decode(bytes));
-    if (decoded is! Map<String, dynamic>) {
-      throw StateError('Invalid backup format.');
-    }
+  //   final decoded = jsonDecode(utf8.decode(bytes));
+  //   if (decoded is! Map<String, dynamic>) {
+  //     throw StateError('Invalid backup format.');
+  //   }
 
-    _validateBackupOwner(decoded, backupOwner);
-    final incomeSources = _parseIncomeSources(
-      _extractList(decoded[incomeSourcesKey]),
-      backupOwner,
-    );
-    final categories = _parseCategories(
-      _extractList(decoded[transactionCategoriesKey]),
-      backupOwner,
-    );
-    final transactions = _parseTransactions(
-      _extractList(decoded[financialTransactionsKey]),
-      backupOwner,
-    );
+  //   _validateBackupOwner(decoded, backupOwner);
+  //   final incomeSources = _parseIncomeSources(
+  //     _extractList(decoded[incomeSourcesKey]),
+  //     backupOwner,
+  //   );
+  //   final categories = _parseCategories(
+  //     _extractList(decoded[transactionCategoriesKey]),
+  //     backupOwner,
+  //   );
+  //   final transactions = _parseTransactions(
+  //     _extractList(decoded[financialTransactionsKey]),
+  //     backupOwner,
+  //   );
 
-    if (incomeSources.isEmpty && categories.isEmpty && transactions.isEmpty) {
-      throw StateError(
-        'Cannot restore backup because the backup file is empty.',
-      );
-    }
+  //   if (incomeSources.isEmpty && categories.isEmpty && transactions.isEmpty) {
+  //     throw StateError(
+  //       'Cannot restore backup because the backup file is empty.',
+  //     );
+  //   }
 
-    await _db.transaction(() async {
-      await (_db.delete(
-        _db.financialTransactions,
-      )..where((t) => t.userId.equals(backupOwner))).go();
-      await (_db.delete(
-        _db.transactionCategories,
-      )..where((t) => t.userId.equals(backupOwner))).go();
-      await (_db.delete(
-        _db.incomeSources,
-      )..where((t) => t.userId.equals(backupOwner))).go();
+  //   await _db.transaction(() async {
+  //     await (_db.delete(
+  //       _db.financialTransactions,
+  //     )..where((t) => t.userId.equals(backupOwner))).go();
+  //     await (_db.delete(
+  //       _db.transactionCategories,
+  //     )..where((t) => t.userId.equals(backupOwner))).go();
+  //     await (_db.delete(
+  //       _db.incomeSources,
+  //     )..where((t) => t.userId.equals(backupOwner))).go();
 
-      for (final source in incomeSources) {
-        await _db
-            .into(_db.incomeSources)
-            .insert(
-              IncomeSourcesCompanion(
-                id: Value(source.id),
-                userId: Value(source.userId),
-                name: Value(source.name),
-                currency: Value(source.currency),
-                starterBalance: Value(source.starterBalance),
-                createdAt: Value(source.createdAt),
-                updatedAt: Value(source.updatedAt),
-                syncStatus: Value(source.syncStatus),
-                remoteId: Value(source.remoteId),
-                isDeleted: Value(source.isDeleted),
-              ),
-            );
-      }
+  //     for (final source in incomeSources) {
+  //       await _db
+  //           .into(_db.incomeSources)
+  //           .insert(
+  //             IncomeSourcesCompanion(
+  //               id: Value(source.id),
+  //               userId: Value(source.userId),
+  //               name: Value(source.name),
+  //               currency: Value(source.currency),
+  //               starterBalance: Value(source.starterBalance),
+  //               createdAt: Value(source.createdAt),
+  //               updatedAt: Value(source.updatedAt),
+  //               syncStatus: Value(source.syncStatus),
+  //               remoteId: Value(source.remoteId),
+  //               isDeleted: Value(source.isDeleted),
+  //             ),
+  //           );
+  //     }
 
-      for (final category in categories) {
-        await _db
-            .into(_db.transactionCategories)
-            .insert(
-              TransactionCategoriesCompanion(
-                id: Value(category.id),
-                userId: Value(category.userId),
-                name: Value(category.name),
-                direction: Value(category.direction),
-                createdAt: Value(category.createdAt),
-                updatedAt: Value(category.updatedAt),
-                syncStatus: Value(category.syncStatus),
-                remoteId: Value(category.remoteId),
-                isDeleted: Value(category.isDeleted),
-              ),
-            );
-      }
+  //     for (final category in categories) {
+  //       await _db
+  //           .into(_db.transactionCategories)
+  //           .insert(
+  //             TransactionCategoriesCompanion(
+  //               id: Value(category.id),
+  //               userId: Value(category.userId),
+  //               name: Value(category.name),
+  //               direction: Value(category.direction),
+  //               createdAt: Value(category.createdAt),
+  //               updatedAt: Value(category.updatedAt),
+  //               syncStatus: Value(category.syncStatus),
+  //               remoteId: Value(category.remoteId),
+  //               isDeleted: Value(category.isDeleted),
+  //             ),
+  //           );
+  //     }
 
-      for (final transaction in transactions) {
-        // Backup format is assumed to include denormalized `direction`.
-        final dir = transaction.direction;
+  //     for (final transaction in transactions) {
+  //       // Backup format is assumed to include denormalized `direction`.
+  //       final dir = transaction.direction;
 
-        await _db
-            .into(_db.financialTransactions)
-            .insert(
-              FinancialTransactionsCompanion(
-                id: Value(transaction.id),
-                userId: Value(transaction.userId),
-                incomeSourceId: Value(transaction.incomeSourceId),
-                categoryId: Value(transaction.categoryId),
-                isSystem: Value(transaction.isSystem),
-                direction: Value(dir),
-                amount: Value(transaction.amount),
-                note: Value(transaction.note),
-                date: Value(transaction.date),
-                createdAt: Value(transaction.createdAt),
-                updatedAt: Value(transaction.updatedAt),
-                syncStatus: Value(transaction.syncStatus),
-                remoteId: Value(transaction.remoteId),
-                isDeleted: Value(transaction.isDeleted),
-              ),
-            );
-      }
-    });
-  }
+  //       await _db
+  //           .into(_db.financialTransactions)
+  //           .insert(
+  //             FinancialTransactionsCompanion(
+  //               id: Value(transaction.id),
+  //               userId: Value(transaction.userId),
+  //               incomeSourceId: Value(transaction.incomeSourceId),
+  //               categoryId: Value(transaction.categoryId),
+  //               isSystem: Value(transaction.isSystem),
+  //               direction: Value(dir),
+  //               amount: Value(transaction.amount),
+  //               note: Value(transaction.note),
+  //               date: Value(transaction.date),
+  //               createdAt: Value(transaction.createdAt),
+  //               updatedAt: Value(transaction.updatedAt),
+  //               syncStatus: Value(transaction.syncStatus),
+  //               remoteId: Value(transaction.remoteId),
+  //               isDeleted: Value(transaction.isDeleted),
+  //             ),
+  //           );
+  //     }
+  //   });
+  // }
 
   /// Restore user data from Google Drive (full replacement).
   /// Downloads the latest backup from G Drive and replaces all local data with it.
   /// This is the G Drive version of restoreUserData().
   Future<void> restoreUserDataFromGDrive() async {
-    final authStorageInstance = await AuthUserStorage.instance();
-    final accessToken = await authStorageInstance.storedAccessToken;
+    final gSignInClientAuthorization = await gSignIn.authorizationClient
+        .authorizeScopes(scopes);
+    final accessToken = gSignInClientAuthorization.accessToken;
 
     if (accessToken == null || accessToken.isEmpty) {
       throw StateError(
@@ -620,32 +713,32 @@ class BackupService {
   /// Kept for reference only. Uses Supabase storage which is not active.
   /// Fetches the parsed backup data without applying it to the local DB.
   /// Useful for merge/preview operations.
-  Future<Map<String, List<dynamic>>> fetchBackupData() async {
-    final user = _requireSignedInUser();
-    final backupOwner = _backupOwner(user);
-    final bytes = await _downloadLatestBackup(backupOwner);
-    final decoded = jsonDecode(utf8.decode(bytes));
-    if (decoded is! Map<String, dynamic>) {
-      throw StateError('Invalid backup format.');
-    }
+  // Future<Map<String, List<dynamic>>> fetchBackupData() async {
+  //   final user = _requireSignedInUser();
+  //   final backupOwner = _backupOwner(user);
+  //   final bytes = await _downloadLatestBackup(backupOwner);
+  //   final decoded = jsonDecode(utf8.decode(bytes));
+  //   if (decoded is! Map<String, dynamic>) {
+  //     throw StateError('Invalid backup format.');
+  //   }
 
-    _validateBackupOwner(decoded, backupOwner);
+  //   _validateBackupOwner(decoded, backupOwner);
 
-    return {
-      incomeSourcesKey: _parseIncomeSources(
-        _extractList(decoded[incomeSourcesKey]),
-        backupOwner,
-      ),
-      transactionCategoriesKey: _parseCategories(
-        _extractList(decoded[transactionCategoriesKey]),
-        backupOwner,
-      ),
-      financialTransactionsKey: _parseTransactions(
-        _extractList(decoded[financialTransactionsKey]),
-        backupOwner,
-      ),
-    };
-  }
+  //   return {
+  //     incomeSourcesKey: _parseIncomeSources(
+  //       _extractList(decoded[incomeSourcesKey]),
+  //       backupOwner,
+  //     ),
+  //     transactionCategoriesKey: _parseCategories(
+  //       _extractList(decoded[transactionCategoriesKey]),
+  //       backupOwner,
+  //     ),
+  //     financialTransactionsKey: _parseTransactions(
+  //       _extractList(decoded[financialTransactionsKey]),
+  //       backupOwner,
+  //     ),
+  //   };
+  // }
 
   AuthUser _requireSignedInUser() {
     final user = _auth.currentAuthUser;
@@ -716,157 +809,157 @@ class BackupService {
 
   /// [DEAD CODE] [DEPRECATED] - No longer used, replaced by _uploadToDrive()
   /// Kept for reference only. Uses Supabase storage which is not active.
-  Future<void> _uploadJsonBackup(String path, List<int> payload) async {
-    final bytes = Uint8List.fromList(payload);
-    final storage = _supabase.storage.from(_backupBucket);
+  // Future<void> _uploadJsonBackup(String path, List<int> payload) async {
+  //   final bytes = Uint8List.fromList(payload);
+  //   final storage = _supabase.storage.from(_backupBucket);
 
-    if (bytes.length <= _chunkSize) {
-      await storage.uploadBinary(
-        path,
-        bytes,
-        fileOptions: const FileOptions(
-          contentType: 'application/json',
-          upsert: true,
-        ),
-      );
-      return;
-    }
+  //   if (bytes.length <= _chunkSize) {
+  //     await storage.uploadBinary(
+  //       path,
+  //       bytes,
+  //       fileOptions: const FileOptions(
+  //         contentType: 'application/json',
+  //         upsert: true,
+  //       ),
+  //     );
+  //     return;
+  //   }
 
-    final chunks = <String>[];
-    for (var offset = 0; offset < bytes.length; offset += _chunkSize) {
-      final chunkIndex = chunks.length;
-      final end = offset + _chunkSize > bytes.length
-          ? bytes.length
-          : offset + _chunkSize;
-      final chunkPath = '$path.part${chunkIndex.toString().padLeft(3, '0')}';
-      await storage.uploadBinary(
-        chunkPath,
-        Uint8List.sublistView(bytes, offset, end),
-        fileOptions: const FileOptions(
-          contentType: 'application/octet-stream',
-          upsert: true,
-        ),
-      );
-      chunks.add(chunkPath);
-    }
+  //   final chunks = <String>[];
+  //   for (var offset = 0; offset < bytes.length; offset += _chunkSize) {
+  //     final chunkIndex = chunks.length;
+  //     final end = offset + _chunkSize > bytes.length
+  //         ? bytes.length
+  //         : offset + _chunkSize;
+  //     final chunkPath = '$path.part${chunkIndex.toString().padLeft(3, '0')}';
+  //     await storage.uploadBinary(
+  //       chunkPath,
+  //       Uint8List.sublistView(bytes, offset, end),
+  //       fileOptions: const FileOptions(
+  //         contentType: 'application/octet-stream',
+  //         upsert: true,
+  //       ),
+  //     );
+  //     chunks.add(chunkPath);
+  //   }
 
-    final manifest = jsonEncode({
-      'manifestVersion': _manifestVersion,
-      'chunked': true,
-      'contentType': 'application/json',
-      'size': bytes.length,
-      'chunks': chunks,
-    });
+  //   final manifest = jsonEncode({
+  //     'manifestVersion': _manifestVersion,
+  //     'chunked': true,
+  //     'contentType': 'application/json',
+  //     'size': bytes.length,
+  //     'chunks': chunks,
+  //   });
 
-    await storage.uploadBinary(
-      path,
-      Uint8List.fromList(utf8.encode(manifest)),
-      fileOptions: const FileOptions(
-        contentType: 'application/json',
-        upsert: true,
-      ),
-    );
-  }
+  //   await storage.uploadBinary(
+  //     path,
+  //     Uint8List.fromList(utf8.encode(manifest)),
+  //     fileOptions: const FileOptions(
+  //       contentType: 'application/json',
+  //       upsert: true,
+  //     ),
+  //   );
+  // }
 
   /// [DEAD CODE] [DEPRECATED] - No longer used, replaced by Google Drive backup
   /// Kept for reference only. Uses Supabase storage which is not active.
-  Future<Uint8List> _downloadLatestBackup(String uid) async {
-    final path = await _latestBackupPath(uid);
-    // debugPrint('Latest backup path for $path');
-    if (path == null) {
-      throw StateError('No backup is available to restore.');
-    }
+  // Future<Uint8List> _downloadLatestBackup(String uid) async {
+  //   final path = await _latestBackupPath(uid);
+  //   // debugPrint('Latest backup path for $path');
+  //   if (path == null) {
+  //     throw StateError('No backup is available to restore.');
+  //   }
 
-    final storage = _supabase.storage.from(_backupBucket);
-    final bytes = await storage.download(path);
-    debugPrint("${bytes.length} bytes downloaded from $path");
-    if (bytes.isEmpty) {
-      throw StateError('No backup is available to restore.');
-    }
+  //   final storage = _supabase.storage.from(_backupBucket);
+  //   final bytes = await storage.download(path);
+  //   debugPrint("${bytes.length} bytes downloaded from $path");
+  //   if (bytes.isEmpty) {
+  //     throw StateError('No backup is available to restore.');
+  //   }
 
-    final decoded = jsonDecode(utf8.decode(bytes));
-    if (decoded is Map<String, dynamic> && decoded['chunked'] == true) {
-      return await _downloadChunkedBackup(decoded);
-    }
+  //   final decoded = jsonDecode(utf8.decode(bytes));
+  //   if (decoded is Map<String, dynamic> && decoded['chunked'] == true) {
+  //     return await _downloadChunkedBackup(decoded);
+  //   }
 
-    return bytes;
-  }
+  //   return bytes;
+  // }
 
   /// [DEAD CODE] [DEPRECATED] - Helper for Supabase chunked downloads
   /// Kept for reference only.
-  Future<Uint8List> _downloadChunkedBackup(
-    Map<String, dynamic> manifest,
-  ) async {
-    final chunks = manifest['chunks'];
-    if (chunks is! List || chunks.isEmpty) {
-      throw StateError('Invalid backup format.');
-    }
+  // Future<Uint8List> _downloadChunkedBackup(
+  //   Map<String, dynamic> manifest,
+  // ) async {
+  //   final chunks = manifest['chunks'];
+  //   if (chunks is! List || chunks.isEmpty) {
+  //     throw StateError('Invalid backup format.');
+  //   }
 
-    final storage = _supabase.storage.from(_backupBucket);
-    final builder = BytesBuilder(copy: false);
-    for (final chunk in chunks) {
-      if (chunk is! String) {
-        throw StateError('Invalid backup format.');
-      }
-      builder.add(await storage.download(chunk));
-    }
+  //   final storage = _supabase.storage.from(_backupBucket);
+  //   final builder = BytesBuilder(copy: false);
+  //   for (final chunk in chunks) {
+  //     if (chunk is! String) {
+  //       throw StateError('Invalid backup format.');
+  //     }
+  //     builder.add(await storage.download(chunk));
+  //   }
 
-    final bytes = builder.takeBytes();
-    if (manifest['size'] is int && bytes.length != manifest['size']) {
-      throw StateError('Invalid backup format.');
-    }
-    return bytes;
-  }
+  //   final bytes = builder.takeBytes();
+  //   if (manifest['size'] is int && bytes.length != manifest['size']) {
+  //     throw StateError('Invalid backup format.');
+  //   }
+  //   return bytes;
+  // }
 
   /// [DEAD CODE] [DEPRECATED] - Helper for finding latest Supabase backup
   /// Kept for reference only.
-  Future<String?> _latestBackupPath(String uid) async {
-    try {
-      final filesObjects = await _supabase.storage
-          .from(_backupBucket)
-          .list(path: '$_backupFolder/$uid');
+  // Future<String?> _latestBackupPath(String uid) async {
+  //   try {
+  //     final filesObjects = await _supabase.storage
+  //         .from(_backupBucket)
+  //         .list(path: '$_backupFolder/$uid');
 
-      if (filesObjects.isEmpty) {
-        debugPrint('No backup files found for user: $uid');
-        return null;
-      }
+  //     if (filesObjects.isEmpty) {
+  //       debugPrint('No backup files found for user: $uid');
+  //       return null;
+  //     }
 
-      String? latestFileName;
-      for (final fileObject in filesObjects) {
-        final name = fileObject.name;
-        if (!name.endsWith('.json')) {
-          continue;
-        }
+  //     String? latestFileName;
+  //     for (final fileObject in filesObjects) {
+  //       final name = fileObject.name;
+  //       if (!name.endsWith('.json')) {
+  //         continue;
+  //       }
 
-        final stem = name.substring(0, name.length - 5);
-        if (int.tryParse(stem) == null) {
-          continue;
-        }
+  //       final stem = name.substring(0, name.length - 5);
+  //       if (int.tryParse(stem) == null) {
+  //         continue;
+  //       }
 
-        if (latestFileName == null) {
-          latestFileName = name;
-          continue;
-        }
+  //       if (latestFileName == null) {
+  //         latestFileName = name;
+  //         continue;
+  //       }
 
-        final currentStem = latestFileName!.substring(
-          0,
-          latestFileName!.length - 5,
-        );
-        if (int.parse(stem) > int.parse(currentStem)) {
-          latestFileName = name;
-        }
-      }
+  //       final currentStem = latestFileName!.substring(
+  //         0,
+  //         latestFileName!.length - 5,
+  //       );
+  //       if (int.parse(stem) > int.parse(currentStem)) {
+  //         latestFileName = name;
+  //       }
+  //     }
 
-      if (latestFileName == null) {
-        return null;
-      }
+  //     if (latestFileName == null) {
+  //       return null;
+  //     }
 
-      return '$_backupFolder/$uid/$latestFileName';
-    } catch (e) {
-      debugPrint('No backup folder found for user $uid: $e');
-      return null;
-    }
-  }
+  //     return '$_backupFolder/$uid/$latestFileName';
+  //   } catch (e) {
+  //     debugPrint('No backup folder found for user $uid: $e');
+  //     return null;
+  //   }
+  // }
 
   String _backupPath(String uid, DateTime timestamp) {
     final fileName = timestamp.millisecondsSinceEpoch.toString();

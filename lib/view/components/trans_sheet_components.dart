@@ -45,12 +45,11 @@ class _CategoryFieldState extends State<CategoryField> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Consumer<CategoryViewModel>(
-      builder: (context, catC, child) {
-        final categories = catC.categories;
+    final categories = context.watch<CategoryViewModel>().categories;
+    return Builder(
+      builder: (context) {
         final TransactionCategory? gottenCat = categories.firstWhereOrNull(
           (cat) => cat.id == widget.initialCategoryId,
-     
         );
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,7 +132,7 @@ class _CategoryFieldState extends State<CategoryField> {
               decoratorProps: DropDownDecoratorProps(
                 decoration: InputDecoration(
                   labelText: !widget.isEdit
-                      ?"إختر نوع المعاملة" 
+                      ? "إختر نوع المعاملة"
                       : gottenCat!.name,
                   border: OutlineInputBorder(),
                 ),
@@ -143,7 +142,6 @@ class _CategoryFieldState extends State<CategoryField> {
         );
       },
     );
- 
   }
 }
 ////////////////
@@ -152,11 +150,7 @@ class AmountField extends StatelessWidget {
   final TextEditingController controller;
   final bool enabled;
 
-  const AmountField({
-    super.key,
-    required this.controller,
-     this.enabled=true,
-  });
+  const AmountField({super.key, required this.controller, this.enabled = true});
 
   @override
   Widget build(BuildContext context) {
@@ -195,7 +189,7 @@ class DateField extends StatelessWidget {
   const DateField({
     super.key,
     required this.selectedDate,
-     this.enabled=true,
+    this.enabled = true,
     required this.onChanged,
   });
 
@@ -254,7 +248,7 @@ class NoteField extends StatelessWidget {
   final TextEditingController controller;
   final bool enabled;
 
-  const NoteField({super.key, required this.controller,  this.enabled=true});
+  const NoteField({super.key, required this.controller, this.enabled = true});
 
   @override
   Widget build(BuildContext context) {

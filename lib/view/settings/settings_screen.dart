@@ -20,7 +20,6 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   int _activeTabIndex = 0; // Settings tab is active
-  // State moved to BackupViewModel
 
   Future<void> _backupNow() async {
     final vm = context.read<BackupViewModel>();
@@ -213,25 +212,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           context,
                           onTap: () => context.push('/categories'),
                         ),
-                        Consumer<BackupViewModel>(
-                          builder: (context, vm, child) => Column(
-                            children: [
-                              _SettingRow(
-                                vm.isBackingUp
-                                    ? 'جارٍ إجراء النسخ الاحتياطي...'
-                                    : 'النسخ الاحتياطي',
-                                context,
-                                onTap: vm.isBackingUp ? null : _backupNow,
-                              ),
-                              _SettingRow(
-                                vm.isRestoring
-                                    ? 'جارٍ استعادة النسخة الاحتياطية...'
-                                    : 'استعادة النسخة الاحتياطية',
-                                context,
-                                onTap: vm.isRestoring ? null : _restoreBackup,
-                              ),
-                            ],
-                          ),
+                        Builder(
+                          builder: (context) {
+                            final vm = context.watch<BackupViewModel>();
+                            return Column(
+                              children: [
+                                _SettingRow(
+                                  vm.isBackingUp
+                                      ? 'جارٍ إجراء النسخ الاحتياطي...'
+                                      : 'النسخ الاحتياطي',
+                                  context,
+                                  onTap: vm.isBackingUp ? null : _backupNow,
+                                ),
+                                _SettingRow(
+                                  vm.isRestoring
+                                      ? 'جارٍ استعادة النسخة الاحتياطية...'
+                                      : 'استعادة النسخة الاحتياطية',
+                                  context,
+                                  onTap: vm.isRestoring ? null : _restoreBackup,
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -256,70 +258,74 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         children: [
                           _SectionTitle('المظهر', context),
                           SizedBox(height: context.scaleH(8)),
-                          Consumer<ThemeViewModel>(
-                            builder: (context, themeViewModel, child) => Wrap(
-                              alignment: WrapAlignment.center,
-                              spacing: context.scaleW(8),
-                              runSpacing: context.scaleH(8),
-                              children: AppThemeMode.values.asMap().entries.map(
-                                (e) {
-                                  final isSelected =
-                                      themeViewModel.mode.index == e.key;
-                                  return ChoiceChip(
-                                    selected: isSelected,
-                                    label: Text(
-                                      e.value.name == "system"
-                                          ? "إعدادات النظام"
-                                          : e.value.name == "light"
-                                          ? "فاتح"
-                                          : "داكن",
-                                    ),
-                                    selectedColor: scheme.primary,
-                                    backgroundColor:
-                                        scheme.surfaceContainerHighest,
-                                    labelStyle: TextStyle(
-                                      color: isSelected
-                                          ? scheme.onPrimary
-                                          : scheme.onSurface,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                    onSelected: (_) {
-                                      themeViewModel.setThemeMode(
-                                        AppThemeMode.values[e.key],
+                          Builder(
+                            builder: (context) {
+                              final themeViewModel = context
+                                  .watch<ThemeViewModel>();
+                              return Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: context.scaleW(8),
+                                runSpacing: context.scaleH(8),
+                                children: AppThemeMode.values
+                                    .asMap()
+                                    .entries
+                                    .map((e) {
+                                      final isSelected =
+                                          themeViewModel.mode.index == e.key;
+                                      return ChoiceChip(
+                                        selected: isSelected,
+                                        label: Text(
+                                          e.value.name == "system"
+                                              ? "إعدادات النظام"
+                                              : e.value.name == "light"
+                                              ? "فاتح"
+                                              : "داكن",
+                                        ),
+                                        selectedColor: scheme.primary,
+                                        backgroundColor:
+                                            scheme.surfaceContainerHighest,
+                                        labelStyle: TextStyle(
+                                          color: isSelected
+                                              ? scheme.onPrimary
+                                              : scheme.onSurface,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                        onSelected: (_) {
+                                          themeViewModel.setThemeMode(
+                                            AppThemeMode.values[e.key],
+                                          );
+                                        },
                                       );
-                                    },
-                                  );
-                                },
-                              ).toList(),
-                            ),
+                                    })
+                                    .toList(),
+                              );
+                            },
                           ),
                         ],
                       ),
                     ),
                   ),
                   SizedBox(height: context.scaleH(24)),
-                  Consumer<AuthViewModel>(
-                    builder: (context, authProvider, child) => AppPrimaryButton(
-                      label: 'تسجيل الخروج',
-                      onPressed: () async {
-                        showDialog(
-                          context: context,
-                          builder: (dialogContext) => AppConfirmActionDialog(
-                            title: "أنت على وشك تسجيل الخروج",
-                            message: "هل تريد فعلاً تسجيل الخروج؟",
-                            confirmLabel: "تأكيد",
-                            cancelLabel: "إلغاء",
-                            onConfirm: () async {
-                              await authProvider.signOut();
-                              if (!dialogContext.mounted) return;
-                              Navigator.pop(dialogContext);
-                              if (!context.mounted) return;
-                              context.go('/start');
-                            },
-                          ),
-                        );
-                      },
-                    ),
+                  AppPrimaryButton(
+                    label: 'تسجيل الخروج',
+                    onPressed: () async {
+                      showDialog(
+                        context: context,
+                        builder: (dialogContext) => AppConfirmActionDialog(
+                          title: "أنت على وشك تسجيل الخروج",
+                          message: "هل تريد فعلاً تسجيل الخروج؟",
+                          confirmLabel: "تأكيد",
+                          cancelLabel: "إلغاء",
+                          onConfirm: () async {
+                            await context.read<AuthViewModel>().signOut();
+                            if (!dialogContext.mounted) return;
+                            Navigator.pop(dialogContext);
+                            if (!context.mounted) return;
+                            context.go('/start');
+                          },
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),

@@ -4,7 +4,6 @@ import 'package:madakhel_app/data/db/app_db.dart';
 import 'package:madakhel_app/model/trans_data.dart';
 import 'package:madakhel_app/view/components/app_primary_button.dart';
 import 'package:madakhel_app/view/components/trans_sheet_components.dart';
-import 'package:madakhel_app/view_model/category_view_model.dart';
 import 'package:madakhel_app/view_model/transaction_view_model.dart';
 import 'package:provider/provider.dart';
 
@@ -54,9 +53,10 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return Consumer<TransactionViewModel>(
-      builder: (context, controller, _) {
-        final state = controller.state;
+    final controller = context.watch<TransactionViewModel>();
+    final state = controller.state;
+    return Builder(
+      builder: (context) {
         final isLoading = state.isLoading;
 
         return Padding(

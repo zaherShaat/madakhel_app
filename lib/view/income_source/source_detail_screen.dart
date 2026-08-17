@@ -4,7 +4,6 @@ import 'package:madakhel_app/core/utils.dart';
 import 'package:madakhel_app/data/db/app_db.dart';
 import 'package:madakhel_app/data/pdf/permissions_manager.dart';
 import 'package:madakhel_app/model/income_source_with_balance.dart';
-import 'package:madakhel_app/model/transaction_direction.dart';
 import 'package:madakhel_app/view/components/app_confirm_action_dialog.dart';
 import 'package:madakhel_app/view/income_source/components/add_transaction_sheet.dart';
 import 'package:madakhel_app/view/income_source/components/pdf_export_btn.dart';
@@ -553,24 +552,22 @@ class _SourceDetailScreenState extends State<SourceDetailScreen> {
   void _showDeleteSourceConfirmation(BuildContext context) {
     showDialog(
       context: context,
-      builder: (dialogContext) => Consumer(
-        builder: (context, value, child) => AppConfirmActionDialog(
-          title: 'تأكيد حذف المصدر',
-          message:
-              'سيتم حذف مصدر الدخل وجميع المعاملات المرتبطة به. لا يمكن التراجع عن هذا الإجراء.',
-          confirmLabel: 'نعم، احذف',
-          cancelLabel: 'إلغاء',
-          isDanger: true,
-          onConfirm: () async {
-            await context.read<IncomeSourceViewModel>().deleteIncomeSource(
-              widget.source.id,
-            );
-            await _refreshTransactions(classifier: selectedClassifier);
-            if (!context.mounted) return;
-            Navigator.pop(dialogContext);
-            context.pop();
-          },
-        ),
+      builder: (dialogContext) => AppConfirmActionDialog(
+        title: 'تأكيد حذف المصدر',
+        message:
+            'سيتم حذف مصدر الدخل وجميع المعاملات المرتبطة به. لا يمكن التراجع عن هذا الإجراء.',
+        confirmLabel: 'نعم، احذف',
+        cancelLabel: 'إلغاء',
+        isDanger: true,
+        onConfirm: () async {
+          await context.read<IncomeSourceViewModel>().deleteIncomeSource(
+            widget.source.id,
+          );
+          await _refreshTransactions(classifier: selectedClassifier);
+          if (!context.mounted) return;
+          Navigator.pop(dialogContext);
+          context.pop();
+        },
       ),
     );
   }
